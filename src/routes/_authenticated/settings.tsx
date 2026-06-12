@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2, Search, ShieldCheck, UserCheck, UserX } from "lucide-react";
-import { AppShell } from "@/components/app/app-shell";
+import { PageHeader } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +34,8 @@ function SettingsPage() {
   const { hasRole } = useAuth();
   const isAdmin = hasRole("admin");
   return (
-    <AppShell title={t("settings.title")} subtitle={t("settings.subtitle")}>
+    <>
+      <PageHeader title={t("settings.title")} description={t("settings.subtitle")} />
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList>
           <TabsTrigger value="profile">{t("settings.tab.profile")}</TabsTrigger>
@@ -45,7 +46,7 @@ function SettingsPage() {
         {isAdmin && <TabsContent value="team"><TeamTab /></TabsContent>}
         {isAdmin && <TabsContent value="company"><CompanyTab /></TabsContent>}
       </Tabs>
-    </AppShell>
+    </>
   );
 }
 
