@@ -21,6 +21,7 @@ import { Route as AuthenticatedKbRouteImport } from './routes/_authenticated/kb'
 import { Route as AuthenticatedEndpointsRouteImport } from './routes/_authenticated/endpoints'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
@@ -91,6 +92,11 @@ const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
   path: '/clients',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAutomationsRoute =
   AuthenticatedAutomationsRouteImport.update({
     id: '/automations',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/alerts': typeof AuthenticatedAlertsRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/alerts': typeof AuthenticatedAlertsRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/_authenticated/alerts': typeof AuthenticatedAlertsRoute
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
@@ -228,6 +237,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/audit'
     | '/automations'
+    | '/billing'
     | '/clients'
     | '/dashboard'
     | '/endpoints'
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/audit'
     | '/automations'
+    | '/billing'
     | '/clients'
     | '/dashboard'
     | '/endpoints'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/_authenticated/alerts'
     | '/_authenticated/audit'
     | '/_authenticated/automations'
+    | '/_authenticated/billing'
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
     | '/_authenticated/endpoints'
@@ -383,6 +395,13 @@ declare module '@tanstack/react-router' {
       path: '/clients'
       fullPath: '/clients'
       preLoaderRoute: typeof AuthenticatedClientsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/automations': {
@@ -526,6 +545,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertsRoute: typeof AuthenticatedAlertsRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEndpointsRoute: typeof AuthenticatedEndpointsRouteWithChildren
@@ -540,6 +560,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAlertsRoute: AuthenticatedAlertsRoute,
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEndpointsRoute: AuthenticatedEndpointsRouteWithChildren,
@@ -563,3 +584,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
