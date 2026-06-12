@@ -715,71 +715,152 @@ export type Database = {
         Row: {
           agent_token: string | null
           agent_version: string | null
+          bios_date: string | null
+          bios_vendor: string | null
+          bios_version: string | null
           client_id: string
+          cpu_cores: number | null
+          cpu_model: string | null
+          cpu_threads: number | null
           cpu_usage: number | null
           created_at: string
           disk_usage: number | null
+          disks: Json
+          dns_servers: Json
+          domain: string | null
+          gateway: string | null
+          gpu: string | null
           hostname: string
           id: string
+          installed_software: Json
+          inventory_updated_at: string | null
           ip_address: string | null
+          last_boot_at: string | null
           last_heartbeat: string | null
           last_seen_ip: string | null
+          logged_user: string | null
           mac_address: string | null
+          manufacturer: string | null
+          model: string | null
+          motherboard: string | null
+          network_interfaces: Json
           notes: string | null
           os: string | null
           os_version: string | null
+          pending_updates: Json
+          public_ip: string | null
+          ram_total_mb: number | null
           ram_usage: number | null
+          running_processes: Json
+          serial_number: string | null
+          services: Json
           status: Database["public"]["Enums"]["endpoint_status"]
           tags: string[]
           tenant_id: string
+          timezone: string | null
           type: Database["public"]["Enums"]["endpoint_type"]
           updated_at: string
+          uptime_seconds: number | null
         }
         Insert: {
           agent_token?: string | null
           agent_version?: string | null
+          bios_date?: string | null
+          bios_vendor?: string | null
+          bios_version?: string | null
           client_id: string
+          cpu_cores?: number | null
+          cpu_model?: string | null
+          cpu_threads?: number | null
           cpu_usage?: number | null
           created_at?: string
           disk_usage?: number | null
+          disks?: Json
+          dns_servers?: Json
+          domain?: string | null
+          gateway?: string | null
+          gpu?: string | null
           hostname: string
           id?: string
+          installed_software?: Json
+          inventory_updated_at?: string | null
           ip_address?: string | null
+          last_boot_at?: string | null
           last_heartbeat?: string | null
           last_seen_ip?: string | null
+          logged_user?: string | null
           mac_address?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          motherboard?: string | null
+          network_interfaces?: Json
           notes?: string | null
           os?: string | null
           os_version?: string | null
+          pending_updates?: Json
+          public_ip?: string | null
+          ram_total_mb?: number | null
           ram_usage?: number | null
+          running_processes?: Json
+          serial_number?: string | null
+          services?: Json
           status?: Database["public"]["Enums"]["endpoint_status"]
           tags?: string[]
           tenant_id: string
+          timezone?: string | null
           type?: Database["public"]["Enums"]["endpoint_type"]
           updated_at?: string
+          uptime_seconds?: number | null
         }
         Update: {
           agent_token?: string | null
           agent_version?: string | null
+          bios_date?: string | null
+          bios_vendor?: string | null
+          bios_version?: string | null
           client_id?: string
+          cpu_cores?: number | null
+          cpu_model?: string | null
+          cpu_threads?: number | null
           cpu_usage?: number | null
           created_at?: string
           disk_usage?: number | null
+          disks?: Json
+          dns_servers?: Json
+          domain?: string | null
+          gateway?: string | null
+          gpu?: string | null
           hostname?: string
           id?: string
+          installed_software?: Json
+          inventory_updated_at?: string | null
           ip_address?: string | null
+          last_boot_at?: string | null
           last_heartbeat?: string | null
           last_seen_ip?: string | null
+          logged_user?: string | null
           mac_address?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          motherboard?: string | null
+          network_interfaces?: Json
           notes?: string | null
           os?: string | null
           os_version?: string | null
+          pending_updates?: Json
+          public_ip?: string | null
+          ram_total_mb?: number | null
           ram_usage?: number | null
+          running_processes?: Json
+          serial_number?: string | null
+          services?: Json
           status?: Database["public"]["Enums"]["endpoint_status"]
           tags?: string[]
           tenant_id?: string
+          timezone?: string | null
           type?: Database["public"]["Enums"]["endpoint_type"]
           updated_at?: string
+          uptime_seconds?: number | null
         }
         Relationships: [
           {
