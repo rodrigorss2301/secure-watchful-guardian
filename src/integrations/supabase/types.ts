@@ -182,6 +182,171 @@ export type Database = {
           },
         ]
       }
+      automation_runs: {
+        Row: {
+          automation_id: string
+          client_id: string | null
+          created_at: string
+          duration_ms: number | null
+          endpoint_id: string | null
+          error: string | null
+          exit_code: number | null
+          finished_at: string | null
+          id: string
+          output: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["automation_run_status"]
+          tenant_id: string
+          trigger_source: Database["public"]["Enums"]["automation_trigger"]
+          triggered_by: string | null
+        }
+        Insert: {
+          automation_id: string
+          client_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          endpoint_id?: string | null
+          error?: string | null
+          exit_code?: number | null
+          finished_at?: string | null
+          id?: string
+          output?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["automation_run_status"]
+          tenant_id: string
+          trigger_source?: Database["public"]["Enums"]["automation_trigger"]
+          triggered_by?: string | null
+        }
+        Update: {
+          automation_id?: string
+          client_id?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          endpoint_id?: string | null
+          error?: string | null
+          exit_code?: number | null
+          finished_at?: string | null
+          id?: string
+          output?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["automation_run_status"]
+          tenant_id?: string
+          trigger_source?: Database["public"]["Enums"]["automation_trigger"]
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_runs_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_runs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      automations: {
+        Row: {
+          client_id: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          cron_expr: string | null
+          description: string | null
+          enabled: boolean
+          endpoint_id: string | null
+          id: string
+          kind: Database["public"]["Enums"]["automation_kind"]
+          language: Database["public"]["Enums"]["automation_language"]
+          name: string
+          notify_email: string | null
+          scope: Database["public"]["Enums"]["automation_scope"]
+          tenant_id: string
+          trigger: Database["public"]["Enums"]["automation_trigger"]
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          cron_expr?: string | null
+          description?: string | null
+          enabled?: boolean
+          endpoint_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["automation_kind"]
+          language?: Database["public"]["Enums"]["automation_language"]
+          name: string
+          notify_email?: string | null
+          scope?: Database["public"]["Enums"]["automation_scope"]
+          tenant_id: string
+          trigger?: Database["public"]["Enums"]["automation_trigger"]
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          cron_expr?: string | null
+          description?: string | null
+          enabled?: boolean
+          endpoint_id?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["automation_kind"]
+          language?: Database["public"]["Enums"]["automation_language"]
+          name?: string
+          notify_email?: string | null
+          scope?: Database["public"]["Enums"]["automation_scope"]
+          tenant_id?: string
+          trigger?: Database["public"]["Enums"]["automation_trigger"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automations_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           client_id: string
@@ -722,6 +887,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      run_automation: { Args: { _automation_id: string }; Returns: number }
     }
     Enums: {
       alert_comparator: "gt" | "gte" | "lt" | "lte"
@@ -730,6 +896,16 @@ export type Database = {
       alert_severity: "info" | "warning" | "critical"
       alert_status: "open" | "acknowledged" | "resolved"
       app_role: "admin" | "technician" | "viewer"
+      automation_kind: "script" | "task"
+      automation_language: "powershell" | "bash" | "python"
+      automation_run_status:
+        | "queued"
+        | "running"
+        | "success"
+        | "failed"
+        | "cancelled"
+      automation_scope: "all" | "client" | "endpoint"
+      automation_trigger: "manual" | "schedule" | "alert"
       client_status: "active" | "inactive" | "prospect"
       endpoint_status: "online" | "offline" | "warning" | "critical"
       endpoint_type: "workstation" | "server" | "mobile" | "network"
@@ -876,6 +1052,17 @@ export const Constants = {
       alert_severity: ["info", "warning", "critical"],
       alert_status: ["open", "acknowledged", "resolved"],
       app_role: ["admin", "technician", "viewer"],
+      automation_kind: ["script", "task"],
+      automation_language: ["powershell", "bash", "python"],
+      automation_run_status: [
+        "queued",
+        "running",
+        "success",
+        "failed",
+        "cancelled",
+      ],
+      automation_scope: ["all", "client", "endpoint"],
+      automation_trigger: ["manual", "schedule", "alert"],
       client_status: ["active", "inactive", "prospect"],
       endpoint_status: ["online", "offline", "warning", "critical"],
       endpoint_type: ["workstation", "server", "mobile", "network"],
