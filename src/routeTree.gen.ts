@@ -25,9 +25,11 @@ import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
 import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
+import { Route as AuthenticatedPortalTicketsRouteImport } from './routes/_authenticated/portal.tickets'
 import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
+import { Route as AuthenticatedPortalTicketsNewRouteImport } from './routes/_authenticated/portal.tickets.new'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -109,6 +111,12 @@ const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedTicketsRoute,
 } as any)
+const AuthenticatedPortalTicketsRoute =
+  AuthenticatedPortalTicketsRouteImport.update({
+    id: '/portal/tickets',
+    path: '/portal/tickets',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedKbSlugRoute = AuthenticatedKbSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -125,6 +133,12 @@ const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedClientsRoute,
 } as any)
+const AuthenticatedPortalTicketsNewRoute =
+  AuthenticatedPortalTicketsNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedPortalTicketsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,7 +158,9 @@ export interface FileRoutesByFullPath {
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
+  '/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -164,7 +180,9 @@ export interface FileRoutesByTo {
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
+  '/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -186,7 +204,9 @@ export interface FileRoutesById {
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/_authenticated/kb/$slug': typeof AuthenticatedKbSlugRoute
+  '/_authenticated/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/_authenticated/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -208,7 +228,9 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/endpoints/$id'
     | '/kb/$slug'
+    | '/portal/tickets'
     | '/tickets/$id'
+    | '/portal/tickets/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,7 +250,9 @@ export interface FileRouteTypes {
     | '/clients/$id'
     | '/endpoints/$id'
     | '/kb/$slug'
+    | '/portal/tickets'
     | '/tickets/$id'
+    | '/portal/tickets/new'
   id:
     | '__root__'
     | '/'
@@ -249,7 +273,9 @@ export interface FileRouteTypes {
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
     | '/_authenticated/kb/$slug'
+    | '/_authenticated/portal/tickets'
     | '/_authenticated/tickets/$id'
+    | '/_authenticated/portal/tickets/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -374,6 +400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
+    '/_authenticated/portal/tickets': {
+      id: '/_authenticated/portal/tickets'
+      path: '/portal/tickets'
+      fullPath: '/portal/tickets'
+      preLoaderRoute: typeof AuthenticatedPortalTicketsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kb/$slug': {
       id: '/_authenticated/kb/$slug'
       path: '/$slug'
@@ -394,6 +427,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/clients/$id'
       preLoaderRoute: typeof AuthenticatedClientsIdRouteImport
       parentRoute: typeof AuthenticatedClientsRoute
+    }
+    '/_authenticated/portal/tickets/new': {
+      id: '/_authenticated/portal/tickets/new'
+      path: '/new'
+      fullPath: '/portal/tickets/new'
+      preLoaderRoute: typeof AuthenticatedPortalTicketsNewRouteImport
+      parentRoute: typeof AuthenticatedPortalTicketsRoute
     }
   }
 }
@@ -446,6 +486,20 @@ const AuthenticatedTicketsRouteChildren: AuthenticatedTicketsRouteChildren = {
 const AuthenticatedTicketsRouteWithChildren =
   AuthenticatedTicketsRoute._addFileChildren(AuthenticatedTicketsRouteChildren)
 
+interface AuthenticatedPortalTicketsRouteChildren {
+  AuthenticatedPortalTicketsNewRoute: typeof AuthenticatedPortalTicketsNewRoute
+}
+
+const AuthenticatedPortalTicketsRouteChildren: AuthenticatedPortalTicketsRouteChildren =
+  {
+    AuthenticatedPortalTicketsNewRoute: AuthenticatedPortalTicketsNewRoute,
+  }
+
+const AuthenticatedPortalTicketsRouteWithChildren =
+  AuthenticatedPortalTicketsRoute._addFileChildren(
+    AuthenticatedPortalTicketsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertsRoute: typeof AuthenticatedAlertsRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
@@ -457,6 +511,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
+  AuthenticatedPortalTicketsRoute: typeof AuthenticatedPortalTicketsRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -470,6 +525,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
+  AuthenticatedPortalTicketsRoute: AuthenticatedPortalTicketsRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -485,3 +541,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
