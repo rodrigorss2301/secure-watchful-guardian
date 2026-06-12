@@ -55,7 +55,11 @@ const PRIORITY_COLOR: Record<TicketPriority, string> = {
 
 function DashboardPage() {
   const { t, lang } = useI18n();
-  const { tenant } = useAuth();
+  const { tenant, roles } = useAuth();
+
+  if (roles.length > 0 && roles.every((r) => r === "portal")) {
+    return <Navigate to="/portal/tickets" replace />;
+  }
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard", tenant?.id],
