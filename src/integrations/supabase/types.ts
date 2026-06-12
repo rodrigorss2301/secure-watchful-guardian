@@ -288,6 +288,226 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_activity: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          field: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          tenant_id: string
+          ticket_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          field?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          tenant_id: string
+          ticket_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          field?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          tenant_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_activity_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_activity_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_comments: {
+        Row: {
+          author_id: string | null
+          body: string
+          created_at: string
+          id: string
+          internal: boolean
+          tenant_id: string
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          internal?: boolean
+          tenant_id: string
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          internal?: boolean
+          tenant_id?: string
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_comments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_counters: {
+        Row: {
+          last_number: number
+          tenant_id: string
+        }
+        Insert: {
+          last_number?: number
+          tenant_id: string
+        }
+        Update: {
+          last_number?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_counters_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tickets: {
+        Row: {
+          assignee_id: string | null
+          category: Database["public"]["Enums"]["ticket_category"]
+          client_id: string
+          closed_at: string | null
+          contact_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          endpoint_id: string | null
+          id: string
+          number: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at: string | null
+          sla_due_at: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["ticket_status"]
+          tags: string[]
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          client_id: string
+          closed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          endpoint_id?: string | null
+          id?: string
+          number: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: string[]
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          category?: Database["public"]["Enums"]["ticket_category"]
+          client_id?: string
+          closed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          endpoint_id?: string | null
+          id?: string
+          number?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          resolved_at?: string | null
+          sla_due_at?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["ticket_status"]
+          tags?: string[]
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tickets_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "client_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tickets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -340,6 +560,14 @@ export type Database = {
       endpoint_status: "online" | "offline" | "warning" | "critical"
       endpoint_type: "workstation" | "server" | "mobile" | "network"
       sla_tier: "bronze" | "silver" | "gold" | "platinum"
+      ticket_category:
+        | "incident"
+        | "request"
+        | "problem"
+        | "change"
+        | "question"
+      ticket_priority: "low" | "medium" | "high" | "urgent"
+      ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"
       user_status: "pending" | "active" | "disabled"
     }
     CompositeTypes: {
@@ -473,6 +701,9 @@ export const Constants = {
       endpoint_status: ["online", "offline", "warning", "critical"],
       endpoint_type: ["workstation", "server", "mobile", "network"],
       sla_tier: ["bronze", "silver", "gold", "platinum"],
+      ticket_category: ["incident", "request", "problem", "change", "question"],
+      ticket_priority: ["low", "medium", "high", "urgent"],
+      ticket_status: ["open", "in_progress", "waiting", "resolved", "closed"],
       user_status: ["pending", "active", "disabled"],
     },
   },
