@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "technician" | "viewer";
+export type AppRole = "admin" | "technician" | "viewer" | "portal";
 export type ProfileStatus = "pending" | "active" | "disabled";
 
 export type Profile = {
