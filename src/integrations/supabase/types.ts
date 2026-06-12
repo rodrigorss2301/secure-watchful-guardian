@@ -14,6 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_rules: {
+        Row: {
+          client_id: string | null
+          comparator: Database["public"]["Enums"]["alert_comparator"]
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_minutes: number
+          enabled: boolean
+          endpoint_id: string | null
+          id: string
+          metric: Database["public"]["Enums"]["alert_metric"]
+          name: string
+          notify_email: string | null
+          scope: Database["public"]["Enums"]["alert_scope"]
+          severity: Database["public"]["Enums"]["alert_severity"]
+          tenant_id: string
+          threshold: number
+          updated_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          comparator?: Database["public"]["Enums"]["alert_comparator"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          enabled?: boolean
+          endpoint_id?: string | null
+          id?: string
+          metric: Database["public"]["Enums"]["alert_metric"]
+          name: string
+          notify_email?: string | null
+          scope?: Database["public"]["Enums"]["alert_scope"]
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          tenant_id: string
+          threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          comparator?: Database["public"]["Enums"]["alert_comparator"]
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          enabled?: boolean
+          endpoint_id?: string | null
+          id?: string
+          metric?: Database["public"]["Enums"]["alert_metric"]
+          name?: string
+          notify_email?: string | null
+          scope?: Database["public"]["Enums"]["alert_scope"]
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          tenant_id?: string
+          threshold?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_rules_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_rules_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alert_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          client_id: string | null
+          created_at: string
+          endpoint_id: string | null
+          id: string
+          message: string
+          metric: Database["public"]["Enums"]["alert_metric"]
+          resolved_at: string | null
+          rule_id: string | null
+          severity: Database["public"]["Enums"]["alert_severity"]
+          status: Database["public"]["Enums"]["alert_status"]
+          tenant_id: string
+          threshold: number | null
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          client_id?: string | null
+          created_at?: string
+          endpoint_id?: string | null
+          id?: string
+          message: string
+          metric: Database["public"]["Enums"]["alert_metric"]
+          resolved_at?: string | null
+          rule_id?: string | null
+          severity: Database["public"]["Enums"]["alert_severity"]
+          status?: Database["public"]["Enums"]["alert_status"]
+          tenant_id: string
+          threshold?: number | null
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          client_id?: string | null
+          created_at?: string
+          endpoint_id?: string | null
+          id?: string
+          message?: string
+          metric?: Database["public"]["Enums"]["alert_metric"]
+          resolved_at?: string | null
+          rule_id?: string | null
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          status?: Database["public"]["Enums"]["alert_status"]
+          tenant_id?: string
+          threshold?: number | null
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "alert_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           client_id: string
@@ -545,6 +713,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      evaluate_alert_rules: { Args: never; Returns: number }
       get_user_tenant: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -555,6 +724,11 @@ export type Database = {
       }
     }
     Enums: {
+      alert_comparator: "gt" | "gte" | "lt" | "lte"
+      alert_metric: "cpu" | "ram" | "disk" | "offline"
+      alert_scope: "all" | "client" | "endpoint"
+      alert_severity: "info" | "warning" | "critical"
+      alert_status: "open" | "acknowledged" | "resolved"
       app_role: "admin" | "technician" | "viewer"
       client_status: "active" | "inactive" | "prospect"
       endpoint_status: "online" | "offline" | "warning" | "critical"
@@ -696,6 +870,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      alert_comparator: ["gt", "gte", "lt", "lte"],
+      alert_metric: ["cpu", "ram", "disk", "offline"],
+      alert_scope: ["all", "client", "endpoint"],
+      alert_severity: ["info", "warning", "critical"],
+      alert_status: ["open", "acknowledged", "resolved"],
       app_role: ["admin", "technician", "viewer"],
       client_status: ["active", "inactive", "prospect"],
       endpoint_status: ["online", "offline", "warning", "critical"],
