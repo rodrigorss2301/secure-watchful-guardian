@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Server, TicketCheck, Workflow, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, Server, TicketCheck, Workflow, BarChart3, Settings, Building2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +22,7 @@ type NavItem = { titleKey: TKey; url: string; icon: typeof LayoutDashboard; role
 
 const operations: NavItem[] = [
   { titleKey: "nav.dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { titleKey: "nav.clients", url: "/clients", icon: Building2 },
   { titleKey: "nav.endpoints", url: "/endpoints", icon: Server },
   { titleKey: "nav.tickets", url: "/tickets", icon: TicketCheck },
   { titleKey: "nav.automations", url: "/automations", icon: Workflow, roles: ["admin", "technician"] },
