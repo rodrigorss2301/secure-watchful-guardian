@@ -92,7 +92,7 @@ function ProfileTab() {
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
           {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {t("common.save" as TKey) || "Save"}
+          {t("common.save")}
         </Button>
       </CardContent>
     </Card>
@@ -131,7 +131,7 @@ function CompanyTab() {
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending || !name.trim()}>
           {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {t("common.save" as TKey) || "Save"}
+          {t("common.save")}
         </Button>
       </CardContent>
     </Card>
