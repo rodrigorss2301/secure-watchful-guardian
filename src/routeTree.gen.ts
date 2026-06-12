@@ -21,6 +21,7 @@ import { Route as AuthenticatedEndpointsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
+import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 
@@ -84,6 +85,11 @@ const AuthenticatedAutomationsRoute =
     path: '/automations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedTicketsRoute,
+} as any)
 const AuthenticatedEndpointsIdRoute =
   AuthenticatedEndpointsIdRouteImport.update({
     id: '/$id',
@@ -107,9 +113,10 @@ export interface FileRoutesByFullPath {
   '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/tickets': typeof AuthenticatedTicketsRoute
+  '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/tickets/$id': typeof AuthenticatedTicketsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -122,9 +129,10 @@ export interface FileRoutesByTo {
   '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
-  '/tickets': typeof AuthenticatedTicketsRoute
+  '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/tickets/$id': typeof AuthenticatedTicketsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -139,9 +147,10 @@ export interface FileRoutesById {
   '/_authenticated/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
-  '/_authenticated/tickets': typeof AuthenticatedTicketsRoute
+  '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/clients/$id'
     | '/endpoints/$id'
+    | '/tickets/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/clients/$id'
     | '/endpoints/$id'
+    | '/tickets/$id'
   id:
     | '__root__'
     | '/'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tickets'
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
+    | '/_authenticated/tickets/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -286,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tickets/$id': {
+      id: '/_authenticated/tickets/$id'
+      path: '/$id'
+      fullPath: '/tickets/$id'
+      preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
+      parentRoute: typeof AuthenticatedTicketsRoute
+    }
     '/_authenticated/endpoints/$id': {
       id: '/_authenticated/endpoints/$id'
       path: '/$id'
@@ -328,6 +347,17 @@ const AuthenticatedEndpointsRouteWithChildren =
     AuthenticatedEndpointsRouteChildren,
   )
 
+interface AuthenticatedTicketsRouteChildren {
+  AuthenticatedTicketsIdRoute: typeof AuthenticatedTicketsIdRoute
+}
+
+const AuthenticatedTicketsRouteChildren: AuthenticatedTicketsRouteChildren = {
+  AuthenticatedTicketsIdRoute: AuthenticatedTicketsIdRoute,
+}
+
+const AuthenticatedTicketsRouteWithChildren =
+  AuthenticatedTicketsRoute._addFileChildren(AuthenticatedTicketsRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRouteWithChildren
@@ -335,7 +365,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEndpointsRoute: typeof AuthenticatedEndpointsRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
-  AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
+  AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -345,7 +375,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEndpointsRoute: AuthenticatedEndpointsRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
-  AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
+  AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =
