@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -201,7 +200,9 @@ function Metric({ icon: Icon, label, value }: { icon: typeof Cpu; label: string;
         </div>
         <span className="font-mono text-sm font-semibold">{value != null ? `${pct.toFixed(0)}%` : "—"}</span>
       </div>
-      <Progress value={pct} className="h-2" indicatorClassName={usageTone(value)} />
+      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+        <div className={`h-full transition-all ${usageTone(value)}`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
