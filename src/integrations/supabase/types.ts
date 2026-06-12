@@ -182,6 +182,48 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_table: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+          summary: string | null
+          tenant_id: string
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_table: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          summary?: string | null
+          tenant_id: string
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_table?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+          summary?: string | null
+          tenant_id?: string
+        }
+        Relationships: []
+      }
       automation_runs: {
         Row: {
           automation_id: string
