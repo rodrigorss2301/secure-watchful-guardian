@@ -126,7 +126,7 @@ function KbPage() {
                   {a.excerpt && <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{a.excerpt}</p>}
                   {a.tags && a.tags.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-1">
-                      {a.tags.slice(0, 4).map((tag) => <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>)}
+                      {a.tags.slice(0, 4).map((tag: string) => <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>)}
                     </div>
                   )}
                   <div className="mt-auto flex items-center justify-between pt-4 text-xs text-muted-foreground">
