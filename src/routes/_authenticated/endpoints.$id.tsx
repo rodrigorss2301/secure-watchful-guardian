@@ -191,6 +191,8 @@ function EndpointDetailPage() {
         </Card>
       )}
 
+      <InventorySections endpoint={endpoint} />
+
       <EndpointFormDialog open={editOpen} onOpenChange={setEditOpen} endpoint={endpoint} />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
