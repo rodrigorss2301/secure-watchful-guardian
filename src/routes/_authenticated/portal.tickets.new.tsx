@@ -33,7 +33,7 @@ function NewPortalTicket() {
     mutationFn: async () => {
       if (!tenant || !profile) throw new Error("no session");
       if (!clientId) throw new Error(t("portal.notLinked"));
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("tickets")
         .insert({
           tenant_id: tenant.id,
