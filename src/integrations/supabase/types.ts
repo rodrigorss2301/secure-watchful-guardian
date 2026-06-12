@@ -520,6 +520,136 @@ export type Database = {
           },
         ]
       }
+      contract_items: {
+        Row: {
+          contract_id: string
+          created_at: string
+          description: string
+          discount_pct: number
+          id: string
+          quantity: number
+          service_id: string | null
+          tenant_id: string
+          unit_price: number
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          description: string
+          discount_pct?: number
+          id?: string
+          quantity?: number
+          service_id?: string | null
+          tenant_id: string
+          unit_price?: number
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          description?: string
+          discount_pct?: number
+          id?: string
+          quantity?: number
+          service_id?: string | null
+          tenant_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_items_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "service_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contracts: {
+        Row: {
+          auto_renew: boolean
+          billing_cycle: Database["public"]["Enums"]["billing_cycle"]
+          client_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          end_date: string | null
+          id: string
+          monthly_value: number
+          name: string
+          notes: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["contract_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_renew?: boolean
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          monthly_value?: number
+          name: string
+          notes?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["contract_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_renew?: boolean
+          billing_cycle?: Database["public"]["Enums"]["billing_cycle"]
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          monthly_value?: number
+          name?: string
+          notes?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["contract_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoints: {
         Row: {
           agent_version: string | null
@@ -594,6 +724,165 @@ export type Database = {
           },
           {
             foreignKeyName: "endpoints_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_counters: {
+        Row: {
+          last_number: number
+          tenant_id: string
+        }
+        Insert: {
+          last_number?: number
+          tenant_id: string
+        }
+        Update: {
+          last_number?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_counters_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_items: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          invoice_id: string
+          quantity: number
+          tenant_id: string
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          invoice_id: string
+          quantity?: number
+          tenant_id: string
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          quantity?: number
+          tenant_id?: string
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          client_id: string
+          contract_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string
+          id: string
+          issue_date: string
+          notes: string | null
+          number: string
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subtotal: number
+          tax: number
+          tenant_id: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax?: number
+          tenant_id: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          contract_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string
+          id?: string
+          issue_date?: string
+          notes?: string | null
+          number?: string
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subtotal?: number
+          tax?: number
+          tenant_id?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -710,6 +999,56 @@ export type Database = {
           },
           {
             foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_catalog: {
+        Row: {
+          active: boolean
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          name: string
+          tax_rate: number
+          tenant_id: string
+          unit: Database["public"]["Enums"]["service_unit"]
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          name: string
+          tax_rate?: number
+          tenant_id: string
+          unit?: Database["public"]["Enums"]["service_unit"]
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          name?: string
+          tax_rate?: number
+          tenant_id?: string
+          unit?: Database["public"]["Enums"]["service_unit"]
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_catalog_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -996,6 +1335,14 @@ export type Database = {
     }
     Functions: {
       evaluate_alert_rules: { Args: never; Returns: number }
+      generate_invoice_from_contract: {
+        Args: {
+          _contract_id: string
+          _period_end?: string
+          _period_start?: string
+        }
+        Returns: string
+      }
       get_user_client: { Args: { _user_id: string }; Returns: string }
       get_user_tenant: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -1005,6 +1352,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_invoice_paid: { Args: { _invoice_id: string }; Returns: undefined }
       run_automation: { Args: { _automation_id: string }; Returns: number }
     }
     Enums: {
@@ -1024,11 +1372,15 @@ export type Database = {
         | "cancelled"
       automation_scope: "all" | "client" | "endpoint"
       automation_trigger: "manual" | "schedule" | "alert"
+      billing_cycle: "one_time" | "monthly" | "quarterly" | "yearly"
       client_status: "active" | "inactive" | "prospect"
+      contract_status: "draft" | "active" | "suspended" | "ended" | "cancelled"
       endpoint_status: "online" | "offline" | "warning" | "critical"
       endpoint_type: "workstation" | "server" | "mobile" | "network"
+      invoice_status: "draft" | "sent" | "paid" | "overdue" | "void"
       kb_status: "draft" | "published" | "archived"
       kb_visibility: "internal" | "public"
+      service_unit: "hour" | "month" | "endpoint" | "user" | "license" | "fixed"
       sla_tier: "bronze" | "silver" | "gold" | "platinum"
       ticket_category:
         | "incident"
@@ -1183,11 +1535,15 @@ export const Constants = {
       ],
       automation_scope: ["all", "client", "endpoint"],
       automation_trigger: ["manual", "schedule", "alert"],
+      billing_cycle: ["one_time", "monthly", "quarterly", "yearly"],
       client_status: ["active", "inactive", "prospect"],
+      contract_status: ["draft", "active", "suspended", "ended", "cancelled"],
       endpoint_status: ["online", "offline", "warning", "critical"],
       endpoint_type: ["workstation", "server", "mobile", "network"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "void"],
       kb_status: ["draft", "published", "archived"],
       kb_visibility: ["internal", "public"],
+      service_unit: ["hour", "month", "endpoint", "user", "license", "fixed"],
       sla_tier: ["bronze", "silver", "gold", "platinum"],
       ticket_category: ["incident", "request", "problem", "change", "question"],
       ticket_priority: ["low", "medium", "high", "urgent"],
