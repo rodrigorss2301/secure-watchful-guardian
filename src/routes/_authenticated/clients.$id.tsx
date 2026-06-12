@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -32,7 +32,6 @@ function ClientDetailPage() {
   const { t } = useI18n();
   const { hasAnyRole } = useAuth();
   const canWrite = hasAnyRole(["admin", "technician"]);
-  const navigate = useNavigate();
   const qc = useQueryClient();
 
   const [editOpen, setEditOpen] = useState(false);
