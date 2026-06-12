@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Pencil, Trash2, Cpu, MemoryStick, HardDrive, Wifi, Globe, Hash, Activity,
+  Server as ServerIcon, Network, Package, ListTree, Clock, User as UserIcon, Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,28 @@ import {
 import { useNavigate } from "@tanstack/react-router";
 
 type EndpointRow = Endpoint & { clients: { id: string; name: string } | null };
+
+type DiskInfo = { name?: string; mount?: string; fs?: string; type?: string; size_gb?: number; free_gb?: number; used_pct?: number };
+type NicInfo = { name?: string; mac?: string; ip?: string; ipv6?: string; speed_mbps?: number; status?: string };
+type SoftwareInfo = { name?: string; version?: string; publisher?: string; install_date?: string };
+type ProcessInfo = { name?: string; pid?: number; cpu?: number; ram_mb?: number; user?: string };
+type ServiceInfo = { name?: string; display_name?: string; status?: string; start_type?: string };
+type UpdateInfo = { id?: string; title?: string; severity?: string; kb?: string };
+
+function fmtBytes(mb?: number | null) {
+  if (mb == null) return "—";
+  if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
+  return `${mb} MB`;
+}
+function fmtUptime(s?: number | null) {
+  if (!s) return "—";
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m}m`;
+  return `${m}m`;
+}
 
 export const Route = createFileRoute("/_authenticated/endpoints/$id")({
   head: () => ({ meta: [{ title: "Endpoint — Autotechs RMM" }] }),
