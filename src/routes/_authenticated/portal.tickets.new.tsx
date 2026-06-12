@@ -41,7 +41,7 @@ function NewPortalTicket() {
           title: title.trim(),
           description: description.trim() || null,
           priority: priority as any,
-          category: category.trim() || null,
+          category: (category.trim() || undefined) as any,
           status: "open" as any,
           created_by: profile.id,
         })
