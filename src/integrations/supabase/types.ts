@@ -669,6 +669,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          client_id: string | null
           created_at: string
           email: string
           full_name: string | null
@@ -679,6 +680,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          client_id?: string | null
           created_at?: string
           email: string
           full_name?: string | null
@@ -689,6 +691,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          client_id?: string | null
           created_at?: string
           email?: string
           full_name?: string | null
@@ -698,6 +701,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -986,6 +996,7 @@ export type Database = {
     }
     Functions: {
       evaluate_alert_rules: { Args: never; Returns: number }
+      get_user_client: { Args: { _user_id: string }; Returns: string }
       get_user_tenant: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
