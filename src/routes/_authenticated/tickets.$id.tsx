@@ -32,11 +32,10 @@ type TicketRow = Ticket & {
   clients: { id: string; name: string } | null;
   endpoints: { id: string; hostname: string } | null;
   client_contacts: { id: string; name: string } | null;
-  assignee: { id: string; full_name: string | null; email: string } | null;
-  creator: { id: string; full_name: string | null; email: string } | null;
 };
 
-type CommentRow = TicketComment & { author: { full_name: string | null; email: string } | null };
+type StaffEntry = { id: string; full_name: string | null; email: string };
+type CommentRow = TicketComment;
 
 export const Route = createFileRoute("/_authenticated/tickets/$id")({
   head: () => ({ meta: [{ title: "Ticket — Autotechs RMM" }] }),
@@ -61,12 +60,7 @@ function TicketDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tickets")
-        .select(`*,
-          clients(id, name),
-          endpoints(id, hostname),
-          client_contacts(id, name),
-          assignee:profiles!tickets_assignee_id_fkey(id, full_name, email),
-          creator:profiles!tickets_created_by_fkey(id, full_name, email)`)
+        .select(`*, clients(id, name), endpoints(id, hostname), client_contacts(id, name)`)
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
@@ -74,12 +68,24 @@ function TicketDetailPage() {
     },
   });
 
+  const { data: staff } = useQuery({
+    queryKey: ["staff-map", tenant?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id, full_name, email");
+      if (error) throw error;
+      const map = new Map<string, StaffEntry>();
+      (data ?? []).forEach((p) => map.set(p.id, p as StaffEntry));
+      return map;
+    },
+    enabled: !!tenant,
+  });
+
   const { data: comments } = useQuery({
     queryKey: ["ticket-comments", id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ticket_comments")
-        .select("*, author:profiles!ticket_comments_author_id_fkey(full_name, email)")
+        .select("*")
         .eq("ticket_id", id)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -155,6 +161,8 @@ function TicketDetailPage() {
 
   const Cat = CATEGORY_ICON[ticket.category];
   const sla = slaState(ticket);
+  const assignee = ticket.assignee_id ? staff?.get(ticket.assignee_id) : null;
+  const creator = ticket.created_by ? staff?.get(ticket.created_by) : null;
 
   return (
     <div className="space-y-6">
@@ -209,7 +217,10 @@ function TicketDetailPage() {
               {comments?.map((c) => (
                 <div key={c.id} className={`rounded-lg border p-3 text-sm ${c.internal ? "border-amber-500/30 bg-amber-500/5" : "border-border/60 bg-card/40"}`}>
                   <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                    <span className="font-medium">{c.author?.full_name ?? c.author?.email ?? "—"}</span>
+                    <span className="font-medium">{(() => {
+                      const a = c.author_id ? staff?.get(c.author_id) : null;
+                      return a?.full_name ?? a?.email ?? "—";
+                    })()}</span>
                     <span className="flex items-center gap-2">
                       {c.internal && <span className="inline-flex items-center gap-1 text-amber-500"><Lock className="h-3 w-3" />{t("tickets.comment.internal")}</span>}
                       {new Date(c.created_at).toLocaleString()}
@@ -314,8 +325,8 @@ function TicketDetailPage() {
               {t("tickets.detail.timeline")}
             </h2>
             <dl className="space-y-3 text-xs">
-              <Row label={t("tickets.detail.created")} value={`${new Date(ticket.created_at).toLocaleString()} · ${ticket.creator?.full_name ?? ticket.creator?.email ?? "—"}`} />
-              <Row label={t("tickets.field.assignee")} value={ticket.assignee?.full_name ?? ticket.assignee?.email ?? t("tickets.unassigned")} />
+              <Row label={t("tickets.detail.created")} value={`${new Date(ticket.created_at).toLocaleString()} · ${creator?.full_name ?? creator?.email ?? "—"}`} />
+              <Row label={t("tickets.field.assignee")} value={assignee?.full_name ?? assignee?.email ?? t("tickets.unassigned")} />
               <Row label={t("tickets.col.updated")} value={relTime(ticket.updated_at)} />
               {ticket.resolved_at && <Row label={t("tickets.detail.resolved")} value={new Date(ticket.resolved_at).toLocaleString()} />}
               {ticket.closed_at && <Row label={t("tickets.detail.closed")} value={new Date(ticket.closed_at).toLocaleString()} />}
