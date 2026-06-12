@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
 });
 
-const ROLES: AppRole[] = ["admin", "technician", "viewer"];
+const ROLES: AppRole[] = ["admin", "technician", "viewer", "portal"];
 
 function initials(name: string | null, email: string): string {
   const src = (name?.trim() || email).split(/\s+/);
