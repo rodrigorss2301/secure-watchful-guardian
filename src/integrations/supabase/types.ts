@@ -14,6 +14,137 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_contacts: {
+        Row: {
+          client_id: string
+          created_at: string
+          email: string | null
+          id: string
+          is_primary: boolean
+          name: string
+          phone: string | null
+          role: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name: string
+          phone?: string | null
+          role?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_primary?: boolean
+          name?: string
+          phone?: string | null
+          role?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_contacts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_contacts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          address_line: string | null
+          city: string | null
+          contract_end: string | null
+          contract_start: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          email: string | null
+          id: string
+          industry: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          postal_code: string | null
+          sla_tier: Database["public"]["Enums"]["sla_tier"]
+          state: string | null
+          status: Database["public"]["Enums"]["client_status"]
+          tenant_id: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address_line?: string | null
+          city?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          sla_tier?: Database["public"]["Enums"]["sla_tier"]
+          state?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          tenant_id: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address_line?: string | null
+          city?: string | null
+          contract_end?: string | null
+          contract_start?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          id?: string
+          industry?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          postal_code?: string | null
+          sla_tier?: Database["public"]["Enums"]["sla_tier"]
+          state?: string | null
+          status?: Database["public"]["Enums"]["client_status"]
+          tenant_id?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -124,6 +255,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "technician" | "viewer"
+      client_status: "active" | "inactive" | "prospect"
+      sla_tier: "bronze" | "silver" | "gold" | "platinum"
       user_status: "pending" | "active" | "disabled"
     }
     CompositeTypes: {
@@ -253,6 +386,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "technician", "viewer"],
+      client_status: ["active", "inactive", "prospect"],
+      sla_tier: ["bronze", "silver", "gold", "platinum"],
       user_status: ["pending", "active", "disabled"],
     },
   },
