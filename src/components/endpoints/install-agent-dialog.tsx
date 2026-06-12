@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Download, Loader2, RefreshCw, Terminal, CheckCircle2 } from "lucide-react";
+import { Copy, Download, Loader2, RefreshCw, Terminal, CheckCircle2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,6 +37,28 @@ export function InstallAgentDialog({ open, onOpenChange }: Props) {
       return data;
     },
     enabled: !!tenant && open,
+  });
+
+  const createInternal = useMutation({
+    mutationFn: async () => {
+      if (!tenant) throw new Error("no tenant");
+      const existing = clients?.find((c) => c.name.toLowerCase() === "interno");
+      if (existing) return existing;
+      const { data, error } = await supabase
+        .from("clients")
+        .insert({ tenant_id: tenant.id, name: "Interno", status: "active" })
+        .select("id, name")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (c) => {
+      qc.invalidateQueries({ queryKey: ["clients-lite"] });
+      qc.invalidateQueries({ queryKey: ["clients"] });
+      setClientId(c.id);
+      toast.success(`Cliente "${c.name}" pronto`);
+    },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   useEffect(() => {
@@ -90,13 +112,31 @@ export function InstallAgentDialog({ open, onOpenChange }: Props) {
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">Cliente</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-medium text-muted-foreground">Cliente</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1.5 text-xs"
+                onClick={() => createInternal.mutate()}
+                disabled={createInternal.isPending}
+              >
+                {createInternal.isPending
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : <Building2 className="h-3 w-3" />}
+                Usar cliente "Interno"
+              </Button>
+            </div>
             <Select value={clientId} onValueChange={(v) => { setClientId(v); setToken(null); }}>
               <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
               <SelectContent>
                 {clients?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
+            <p className="text-[11px] text-muted-foreground">
+              Para instalar nos seus próprios servidores/estações, use o cliente "Interno".
+            </p>
           </div>
 
           {!token ? (
