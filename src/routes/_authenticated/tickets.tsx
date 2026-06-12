@@ -26,8 +26,9 @@ import {
 
 type TicketRow = Ticket & {
   clients: { id: string; name: string } | null;
-  assignee: { id: string; full_name: string | null; email: string } | null;
 };
+
+type StaffEntry = { id: string; full_name: string | null; email: string };
 
 export const Route = createFileRoute("/_authenticated/tickets")({
   head: () => ({ meta: [{ title: "Tickets — Autotechs RMM" }] }),
@@ -53,13 +54,25 @@ function TicketsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tickets")
-        .select("*, clients!inner(id, name), assignee:profiles!tickets_assignee_id_fkey(id, full_name, email)")
+        .select("*, clients!inner(id, name)")
         .order("updated_at", { ascending: false });
       if (error) throw error;
       return data as unknown as TicketRow[];
     },
     enabled: !!tenant,
     refetchInterval: 30_000,
+  });
+
+  const { data: staff } = useQuery({
+    queryKey: ["staff-map", tenant?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id, full_name, email");
+      if (error) throw error;
+      const map = new Map<string, StaffEntry>();
+      (data ?? []).forEach((p) => map.set(p.id, p as StaffEntry));
+      return map;
+    },
+    enabled: !!tenant,
   });
 
   const deleteMutation = useMutation({
@@ -193,7 +206,10 @@ function TicketsPage() {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{tk.clients?.name ?? "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {tk.assignee ? (tk.assignee.full_name ?? tk.assignee.email) : <span className="italic opacity-60">{t("tickets.unassigned")}</span>}
+                      {(() => {
+                        const a = tk.assignee_id ? staff?.get(tk.assignee_id) : null;
+                        return a ? (a.full_name ?? a.email) : <span className="italic opacity-60">{t("tickets.unassigned")}</span>;
+                      })()}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`text-[10px] uppercase ${PRIORITY_TONE[tk.priority]}`}>
