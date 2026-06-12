@@ -601,6 +601,71 @@ export type Database = {
           },
         ]
       }
+      kb_articles: {
+        Row: {
+          author_id: string | null
+          body: string
+          category: string | null
+          client_id: string | null
+          created_at: string
+          excerpt: string | null
+          id: string
+          published_at: string | null
+          slug: string
+          status: Database["public"]["Enums"]["kb_status"]
+          tags: string[]
+          tenant_id: string
+          title: string
+          updated_at: string
+          views: number
+          visibility: Database["public"]["Enums"]["kb_visibility"]
+        }
+        Insert: {
+          author_id?: string | null
+          body?: string
+          category?: string | null
+          client_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["kb_status"]
+          tags?: string[]
+          tenant_id: string
+          title: string
+          updated_at?: string
+          views?: number
+          visibility?: Database["public"]["Enums"]["kb_visibility"]
+        }
+        Update: {
+          author_id?: string | null
+          body?: string
+          category?: string | null
+          client_id?: string | null
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          published_at?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["kb_status"]
+          tags?: string[]
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+          views?: number
+          visibility?: Database["public"]["Enums"]["kb_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kb_articles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -951,6 +1016,8 @@ export type Database = {
       client_status: "active" | "inactive" | "prospect"
       endpoint_status: "online" | "offline" | "warning" | "critical"
       endpoint_type: "workstation" | "server" | "mobile" | "network"
+      kb_status: "draft" | "published" | "archived"
+      kb_visibility: "internal" | "public"
       sla_tier: "bronze" | "silver" | "gold" | "platinum"
       ticket_category:
         | "incident"
@@ -1108,6 +1175,8 @@ export const Constants = {
       client_status: ["active", "inactive", "prospect"],
       endpoint_status: ["online", "offline", "warning", "critical"],
       endpoint_type: ["workstation", "server", "mobile", "network"],
+      kb_status: ["draft", "published", "archived"],
+      kb_visibility: ["internal", "public"],
       sla_tier: ["bronze", "silver", "gold", "platinum"],
       ticket_category: ["incident", "request", "problem", "change", "question"],
       ticket_priority: ["low", "medium", "high", "urgent"],
