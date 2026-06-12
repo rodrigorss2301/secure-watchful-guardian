@@ -21,6 +21,7 @@ import { Route as AuthenticatedEndpointsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
+import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -83,6 +84,12 @@ const AuthenticatedAutomationsRoute =
     path: '/automations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEndpointsIdRoute =
+  AuthenticatedEndpointsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedEndpointsRoute,
+  } as any)
 const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -97,11 +104,12 @@ export interface FileRoutesByFullPath {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/endpoints': typeof AuthenticatedEndpointsRoute
+  '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -111,11 +119,12 @@ export interface FileRoutesByTo {
   '/automations': typeof AuthenticatedAutomationsRoute
   '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/endpoints': typeof AuthenticatedEndpointsRoute
+  '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -127,11 +136,12 @@ export interface FileRoutesById {
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/endpoints': typeof AuthenticatedEndpointsRoute
+  '/_authenticated/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
+  '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tickets'
     | '/clients/$id'
+    | '/endpoints/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tickets'
     | '/clients/$id'
+    | '/endpoints/$id'
   id:
     | '__root__'
     | '/'
@@ -177,6 +189,7 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/tickets'
     | '/_authenticated/clients/$id'
+    | '/_authenticated/endpoints/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -273,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/endpoints/$id': {
+      id: '/_authenticated/endpoints/$id'
+      path: '/$id'
+      fullPath: '/endpoints/$id'
+      preLoaderRoute: typeof AuthenticatedEndpointsIdRouteImport
+      parentRoute: typeof AuthenticatedEndpointsRoute
+    }
     '/_authenticated/clients/$id': {
       id: '/_authenticated/clients/$id'
       path: '/$id'
@@ -294,11 +314,25 @@ const AuthenticatedClientsRouteChildren: AuthenticatedClientsRouteChildren = {
 const AuthenticatedClientsRouteWithChildren =
   AuthenticatedClientsRoute._addFileChildren(AuthenticatedClientsRouteChildren)
 
+interface AuthenticatedEndpointsRouteChildren {
+  AuthenticatedEndpointsIdRoute: typeof AuthenticatedEndpointsIdRoute
+}
+
+const AuthenticatedEndpointsRouteChildren: AuthenticatedEndpointsRouteChildren =
+  {
+    AuthenticatedEndpointsIdRoute: AuthenticatedEndpointsIdRoute,
+  }
+
+const AuthenticatedEndpointsRouteWithChildren =
+  AuthenticatedEndpointsRoute._addFileChildren(
+    AuthenticatedEndpointsRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedEndpointsRoute: typeof AuthenticatedEndpointsRoute
+  AuthenticatedEndpointsRoute: typeof AuthenticatedEndpointsRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
@@ -308,7 +342,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedEndpointsRoute: AuthenticatedEndpointsRoute,
+  AuthenticatedEndpointsRoute: AuthenticatedEndpointsRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
