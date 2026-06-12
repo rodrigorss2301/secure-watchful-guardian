@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedKbRouteImport } from './routes/_authenticated/kb'
 import { Route as AuthenticatedEndpointsRouteImport } from './routes/_authenticated/endpoints'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
@@ -24,6 +25,7 @@ import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
 import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
+import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 
@@ -66,6 +68,11 @@ const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedKbRoute = AuthenticatedKbRouteImport.update({
+  id: '/kb',
+  path: '/kb',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedEndpointsRoute = AuthenticatedEndpointsRouteImport.update({
   id: '/endpoints',
   path: '/endpoints',
@@ -102,6 +109,11 @@ const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedTicketsRoute,
 } as any)
+const AuthenticatedKbSlugRoute = AuthenticatedKbSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AuthenticatedKbRoute,
+} as any)
 const AuthenticatedEndpointsIdRoute =
   AuthenticatedEndpointsIdRouteImport.update({
     id: '/$id',
@@ -125,11 +137,13 @@ export interface FileRoutesByFullPath {
   '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
+  '/kb': typeof AuthenticatedKbRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
 }
 export interface FileRoutesByTo {
@@ -143,11 +157,13 @@ export interface FileRoutesByTo {
   '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
+  '/kb': typeof AuthenticatedKbRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
 }
 export interface FileRoutesById {
@@ -163,11 +179,13 @@ export interface FileRoutesById {
   '/_authenticated/clients': typeof AuthenticatedClientsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/endpoints': typeof AuthenticatedEndpointsRouteWithChildren
+  '/_authenticated/kb': typeof AuthenticatedKbRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/_authenticated/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
 }
 export interface FileRouteTypes {
@@ -183,11 +201,13 @@ export interface FileRouteTypes {
     | '/clients'
     | '/dashboard'
     | '/endpoints'
+    | '/kb'
     | '/reports'
     | '/settings'
     | '/tickets'
     | '/clients/$id'
     | '/endpoints/$id'
+    | '/kb/$slug'
     | '/tickets/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -201,11 +221,13 @@ export interface FileRouteTypes {
     | '/clients'
     | '/dashboard'
     | '/endpoints'
+    | '/kb'
     | '/reports'
     | '/settings'
     | '/tickets'
     | '/clients/$id'
     | '/endpoints/$id'
+    | '/kb/$slug'
     | '/tickets/$id'
   id:
     | '__root__'
@@ -220,11 +242,13 @@ export interface FileRouteTypes {
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
     | '/_authenticated/endpoints'
+    | '/_authenticated/kb'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/tickets'
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
+    | '/_authenticated/kb/$slug'
     | '/_authenticated/tickets/$id'
   fileRoutesById: FileRoutesById
 }
@@ -294,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedReportsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kb': {
+      id: '/_authenticated/kb'
+      path: '/kb'
+      fullPath: '/kb'
+      preLoaderRoute: typeof AuthenticatedKbRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/endpoints': {
       id: '/_authenticated/endpoints'
       path: '/endpoints'
@@ -343,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
+    '/_authenticated/kb/$slug': {
+      id: '/_authenticated/kb/$slug'
+      path: '/$slug'
+      fullPath: '/kb/$slug'
+      preLoaderRoute: typeof AuthenticatedKbSlugRouteImport
+      parentRoute: typeof AuthenticatedKbRoute
+    }
     '/_authenticated/endpoints/$id': {
       id: '/_authenticated/endpoints/$id'
       path: '/$id'
@@ -385,6 +423,18 @@ const AuthenticatedEndpointsRouteWithChildren =
     AuthenticatedEndpointsRouteChildren,
   )
 
+interface AuthenticatedKbRouteChildren {
+  AuthenticatedKbSlugRoute: typeof AuthenticatedKbSlugRoute
+}
+
+const AuthenticatedKbRouteChildren: AuthenticatedKbRouteChildren = {
+  AuthenticatedKbSlugRoute: AuthenticatedKbSlugRoute,
+}
+
+const AuthenticatedKbRouteWithChildren = AuthenticatedKbRoute._addFileChildren(
+  AuthenticatedKbRouteChildren,
+)
+
 interface AuthenticatedTicketsRouteChildren {
   AuthenticatedTicketsIdRoute: typeof AuthenticatedTicketsIdRoute
 }
@@ -403,6 +453,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEndpointsRoute: typeof AuthenticatedEndpointsRouteWithChildren
+  AuthenticatedKbRoute: typeof AuthenticatedKbRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
@@ -415,6 +466,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedClientsRoute: AuthenticatedClientsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEndpointsRoute: AuthenticatedEndpointsRouteWithChildren,
+  AuthenticatedKbRoute: AuthenticatedKbRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
