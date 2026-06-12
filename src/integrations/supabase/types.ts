@@ -14,6 +14,67 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_enrollments: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          default_type: Database["public"]["Enums"]["endpoint_type"]
+          expires_at: string
+          id: string
+          tenant_id: string
+          token: string
+          used_at: string | null
+          used_endpoint_id: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          default_type?: Database["public"]["Enums"]["endpoint_type"]
+          expires_at?: string
+          id?: string
+          tenant_id: string
+          token: string
+          used_at?: string | null
+          used_endpoint_id?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          default_type?: Database["public"]["Enums"]["endpoint_type"]
+          expires_at?: string
+          id?: string
+          tenant_id?: string
+          token?: string
+          used_at?: string | null
+          used_endpoint_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_enrollments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_enrollments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_enrollments_used_endpoint_id_fkey"
+            columns: ["used_endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alert_rules: {
         Row: {
           client_id: string | null
@@ -652,6 +713,7 @@ export type Database = {
       }
       endpoints: {
         Row: {
+          agent_token: string | null
           agent_version: string | null
           client_id: string
           cpu_usage: number | null
@@ -661,6 +723,7 @@ export type Database = {
           id: string
           ip_address: string | null
           last_heartbeat: string | null
+          last_seen_ip: string | null
           mac_address: string | null
           notes: string | null
           os: string | null
@@ -673,6 +736,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          agent_token?: string | null
           agent_version?: string | null
           client_id: string
           cpu_usage?: number | null
@@ -682,6 +746,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           last_heartbeat?: string | null
+          last_seen_ip?: string | null
           mac_address?: string | null
           notes?: string | null
           os?: string | null
@@ -694,6 +759,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          agent_token?: string | null
           agent_version?: string | null
           client_id?: string
           cpu_usage?: number | null
@@ -703,6 +769,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           last_heartbeat?: string | null
+          last_seen_ip?: string | null
           mac_address?: string | null
           notes?: string | null
           os?: string | null
