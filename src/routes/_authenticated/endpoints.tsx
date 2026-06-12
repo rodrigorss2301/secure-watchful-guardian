@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, Server as ServerIcon, ExternalLink } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Server as ServerIcon, ExternalLink, Download } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
 import { EndpointFormDialog } from "@/components/endpoints/endpoint-form-dialog";
+import { InstallAgentDialog } from "@/components/endpoints/install-agent-dialog";
 import {
   ENDPOINT_STATUSES, ENDPOINT_TYPES, STATUS_DOT, STATUS_TONE, TYPE_ICON, timeAgo,
   type Endpoint, type EndpointStatus, type EndpointType,
@@ -44,6 +45,7 @@ function EndpointsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Endpoint | null>(null);
   const [deleting, setDeleting] = useState<Endpoint | null>(null);
+  const [agentDialogOpen, setAgentDialogOpen] = useState(false);
 
   const { data: endpoints, isLoading } = useQuery({
     queryKey: ["endpoints", tenant?.id],
@@ -111,9 +113,14 @@ function EndpointsPage() {
         title={t("endpoints.title")}
         description={t("endpoints.subtitle")}
         actions={canWrite && (
-          <Button onClick={() => { setEditing(null); setDialogOpen(true); }} className="shadow-glow">
-            <Plus className="mr-2 h-4 w-4" />{t("endpoints.new")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setAgentDialogOpen(true)}>
+              <Download className="mr-2 h-4 w-4" /> Instalar agente
+            </Button>
+            <Button onClick={() => { setEditing(null); setDialogOpen(true); }} className="shadow-glow">
+              <Plus className="mr-2 h-4 w-4" />{t("endpoints.new")}
+            </Button>
+          </div>
         )}
       />
 
@@ -223,6 +230,7 @@ function EndpointsPage() {
       </Card>
 
       <EndpointFormDialog open={dialogOpen} onOpenChange={setDialogOpen} endpoint={editing} />
+      <InstallAgentDialog open={agentDialogOpen} onOpenChange={setAgentDialogOpen} />
 
       <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <AlertDialogContent>
