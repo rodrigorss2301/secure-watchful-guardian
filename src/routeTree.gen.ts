@@ -30,6 +30,7 @@ import { Route as AuthenticatedPortalTicketsRouteImport } from './routes/_authen
 import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
+import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicAgentEnrollRouteImport } from './routes/api/public/agent/enroll'
 import { Route as AuthenticatedPortalTicketsNewRouteImport } from './routes/_authenticated/portal.tickets.new'
 import { Route as AuthenticatedPortalTicketsIdRouteImport } from './routes/_authenticated/portal.tickets.$id'
@@ -141,6 +142,11 @@ const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedClientsRoute,
 } as any)
+const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
+  id: '/api/public/agent/heartbeat',
+  path: '/api/public/agent/heartbeat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentEnrollRoute = ApiPublicAgentEnrollRouteImport.update({
   id: '/api/public/agent/enroll',
   path: '/api/public/agent/enroll',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/_authenticated/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
+  '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/portal/tickets/$id'
     | '/portal/tickets/new'
     | '/api/public/agent/enroll'
+    | '/api/public/agent/heartbeat'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/portal/tickets/$id'
     | '/portal/tickets/new'
     | '/api/public/agent/enroll'
+    | '/api/public/agent/heartbeat'
   id:
     | '__root__'
     | '/'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/_authenticated/portal/tickets/$id'
     | '/_authenticated/portal/tickets/new'
     | '/api/public/agent/enroll'
+    | '/api/public/agent/heartbeat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   PendingApprovalRoute: typeof PendingApprovalRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
+  ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -473,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedClientsIdRouteImport
       parentRoute: typeof AuthenticatedClientsRoute
     }
+    '/api/public/agent/heartbeat': {
+      id: '/api/public/agent/heartbeat'
+      path: '/api/public/agent/heartbeat'
+      fullPath: '/api/public/agent/heartbeat'
+      preLoaderRoute: typeof ApiPublicAgentHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/enroll': {
       id: '/api/public/agent/enroll'
       path: '/api/public/agent/enroll'
@@ -601,6 +621,7 @@ const rootRouteChildren: RootRouteChildren = {
   PendingApprovalRoute: PendingApprovalRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,
+  ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
