@@ -1002,7 +1002,7 @@ export type Database = {
       alert_scope: "all" | "client" | "endpoint"
       alert_severity: "info" | "warning" | "critical"
       alert_status: "open" | "acknowledged" | "resolved"
-      app_role: "admin" | "technician" | "viewer"
+      app_role: "admin" | "technician" | "viewer" | "portal"
       automation_kind: "script" | "task"
       automation_language: "powershell" | "bash" | "python"
       automation_run_status:
@@ -1160,7 +1160,7 @@ export const Constants = {
       alert_scope: ["all", "client", "endpoint"],
       alert_severity: ["info", "warning", "critical"],
       alert_status: ["open", "acknowledged", "resolved"],
-      app_role: ["admin", "technician", "viewer"],
+      app_role: ["admin", "technician", "viewer", "portal"],
       automation_kind: ["script", "task"],
       automation_language: ["powershell", "bash", "python"],
       automation_run_status: [
