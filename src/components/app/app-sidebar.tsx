@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Server, TicketCheck, Workflow, BarChart3, Settings, Building2, Bell, ScrollText, BookOpen } from "lucide-react";
+import { LayoutDashboard, Server, TicketCheck, Workflow, BarChart3, Settings, Building2, Bell, ScrollText, BookOpen, LifeBuoy, PlusCircle } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -34,6 +34,12 @@ const management: NavItem[] = [
   { titleKey: "nav.reports", url: "/reports", icon: BarChart3 },
   { titleKey: "nav.audit", url: "/audit", icon: ScrollText, roles: ["admin"] },
   { titleKey: "nav.settings", url: "/settings", icon: Settings, roles: ["admin"] },
+];
+
+const portalNav: NavItem[] = [
+  { titleKey: "nav.portal", url: "/portal/tickets", icon: LifeBuoy },
+  { titleKey: "nav.portalNew", url: "/portal/tickets/new", icon: PlusCircle },
+  { titleKey: "nav.kb", url: "/kb", icon: BookOpen },
 ];
 
 function NavSection({ labelKey, items }: { labelKey: TKey; items: NavItem[] }) {
@@ -85,6 +91,7 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const primaryRole = roles[0];
+  const portalOnly = roles.length > 0 && roles.every((r) => r === "portal");
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -92,8 +99,14 @@ export function AppSidebar() {
         <Logo withWordmark={!collapsed} size={collapsed ? 28 : 32} />
       </SidebarHeader>
       <SidebarContent className="bg-gradient-surface">
-        <NavSection labelKey="nav.operations" items={operations} />
-        <NavSection labelKey="nav.management" items={management} />
+        {portalOnly ? (
+          <NavSection labelKey="nav.operations" items={portalNav} />
+        ) : (
+          <>
+            <NavSection labelKey="nav.operations" items={operations} />
+            <NavSection labelKey="nav.management" items={management} />
+          </>
+        )}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-3">
         {!collapsed && tenant && (
