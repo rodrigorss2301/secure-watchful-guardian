@@ -65,7 +65,7 @@ function DashboardPage() {
       const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
       const [clientsRes, endpointsRes, ticketsRes, recentRes] = await Promise.all([
         supabase.from("clients").select("id,status"),
-        supabase.from("endpoints").select("id,name,status,type,client_id,cpu_usage,ram_usage,disk_usage,last_seen_at"),
+        supabase.from("endpoints").select("id,hostname,status,type,client_id,cpu_usage,ram_usage,disk_usage,last_heartbeat"),
         supabase.from("tickets").select("id,status,priority,sla_due_at,created_at"),
         supabase.from("tickets")
           .select("id,number,title,status,priority,sla_due_at,created_at,client_id")
@@ -350,7 +350,7 @@ function DashboardPage() {
                     >
                       <span className={`h-2 w-2 rounded-full ${STATUS_DOT[ep.status as EndpointStatus]}`} />
                       <Icon className="h-4 w-4 text-muted-foreground" />
-                      <span className="flex-1 truncate text-sm">{ep.name}</span>
+                      <span className="flex-1 truncate text-sm">{ep.hostname}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         CPU {ep.cpu_usage ?? "—"}% · RAM {ep.ram_usage ?? "—"}%
                       </span>
@@ -358,7 +358,7 @@ function DashboardPage() {
                         {t(`endpoints.status.${ep.status}` as TKey)}
                       </Badge>
                       <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
-                        {timeAgo(ep.last_seen_at, "—")}
+                        {timeAgo(ep.last_heartbeat, "—")}
                       </span>
                     </Link>
                   </li>
