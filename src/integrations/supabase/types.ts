@@ -145,6 +145,87 @@ export type Database = {
           },
         ]
       }
+      endpoints: {
+        Row: {
+          agent_version: string | null
+          client_id: string
+          cpu_usage: number | null
+          created_at: string
+          disk_usage: number | null
+          hostname: string
+          id: string
+          ip_address: string | null
+          last_heartbeat: string | null
+          mac_address: string | null
+          notes: string | null
+          os: string | null
+          os_version: string | null
+          ram_usage: number | null
+          status: Database["public"]["Enums"]["endpoint_status"]
+          tags: string[]
+          tenant_id: string
+          type: Database["public"]["Enums"]["endpoint_type"]
+          updated_at: string
+        }
+        Insert: {
+          agent_version?: string | null
+          client_id: string
+          cpu_usage?: number | null
+          created_at?: string
+          disk_usage?: number | null
+          hostname: string
+          id?: string
+          ip_address?: string | null
+          last_heartbeat?: string | null
+          mac_address?: string | null
+          notes?: string | null
+          os?: string | null
+          os_version?: string | null
+          ram_usage?: number | null
+          status?: Database["public"]["Enums"]["endpoint_status"]
+          tags?: string[]
+          tenant_id: string
+          type?: Database["public"]["Enums"]["endpoint_type"]
+          updated_at?: string
+        }
+        Update: {
+          agent_version?: string | null
+          client_id?: string
+          cpu_usage?: number | null
+          created_at?: string
+          disk_usage?: number | null
+          hostname?: string
+          id?: string
+          ip_address?: string | null
+          last_heartbeat?: string | null
+          mac_address?: string | null
+          notes?: string | null
+          os?: string | null
+          os_version?: string | null
+          ram_usage?: number | null
+          status?: Database["public"]["Enums"]["endpoint_status"]
+          tags?: string[]
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["endpoint_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoints_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoints_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -256,6 +337,8 @@ export type Database = {
     Enums: {
       app_role: "admin" | "technician" | "viewer"
       client_status: "active" | "inactive" | "prospect"
+      endpoint_status: "online" | "offline" | "warning" | "critical"
+      endpoint_type: "workstation" | "server" | "mobile" | "network"
       sla_tier: "bronze" | "silver" | "gold" | "platinum"
       user_status: "pending" | "active" | "disabled"
     }
@@ -387,6 +470,8 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "technician", "viewer"],
       client_status: ["active", "inactive", "prospect"],
+      endpoint_status: ["online", "offline", "warning", "critical"],
+      endpoint_type: ["workstation", "server", "mobile", "network"],
       sla_tier: ["bronze", "silver", "gold", "platinum"],
       user_status: ["pending", "active", "disabled"],
     },
