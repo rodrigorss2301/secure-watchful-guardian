@@ -711,6 +711,44 @@ export type Database = {
           },
         ]
       }
+      endpoint_metric_samples: {
+        Row: {
+          cpu_usage: number | null
+          disk_usage: number | null
+          endpoint_id: string
+          id: number
+          ram_usage: number | null
+          sampled_at: string
+          tenant_id: string
+        }
+        Insert: {
+          cpu_usage?: number | null
+          disk_usage?: number | null
+          endpoint_id: string
+          id?: number
+          ram_usage?: number | null
+          sampled_at?: string
+          tenant_id: string
+        }
+        Update: {
+          cpu_usage?: number | null
+          disk_usage?: number | null
+          endpoint_id?: string
+          id?: number
+          ram_usage?: number | null
+          sampled_at?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_metric_samples_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoints: {
         Row: {
           agent_token: string | null
