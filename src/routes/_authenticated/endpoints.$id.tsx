@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Pencil, Trash2, Cpu, MemoryStick, HardDrive, Wifi, Globe, Hash, Activity,
-  Server as ServerIcon, Network, Package, ListTree, Clock, User as UserIcon, Shield,
+  Server as ServerIcon, Network, Package, ListTree, Clock, User as UserIcon, Shield, MonitorPlay,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
 import { EndpointFormDialog } from "@/components/endpoints/endpoint-form-dialog";
+import { RemoteAccessDialog } from "@/components/endpoints/remote-access-dialog";
 import {
   STATUS_DOT, STATUS_TONE, TYPE_ICON, timeAgo, usageTone,
   type Endpoint,
@@ -65,6 +66,7 @@ function EndpointDetailPage() {
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [rdpOpen, setRdpOpen] = useState(false);
 
   const { data: endpoint, isLoading } = useQuery({
     queryKey: ["endpoint", id],
@@ -188,6 +190,9 @@ function EndpointDetailPage() {
         </div>
         {canWrite && (
           <div className="flex gap-2">
+            <Button onClick={() => setRdpOpen(true)} className="shadow-glow">
+              <MonitorPlay className="mr-2 h-4 w-4" />Acesso remoto
+            </Button>
             <Button variant="outline" onClick={() => setEditOpen(true)}><Pencil className="mr-2 h-4 w-4" />{t("endpoints.edit")}</Button>
             <Button variant="ghost" onClick={() => setDeleteOpen(true)} className="text-destructive hover:text-destructive">
               <Trash2 className="h-4 w-4" />
@@ -268,6 +273,7 @@ function EndpointDetailPage() {
       </div>
 
       <EndpointFormDialog open={editOpen} onOpenChange={setEditOpen} endpoint={endpoint} />
+      <RemoteAccessDialog open={rdpOpen} onOpenChange={setRdpOpen} endpoint={endpoint} />
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
