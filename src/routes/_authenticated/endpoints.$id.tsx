@@ -151,6 +151,14 @@ function EndpointDetailPage() {
   }
 
   const Icon = TYPE_ICON[endpoint.type];
+  const e = endpoint as EndpointRow & InventoryExtras;
+
+  const counts = {
+    critical: alertsList?.filter((a) => a.severity === "critical" && a.status !== "resolved").length ?? 0,
+    warning: alertsList?.filter((a) => a.severity === "warning" && a.status !== "resolved").length ?? 0,
+    info: alertsList?.filter((a) => a.severity === "info" && a.status !== "resolved").length ?? 0,
+  };
+  const softCount = (e.installed_software ?? []).length;
 
   return (
     <div className="space-y-6">
@@ -188,59 +196,76 @@ function EndpointDetailPage() {
         )}
       </div>
 
-      <Card className="border-border/60 p-5">
-        <h2 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("endpoints.detail.metrics")}
-        </h2>
-        <div className="grid gap-5 md:grid-cols-3">
-          <Metric icon={Cpu} label="CPU" value={endpoint.cpu_usage} />
-          <Metric icon={MemoryStick} label="RAM" value={endpoint.ram_usage} />
-          <Metric icon={HardDrive} label="Disco" value={endpoint.disk_usage} />
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/40 px-4 py-3">
+        <CountPill tone="critical" label="Crítico" value={counts.critical} />
+        <CountPill tone="warning" label="Aviso" value={counts.warning} />
+        <CountPill tone="info" label="Informação" value={counts.info} />
+        <div className="ml-auto flex gap-2">
+          <CountPill tone="muted" label="Sistema Operacional" value={endpoint.os ? 1 : 0} />
+          <CountPill tone="muted" label="Software" value={softCount} />
         </div>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-border/60 p-5">
-          <h2 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("endpoints.detail.system")}
-          </h2>
-          <dl className="space-y-3">
-            <Row label={t("endpoints.field.os")} value={[endpoint.os, endpoint.os_version].filter(Boolean).join(" ") || null} />
-            <Row label={t("endpoints.field.agent")} value={endpoint.agent_version} />
-            <Row label={t("endpoints.field.tags")} value={
-              endpoint.tags.length
-                ? (
-                  <div className="flex flex-wrap gap-1">
-                    {endpoint.tags.map((t) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}
-                  </div>
-                )
-                : null
-            } />
-          </dl>
-        </Card>
-
-        <Card className="border-border/60 p-5">
-          <h2 className="mb-4 font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("endpoints.detail.network")}
-          </h2>
-          <dl className="space-y-3">
-            <Row label={<><Globe className="mr-1 inline h-3 w-3" />IP</>} value={endpoint.ip_address && <span className="font-mono">{endpoint.ip_address}</span>} />
-            <Row label={<><Hash className="mr-1 inline h-3 w-3" />MAC</>} value={endpoint.mac_address && <span className="font-mono">{endpoint.mac_address}</span>} />
-            <Row label={<><Wifi className="mr-1 inline h-3 w-3" />Last ping</>} value={endpoint.last_heartbeat ? new Date(endpoint.last_heartbeat).toLocaleString() : null} />
-          </dl>
-        </Card>
       </div>
 
-      {endpoint.notes && (
-        <Card className="border-border/60 p-5">
-          <h2 className="mb-3 font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("endpoints.field.notes")}
-          </h2>
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{endpoint.notes}</p>
-        </Card>
-      )}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <Card className="border-border/60 p-0">
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="m-3 flex flex-wrap">
+              <TabsTrigger value="overview">Visão geral</TabsTrigger>
+              <TabsTrigger value="hardware">Hardware</TabsTrigger>
+              <TabsTrigger value="disks">Discos</TabsTrigger>
+              <TabsTrigger value="os">SO e segurança</TabsTrigger>
+              <TabsTrigger value="software">Software</TabsTrigger>
+              <TabsTrigger value="processes">Processos</TabsTrigger>
+              <TabsTrigger value="services">Serviços</TabsTrigger>
+            </TabsList>
 
-      <InventorySections endpoint={endpoint} />
+            <TabsContent value="overview" className="space-y-5 p-5 pt-0">
+              <div className="grid gap-5 md:grid-cols-3">
+                <Metric icon={Cpu} label="CPU" value={endpoint.cpu_usage} />
+                <Metric icon={MemoryStick} label="RAM" value={endpoint.ram_usage} />
+                <Metric icon={HardDrive} label="Disco" value={endpoint.disk_usage} />
+              </div>
+              <div className="grid gap-5 md:grid-cols-2">
+                <dl className="space-y-3">
+                  <Row label="Hostname" value={endpoint.hostname} />
+                  <Row label="Domínio" value={e.domain} />
+                  <Row label={t("endpoints.field.os")} value={[endpoint.os, endpoint.os_version].filter(Boolean).join(" ") || null} />
+                  <Row label="IP privado" value={endpoint.ip_address && <span className="font-mono">{endpoint.ip_address}</span>} />
+                  <Row label="Último usuário logado" value={e.logged_user} />
+                  <Row label="Visto pela última vez" value={endpoint.last_heartbeat ? new Date(endpoint.last_heartbeat).toLocaleString() : null} />
+                </dl>
+                <dl className="space-y-3">
+                  <Row label="Último reinício" value={e.last_boot_at ? new Date(e.last_boot_at).toLocaleString() : null} />
+                  <Row label={<><Clock className="mr-1 inline h-3 w-3" />Uptime</>} value={fmtUptime(e.uptime_seconds)} />
+                  <Row label="Fuso horário" value={e.timezone} />
+                  <Row label={t("endpoints.field.agent")} value={endpoint.agent_version} />
+                  <Row label="IP público" value={e.public_ip && <span className="font-mono">{e.public_ip}</span>} />
+                  <Row label="Data de adição" value={endpoint.created_at ? new Date(endpoint.created_at).toLocaleString() : null} />
+                </dl>
+              </div>
+              {endpoint.notes && (
+                <div>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Notas</h3>
+                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">{endpoint.notes}</p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="hardware" className="p-5 pt-0"><HardwareTab e={e} /></TabsContent>
+            <TabsContent value="disks" className="p-5 pt-0"><DisksTab e={e} /></TabsContent>
+            <TabsContent value="os" className="p-5 pt-0"><OsTab e={e} /></TabsContent>
+            <TabsContent value="software" className="p-5 pt-0"><SoftwareTab e={e} /></TabsContent>
+            <TabsContent value="processes" className="p-5 pt-0"><ProcessesTab e={e} /></TabsContent>
+            <TabsContent value="services" className="p-5 pt-0"><ServicesTab e={e} /></TabsContent>
+          </Tabs>
+        </Card>
+
+        <div className="space-y-6">
+          <MetricsChartCard samples={samples ?? []} />
+          <ActivityCard items={activity ?? []} />
+          <AlertsListCard items={alertsList ?? []} />
+        </div>
+      </div>
 
       <EndpointFormDialog open={editOpen} onOpenChange={setEditOpen} endpoint={endpoint} />
 
