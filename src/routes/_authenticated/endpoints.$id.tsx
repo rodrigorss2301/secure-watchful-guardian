@@ -80,6 +80,53 @@ function EndpointDetailPage() {
     refetchInterval: 15_000,
   });
 
+  const { data: samples } = useQuery({
+    queryKey: ["endpoint-samples", id],
+    queryFn: async () => {
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from("endpoint_metric_samples")
+        .select("sampled_at, cpu_usage, ram_usage, disk_usage")
+        .eq("endpoint_id", id)
+        .gte("sampled_at", since)
+        .order("sampled_at", { ascending: true })
+        .limit(500);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
+  const { data: alertsList } = useQuery({
+    queryKey: ["endpoint-alerts", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("alerts")
+        .select("id, message, severity, status, created_at")
+        .eq("endpoint_id", id)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 30_000,
+  });
+
+  const { data: activity } = useQuery({
+    queryKey: ["endpoint-activity", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("audit_logs")
+        .select("id, action, summary, actor_email, created_at, entity_table")
+        .eq("entity_id", id)
+        .order("created_at", { ascending: false })
+        .limit: 25 as never;
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("endpoints").delete().eq("id", id);
