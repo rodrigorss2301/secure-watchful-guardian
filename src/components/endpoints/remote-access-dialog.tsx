@@ -7,7 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
-  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,11 +72,19 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
   }, [loggedUser, domain]);
   const [username, setUsername] = useState(defaultUser);
 
-  const host = target === "private" ? privateIp ?? "" : target === "public" ? publicIp ?? "" : customHost.trim();
+  const host =
+    target === "private"
+      ? (privateIp ?? "")
+      : target === "public"
+        ? (publicIp ?? "")
+        : customHost.trim();
   const ready = host.length > 0 && username.length > 0 && port > 0;
 
   const download = () => {
-    if (!ready) { toast.error("Preencha o host e o usuário"); return; }
+    if (!ready) {
+      toast.error("Preencha o host e o usuário");
+      return;
+    }
     const content = buildRdpFile(host, username, port);
     const blob = new Blob([content], { type: "application/x-rdp;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -88,8 +100,12 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
 
   const mstsc = `mstsc /v:${host}${port !== 3389 ? `:${port}` : ""}`;
   const copyMstsc = async () => {
-    try { await navigator.clipboard.writeText(mstsc); toast.success("Comando copiado"); }
-    catch { toast.error("Não foi possível copiar"); }
+    try {
+      await navigator.clipboard.writeText(mstsc);
+      toast.success("Comando copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
   };
 
   const { data: history } = useQuery({
@@ -122,7 +138,9 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
     onSuccess: () => {
       toast.success("Preparação de RDP enviada para o agente");
       qc.invalidateQueries({ queryKey: ["endpoint-commands", endpoint.id] });
-      qc.invalidateQueries({ queryKey: ["endpoint-commands", endpoint.id, "remote-access"] });
+      qc.invalidateQueries({
+        queryKey: ["endpoint-commands", endpoint.id, "remote-access"],
+      });
     },
     onError: (e: Error) => toast.error(e.message),
   });
