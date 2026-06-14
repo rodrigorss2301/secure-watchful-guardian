@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.1.0"
+$AgentVersion = "1.2.0"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
@@ -224,6 +224,53 @@ function Get-Inventory {
   return $inv
 }
 
+function Invoke-AgentCommand($cmd, $params) {
+  $delay = 0
+  $message = ""
+  if ($params) {
+    if ($params.PSObject.Properties.Name -contains "delay_seconds") { $delay = [int]$params.delay_seconds }
+    if ($params.PSObject.Properties.Name -contains "message") { $message = "$($params.message)" }
+  }
+  $msgArg = ""
+  if ($message) { $msgArg = " /c `"$message`"" }
+
+  switch ($cmd) {
+    "shutdown"    { Start-Process -FilePath "shutdown.exe" -ArgumentList ("/s /t {0}{1}" -f $delay, $msgArg) -WindowStyle Hidden -Wait; return "shutdown /s /t $delay scheduled" }
+    "restart"     { Start-Process -FilePath "shutdown.exe" -ArgumentList ("/r /t {0}{1}" -f $delay, $msgArg) -WindowStyle Hidden -Wait; return "shutdown /r /t $delay scheduled" }
+    "logoff"      { Start-Process -FilePath "shutdown.exe" -ArgumentList "/l" -WindowStyle Hidden -Wait; return "logoff issued" }
+    "hibernate"   { Start-Process -FilePath "shutdown.exe" -ArgumentList "/h" -WindowStyle Hidden -Wait; return "hibernate issued" }
+    "sleep"       { Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Application]::SetSuspendState("Suspend", $false, $false) | Out-Null; return "sleep issued" }
+    "wake_on_lan" { return "wake_on_lan must be triggered from another host on the same LAN" }
+    default       { throw "unknown command: $cmd" }
+  }
+}
+
+function Process-Commands($cfg, $commands) {
+  if (-not $commands -or $commands.Count -eq 0) { return }
+  foreach ($c in $commands) {
+    $status = "succeeded"; $output = ""
+    try {
+      $output = Invoke-AgentCommand $c.command $c.params
+      Write-Log ("Comando {0} ({1}) executado" -f $c.command, $c.id)
+    } catch {
+      $status = "failed"; $output = "$($_.Exception.Message)"
+      Write-Log ("Comando {0} ({1}) FALHOU: {2}" -f $c.command, $c.id, $output)
+    }
+    $body = @{
+      agent_token = $cfg.agent_token
+      command_id  = $c.id
+      status      = $status
+      output      = $output
+    } | ConvertTo-Json -Compress
+    try {
+      Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/command-result" -f $cfg.base_url) `
+        -ContentType "application/json" -Body $body -TimeoutSec 30 | Out-Null
+    } catch {
+      Write-Log ("Falha ao reportar resultado {0}: {1}" -f $c.id, $_.Exception.Message)
+    }
+  }
+}
+
 function Invoke-Heartbeat {
   if (-not (Test-Path $ConfigPath)) { Write-Log "Config não encontrado: $ConfigPath"; return }
   $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
@@ -246,9 +293,10 @@ function Invoke-Heartbeat {
   }
   $json = $body | ConvertTo-Json -Compress -Depth 6
   try {
-    Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/heartbeat" -f $cfg.base_url) `
-      -ContentType "application/json" -Body $json -TimeoutSec 60 | Out-Null
+    $resp = Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/heartbeat" -f $cfg.base_url) `
+      -ContentType "application/json" -Body $json -TimeoutSec 60
     Write-Log ("Heartbeat OK cpu={0} ram={1} disk={2}" -f $m.cpu, $m.ram, $m.disk)
+    if ($resp -and $resp.commands) { Process-Commands $cfg $resp.commands }
   } catch {
     Write-Log ("Heartbeat falhou: {0}" -f $_.Exception.Message)
   }
