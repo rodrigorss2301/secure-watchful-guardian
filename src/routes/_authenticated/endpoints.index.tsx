@@ -27,7 +27,7 @@ import {
 
 type EndpointRow = Endpoint & { clients: { id: string; name: string } | null };
 
-export const Route = createFileRoute("/_authenticated/endpoints")({
+export const Route = createFileRoute("/_authenticated/endpoints/")({
   head: () => ({ meta: [{ title: "Endpoints — Autotechs RMM" }] }),
   component: EndpointsPage,
 });
