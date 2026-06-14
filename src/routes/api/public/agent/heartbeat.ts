@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
 
         const { data: ep, error } = await supabaseAdmin
           .from("endpoints")
-          .select("id")
+          .select("id, tenant_id")
           .eq("agent_token", b.agent_token)
           .maybeSingle();
         if (error) return jsonErr(500, "db_error");
@@ -96,6 +96,17 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
           })
           .eq("id", ep.id);
         if (upErr) return jsonErr(500, "update_failed");
+
+        // store metric sample (best-effort) for the 24h chart
+        if (b.cpu_usage != null || b.ram_usage != null || b.disk_usage != null) {
+          await supabaseAdmin.from("endpoint_metric_samples").insert({
+            tenant_id: ep.tenant_id,
+            endpoint_id: ep.id,
+            cpu_usage: b.cpu_usage ?? null,
+            ram_usage: b.ram_usage ?? null,
+            disk_usage: b.disk_usage ?? null,
+          });
+        }
 
         return Response.json({ ok: true, interval_seconds: 60 });
       },
