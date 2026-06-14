@@ -12,7 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
-type Props = { open: boolean; onOpenChange: (o: boolean) => void };
+type Props = {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  preselectedClientId?: string | null;
+  mode?: "install" | "update";
+};
 
 function generateToken(): string {
   const bytes = new Uint8Array(32);
@@ -20,7 +25,7 @@ function generateToken(): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export function InstallAgentDialog({ open, onOpenChange }: Props) {
+export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mode = "install" }: Props) {
   const { tenant, user } = useAuth();
   const qc = useQueryClient();
   const [clientId, setClientId] = useState<string>("");
@@ -63,7 +68,8 @@ export function InstallAgentDialog({ open, onOpenChange }: Props) {
 
   useEffect(() => {
     if (!open) { setToken(null); setExpiresAt(null); setClientId(""); }
-  }, [open]);
+    else if (preselectedClientId) { setClientId(preselectedClientId); }
+  }, [open, preselectedClientId]);
 
   const generate = useMutation({
     mutationFn: async () => {
@@ -103,10 +109,14 @@ export function InstallAgentDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Terminal className="h-5 w-5" /> Instalar agente Windows</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Terminal className="h-5 w-5" />
+            {mode === "update" ? "Reinstalar / atualizar agente" : "Instalar agente Windows"}
+          </DialogTitle>
           <DialogDescription>
-            Gere um token de inscrição, copie o comando e execute no endpoint como Administrador.
-            O agente envia heartbeat (CPU, RAM, disco) a cada 1 minuto.
+            {mode === "update"
+              ? "Gere um novo token e execute o comando no endpoint como Administrador para reinstalar e atualizar o agente para a versão mais recente. O dispositivo continuará vinculado ao mesmo cliente."
+              : "Gere um token de inscrição, copie o comando e execute no endpoint como Administrador. O agente envia heartbeat (CPU, RAM, disco) a cada 1 minuto."}
           </DialogDescription>
         </DialogHeader>
 
