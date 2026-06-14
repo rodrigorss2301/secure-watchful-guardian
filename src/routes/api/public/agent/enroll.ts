@@ -38,25 +38,41 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
         const agentToken = randomBytes(32).toString("hex");
         const ip = b.ip_address ?? request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
 
-        const { data: endpoint, error: epErr } = await supabaseAdmin
-          .from("endpoints")
-          .insert({
-            tenant_id: enr.tenant_id,
-            client_id: enr.client_id,
-            hostname: b.hostname,
-            type: (b.type ?? enr.default_type) as "workstation",
-            status: "online",
-            os: b.os ?? null,
-            os_version: b.os_version ?? null,
-            ip_address: ip,
-            mac_address: b.mac_address ?? null,
-            agent_version: b.agent_version ?? null,
-            agent_token: agentToken,
-            last_heartbeat: new Date().toISOString(),
-            last_seen_ip: ip,
-          })
-          .select("id")
-          .single();
+        let existingEndpoint: { id: string } | null = null;
+        if (b.mac_address) {
+          const { data } = await supabaseAdmin
+            .from("endpoints")
+            .select("id")
+            .eq("tenant_id", enr.tenant_id)
+            .eq("client_id", enr.client_id)
+            .eq("mac_address", b.mac_address)
+            .order("last_heartbeat", { ascending: false, nullsFirst: false })
+            .limit(1)
+            .maybeSingle();
+          existingEndpoint = data;
+        }
+
+        const endpointPayload = {
+          tenant_id: enr.tenant_id,
+          client_id: enr.client_id,
+          hostname: b.hostname,
+          type: (b.type ?? enr.default_type) as "workstation",
+          status: "online" as const,
+          os: b.os ?? null,
+          os_version: b.os_version ?? null,
+          ip_address: ip,
+          mac_address: b.mac_address ?? null,
+          agent_version: b.agent_version ?? null,
+          agent_token: agentToken,
+          last_heartbeat: new Date().toISOString(),
+          last_seen_ip: ip,
+        };
+
+        const endpointQuery = existingEndpoint
+          ? supabaseAdmin.from("endpoints").update(endpointPayload).eq("id", existingEndpoint.id).select("id").single()
+          : supabaseAdmin.from("endpoints").insert(endpointPayload).select("id").single();
+
+        const { data: endpoint, error: epErr } = await endpointQuery;
         if (epErr || !endpoint) return jsonErr(500, "endpoint_create_failed", epErr?.message);
 
         await supabaseAdmin
