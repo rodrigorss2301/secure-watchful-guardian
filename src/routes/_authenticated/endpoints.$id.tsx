@@ -120,7 +120,7 @@ function EndpointDetailPage() {
         .select("id, action, summary, actor_email, created_at, entity_table")
         .eq("entity_id", id)
         .order("created_at", { ascending: false })
-        .limit: 25 as never;
+        .limit(25);
       if (error) throw error;
       return data;
     },
