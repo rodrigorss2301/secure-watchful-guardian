@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Download, MonitorPlay, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { Endpoint } from "@/lib/endpoints";
+
+type CommandRow = Database["public"]["Tables"]["endpoint_commands"]["Row"];
 
 type Props = {
   open: boolean;
@@ -43,6 +49,7 @@ function buildRdpFile(host: string, username: string, port: number) {
 }
 
 export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
+  const qc = useQueryClient();
   const publicIp = (endpoint.public_ip as string | null) ?? null;
   const privateIp = endpoint.ip_address ?? null;
   const loggedUser = (endpoint.logged_user as string | null) ?? null;
@@ -84,6 +91,41 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
     try { await navigator.clipboard.writeText(mstsc); toast.success("Comando copiado"); }
     catch { toast.error("Não foi possível copiar"); }
   };
+
+  const { data: history } = useQuery({
+    queryKey: ["endpoint-commands", endpoint.id, "remote-access"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("endpoint_commands")
+        .select("*")
+        .eq("endpoint_id", endpoint.id)
+        .eq("command", "enable_rdp")
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data as CommandRow[];
+    },
+    enabled: open,
+    refetchInterval: open ? 5_000 : false,
+  });
+
+  const enableRdp = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("endpoint_commands").insert({
+        tenant_id: endpoint.tenant_id,
+        endpoint_id: endpoint.id,
+        command: "enable_rdp",
+        params: { port },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Preparação de RDP enviada para o agente");
+      qc.invalidateQueries({ queryKey: ["endpoint-commands", endpoint.id] });
+      qc.invalidateQueries({ queryKey: ["endpoint-commands", endpoint.id, "remote-access"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -158,6 +200,24 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
                 </ul>
               </div>
             </div>
+          </div>
+
+          <div className="rounded-md border border-border bg-muted/20 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Preparar endpoint para RDP</p>
+                <p className="text-xs text-muted-foreground">Ativa Área de Trabalho Remota, serviço TermService e regras do firewall do Windows.</p>
+              </div>
+              <Button variant="outline" onClick={() => enableRdp.mutate()} disabled={enableRdp.isPending || endpoint.status === "offline"}>
+                Preparar RDP
+              </Button>
+            </div>
+            {history?.[0] && (
+              <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+                <span className="truncate text-muted-foreground">Último: {history[0].output ?? new Date(history[0].created_at).toLocaleString()}</span>
+                <Badge variant="outline" className={statusTone(history[0].status)}>{history[0].status}</Badge>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">
