@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.2.0"
+$AgentVersion = "1.2.1"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
@@ -235,6 +235,14 @@ function Invoke-AgentCommand($cmd, $params) {
   if ($message) { $msgArg = " /c `"$message`"" }
 
   switch ($cmd) {
+    "enable_rdp"  {
+      Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
+      Set-Service -Name "TermService" -StartupType Automatic
+      Start-Service -Name "TermService" -ErrorAction SilentlyContinue
+      Enable-NetFirewallRule -DisplayGroup "Área de Trabalho Remota" -ErrorAction SilentlyContinue | Out-Null
+      Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
+      return "RDP enabled, TermService running, Windows Firewall RDP rules enabled"
+    }
     "shutdown"    { Start-Process -FilePath "shutdown.exe" -ArgumentList ("/s /t {0}{1}" -f $delay, $msgArg) -WindowStyle Hidden -Wait; return "shutdown /s /t $delay scheduled" }
     "restart"     { Start-Process -FilePath "shutdown.exe" -ArgumentList ("/r /t {0}{1}" -f $delay, $msgArg) -WindowStyle Hidden -Wait; return "shutdown /r /t $delay scheduled" }
     "logoff"      { Start-Process -FilePath "shutdown.exe" -ArgumentList "/l" -WindowStyle Hidden -Wait; return "logoff issued" }
