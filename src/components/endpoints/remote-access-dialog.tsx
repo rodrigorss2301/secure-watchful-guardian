@@ -238,3 +238,13 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
     </Dialog>
   );
 }
+
+function statusTone(s: CommandRow["status"]) {
+  switch (s) {
+    case "succeeded": return "border-emerald-500/30 text-emerald-500";
+    case "failed": return "border-destructive/30 text-destructive";
+    case "sent": return "border-sky-500/30 text-sky-500";
+    case "cancelled": return "border-border text-muted-foreground";
+    default: return "border-amber-500/30 text-amber-500";
+  }
+}
