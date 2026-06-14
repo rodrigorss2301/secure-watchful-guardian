@@ -54,7 +54,7 @@ export function PowerDialog({ open, onOpenChange, endpoint }: Props) {
 
   const enqueue = useMutation({
     mutationFn: async (command: CommandType) => {
-      const params: Record<string, unknown> =
+      const params =
         command === "shutdown" || command === "restart"
           ? { delay_seconds: delay, message }
           : {};
