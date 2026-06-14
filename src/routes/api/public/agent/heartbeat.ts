@@ -108,7 +108,23 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
           });
         }
 
-        return Response.json({ ok: true, interval_seconds: 60 });
+        // Pega comandos pendentes para o agente executar agora
+        const { data: pending } = await supabaseAdmin
+          .from("endpoint_commands")
+          .select("id, command, params, created_at")
+          .eq("endpoint_id", ep.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: true })
+          .limit(10);
+
+        if (pending && pending.length > 0) {
+          await supabaseAdmin
+            .from("endpoint_commands")
+            .update({ status: "sent", sent_at: new Date().toISOString() })
+            .in("id", pending.map((c) => c.id));
+        }
+
+        return Response.json({ ok: true, interval_seconds: 60, commands: pending ?? [] });
       },
     },
   },
