@@ -161,20 +161,28 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label className="text-xs font-medium text-muted-foreground">Endereço de destino</Label>
-            <RadioGroup value={target} onValueChange={(v) => setTarget(v as typeof target)} className="space-y-1.5">
+            <RadioGroup
+              value={target}
+              onValueChange={(v) => setTarget(v as typeof target)}
+              className="space-y-1.5"
+            >
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
                 <span className="flex items-center gap-2">
                   <RadioGroupItem value="private" disabled={!privateIp} />
                   <span>IP privado</span>
                 </span>
-                <span className="font-mono text-xs text-muted-foreground">{privateIp ?? "indisponível"}</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {privateIp ?? "indisponível"}
+                </span>
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
                 <span className="flex items-center gap-2">
                   <RadioGroupItem value="public" disabled={!publicIp} />
                   <span>IP público</span>
                 </span>
-                <span className="font-mono text-xs text-muted-foreground">{publicIp ?? "indisponível"}</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {publicIp ?? "indisponível"}
+                </span>
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
                 <span className="flex items-center gap-2">
@@ -195,13 +203,20 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
           <div className="grid grid-cols-[1fr_120px] gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Usuário</Label>
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="DOMÍNIO\usuário" />
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="DOMÍNIO\usuário"
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-muted-foreground">Porta</Label>
               <Input
-                type="number" min={1} max={65535}
-                value={port} onChange={(e) => setPort(Number(e.target.value) || 3389)}
+                type="number"
+                min={1}
+                max={65535}
+                value={port}
+                onChange={(e) => setPort(Number(e.target.value) || 3389)}
               />
             </div>
           </div>
@@ -214,7 +229,10 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
                 <ul className="list-disc space-y-0.5 pl-4 opacity-90">
                   <li>RDP habilitado (Sistema → Área de Trabalho Remota).</li>
                   <li>Porta {port} liberada no firewall do Windows e na rede.</li>
-                  <li>Para IP público, configure port-forwarding ou VPN — exposição direta na internet não é recomendada.</li>
+                  <li>
+                    Para IP público, configure port-forwarding ou VPN — exposição direta na internet
+                    não é recomendada.
+                  </li>
                 </ul>
               </div>
             </div>
