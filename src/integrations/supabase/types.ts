@@ -1634,6 +1634,7 @@ export type Database = {
         | "hibernate"
         | "wake_on_lan"
         | "logoff"
+        | "enable_rdp"
       endpoint_status: "online" | "offline" | "warning" | "critical"
       endpoint_type: "workstation" | "server" | "mobile" | "network"
       invoice_status: "draft" | "sent" | "paid" | "overdue" | "void"
@@ -1811,6 +1812,7 @@ export const Constants = {
         "hibernate",
         "wake_on_lan",
         "logoff",
+        "enable_rdp",
       ],
       endpoint_status: ["online", "offline", "warning", "critical"],
       endpoint_type: ["workstation", "server", "mobile", "network"],

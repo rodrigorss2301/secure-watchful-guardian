@@ -1,0 +1,1 @@
+ALTER TYPE public.endpoint_command_type ADD VALUE IF NOT EXISTS 'enable_rdp';
