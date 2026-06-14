@@ -711,6 +711,66 @@ export type Database = {
           },
         ]
       }
+      endpoint_commands: {
+        Row: {
+          command: Database["public"]["Enums"]["endpoint_command_type"]
+          completed_at: string | null
+          created_at: string
+          endpoint_id: string
+          id: string
+          output: string | null
+          params: Json
+          requested_by: string | null
+          sent_at: string | null
+          status: Database["public"]["Enums"]["endpoint_command_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          command: Database["public"]["Enums"]["endpoint_command_type"]
+          completed_at?: string | null
+          created_at?: string
+          endpoint_id: string
+          id?: string
+          output?: string | null
+          params?: Json
+          requested_by?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["endpoint_command_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          command?: Database["public"]["Enums"]["endpoint_command_type"]
+          completed_at?: string | null
+          created_at?: string
+          endpoint_id?: string
+          id?: string
+          output?: string | null
+          params?: Json
+          requested_by?: string | null
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["endpoint_command_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_commands_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_commands_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoint_metric_samples: {
         Row: {
           cpu_usage: number | null
@@ -1561,6 +1621,19 @@ export type Database = {
       billing_cycle: "one_time" | "monthly" | "quarterly" | "yearly"
       client_status: "active" | "inactive" | "prospect"
       contract_status: "draft" | "active" | "suspended" | "ended" | "cancelled"
+      endpoint_command_status:
+        | "pending"
+        | "sent"
+        | "succeeded"
+        | "failed"
+        | "cancelled"
+      endpoint_command_type:
+        | "shutdown"
+        | "restart"
+        | "sleep"
+        | "hibernate"
+        | "wake_on_lan"
+        | "logoff"
       endpoint_status: "online" | "offline" | "warning" | "critical"
       endpoint_type: "workstation" | "server" | "mobile" | "network"
       invoice_status: "draft" | "sent" | "paid" | "overdue" | "void"
@@ -1724,6 +1797,21 @@ export const Constants = {
       billing_cycle: ["one_time", "monthly", "quarterly", "yearly"],
       client_status: ["active", "inactive", "prospect"],
       contract_status: ["draft", "active", "suspended", "ended", "cancelled"],
+      endpoint_command_status: [
+        "pending",
+        "sent",
+        "succeeded",
+        "failed",
+        "cancelled",
+      ],
+      endpoint_command_type: [
+        "shutdown",
+        "restart",
+        "sleep",
+        "hibernate",
+        "wake_on_lan",
+        "logoff",
+      ],
       endpoint_status: ["online", "offline", "warning", "critical"],
       endpoint_type: ["workstation", "server", "mobile", "network"],
       invoice_status: ["draft", "sent", "paid", "overdue", "void"],
