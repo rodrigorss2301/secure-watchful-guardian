@@ -242,16 +242,27 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">Preparar endpoint para RDP</p>
-                <p className="text-xs text-muted-foreground">Ativa Área de Trabalho Remota, serviço TermService e regras do firewall do Windows.</p>
+                <p className="text-xs text-muted-foreground">
+                  Ativa Área de Trabalho Remota, serviço TermService e regras do firewall do
+                  Windows.
+                </p>
               </div>
-              <Button variant="outline" onClick={() => enableRdp.mutate()} disabled={enableRdp.isPending || endpoint.status === "offline"}>
+              <Button
+                variant="outline"
+                onClick={() => enableRdp.mutate()}
+                disabled={enableRdp.isPending || endpoint.status === "offline"}
+              >
                 Preparar RDP
               </Button>
             </div>
             {history?.[0] && (
               <div className="mt-2 flex items-center justify-between gap-2 text-xs">
-                <span className="truncate text-muted-foreground">Último: {history[0].output ?? new Date(history[0].created_at).toLocaleString()}</span>
-                <Badge variant="outline" className={statusTone(history[0].status)}>{history[0].status}</Badge>
+                <span className="truncate text-muted-foreground">
+                  Último: {history[0].output ?? new Date(history[0].created_at).toLocaleString()}
+                </span>
+                <Badge variant="outline" className={statusTone(history[0].status)}>
+                  {history[0].status}
+                </Badge>
               </div>
             )}
           </div>
@@ -259,7 +270,9 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-muted-foreground">Comando mstsc</Label>
             <div className="flex gap-2">
-              <code className="flex-1 truncate rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs">{mstsc}</code>
+              <code className="flex-1 truncate rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs">
+                {mstsc}
+              </code>
               <Button variant="outline" size="icon" onClick={copyMstsc} disabled={!ready}>
                 <Copy className="h-4 w-4" />
               </Button>
