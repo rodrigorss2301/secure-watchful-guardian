@@ -154,7 +154,8 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
           </DialogTitle>
           <DialogDescription>
             Gere um arquivo <code className="font-mono">.rdp</code> pronto para conectar a{" "}
-            <span className="font-medium text-foreground">{endpoint.hostname}</span> via RDP nativo do Windows.
+            <span className="font-medium text-foreground">{endpoint.hostname}</span> via RDP nativo
+            do Windows.
           </DialogDescription>
         </DialogHeader>
 
@@ -290,10 +291,15 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
 
 function statusTone(s: CommandRow["status"]) {
   switch (s) {
-    case "succeeded": return "border-emerald-500/30 text-emerald-500";
-    case "failed": return "border-destructive/30 text-destructive";
-    case "sent": return "border-sky-500/30 text-sky-500";
-    case "cancelled": return "border-border text-muted-foreground";
-    default: return "border-amber-500/30 text-amber-500";
+    case "succeeded":
+      return "border-emerald-500/30 text-emerald-500";
+    case "failed":
+      return "border-destructive/30 text-destructive";
+    case "sent":
+      return "border-sky-500/30 text-sky-500";
+    case "cancelled":
+      return "border-border text-muted-foreground";
+    default:
+      return "border-amber-500/30 text-amber-500";
   }
 }
