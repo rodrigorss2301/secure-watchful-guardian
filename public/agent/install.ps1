@@ -1,16 +1,22 @@
-﻿# Autotechs RMM - Agente Windows
+# Autotechs RMM - Agente Windows
 # Uso (como Administrador):
 #   iwr -useb "<BaseUrl>/agent/install.ps1" | iex; Install-AutotechsAgent -BaseUrl "<BaseUrl>" -EnrollToken "<TOKEN>"
 # Ou:
 #   powershell -ExecutionPolicy Bypass -File install.ps1 -BaseUrl "<BaseUrl>" -EnrollToken "<TOKEN>"
 
-[CmdletBinding()]
-param(
-  [string]$BaseUrl,
-  [string]$EnrollToken,
-  [ValidateSet("Install","Heartbeat")]
-  [string]$Mode = "Install"
-)
+$BaseUrl = $null
+$EnrollToken = $null
+$Mode = "Install"
+
+for ($i = 0; $i -lt $args.Count; $i++) {
+  switch -Regex ($args[$i]) {
+    '^-BaseUrl$'     { if ($i + 1 -lt $args.Count) { $BaseUrl = "$($args[++$i])" }; continue }
+    '^-EnrollToken$' { if ($i + 1 -lt $args.Count) { $EnrollToken = "$($args[++$i])" }; continue }
+    '^-Mode$'        { if ($i + 1 -lt $args.Count) { $Mode = "$($args[++$i])" }; continue }
+  }
+}
+
+if ($Mode -ne "Install" -and $Mode -ne "Heartbeat") { $Mode = "Install" }
 
 $ErrorActionPreference = "Stop"
 
@@ -18,7 +24,7 @@ $ErrorActionPreference = "Stop"
 if (-not $BaseUrl     -and $env:RMM_URL)   { $BaseUrl     = $env:RMM_URL }
 if (-not $EnrollToken -and $env:RMM_TOKEN) { $EnrollToken = $env:RMM_TOKEN }
 
-$AgentVersion = "1.4.3"
+$AgentVersion = "1.4.4"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
