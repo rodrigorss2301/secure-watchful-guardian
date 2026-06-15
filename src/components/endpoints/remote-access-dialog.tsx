@@ -56,11 +56,12 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
   const qc = useQueryClient();
   const publicIp = (endpoint.public_ip as string | null) ?? null;
   const privateIp = endpoint.ip_address ?? null;
+  const tailscaleIp = (endpoint.tailscale_ip as string | null) ?? null;
   const loggedUser = (endpoint.logged_user as string | null) ?? null;
   const domain = (endpoint.domain as string | null) ?? null;
 
-  const [target, setTarget] = useState<"private" | "public" | "custom">(
-    privateIp ? "private" : publicIp ? "public" : "custom",
+  const [target, setTarget] = useState<"tailscale" | "private" | "public" | "custom">(
+    tailscaleIp ? "tailscale" : privateIp ? "private" : publicIp ? "public" : "custom",
   );
   const [customHost, setCustomHost] = useState(endpoint.hostname ?? "");
   const [port, setPort] = useState<number>(3389);
@@ -73,7 +74,9 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
   const [username, setUsername] = useState(defaultUser);
 
   const host =
-    target === "private"
+    target === "tailscale"
+      ? (tailscaleIp ?? "")
+      : target === "private"
       ? (privateIp ?? "")
       : target === "public"
         ? (publicIp ?? "")
@@ -167,6 +170,15 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
               onValueChange={(v) => setTarget(v as typeof target)}
               className="space-y-1.5"
             >
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm">
+                <span className="flex items-center gap-2">
+                  <RadioGroupItem value="tailscale" disabled={!tailscaleIp} />
+                  <span className="font-medium">Tailscale (recomendado)</span>
+                </span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {tailscaleIp ?? "indisponível"}
+                </span>
+              </label>
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
                 <span className="flex items-center gap-2">
                   <RadioGroupItem value="private" disabled={!privateIp} />
@@ -228,6 +240,10 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
               <div className="space-y-1">
                 <p className="font-medium">Pré-requisitos no endpoint</p>
                 <ul className="list-disc space-y-0.5 pl-4 opacity-90">
+                  <li>
+                    <strong>Tailscale:</strong> instale o cliente no seu PC e logue na mesma
+                    tailnet. O agente já entra automaticamente na rede durante a instalação.
+                  </li>
                   <li>RDP habilitado (Sistema → Área de Trabalho Remota).</li>
                   <li>Porta {port} liberada no firewall do Windows e na rede.</li>
                   <li>
