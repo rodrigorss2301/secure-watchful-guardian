@@ -596,6 +596,31 @@ function ActivityCard({ items }: { items: ActivityItem[] }) {
   );
 }
 
+function AgentVersionInline({ version }: { version: string | null }) {
+  if (!version) {
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+        sem agente
+      </Badge>
+    );
+  }
+  const outdated = isAgentOutdated(version);
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="font-mono">{version}</span>
+      {outdated ? (
+        <Badge variant="outline" className="gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+          atualizar → {LATEST_AGENT_VERSION}
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-500">
+          atualizado
+        </Badge>
+      )}
+    </span>
+  );
+}
+
 type AlertItem = { id: string; message: string; severity: "info" | "warning" | "critical"; status: string; created_at: string };
 function AlertsListCard({ items }: { items: AlertItem[] }) {
   return (
