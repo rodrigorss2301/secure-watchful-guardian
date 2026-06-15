@@ -1,4 +1,4 @@
-# Autotechs RMM - Agente Windows
+﻿# Autotechs RMM - Agente Windows
 # Uso (como Administrador):
 #   iwr -useb "<BaseUrl>/agent/install.ps1" | iex; Install-AutotechsAgent -BaseUrl "<BaseUrl>" -EnrollToken "<TOKEN>"
 # Ou:
