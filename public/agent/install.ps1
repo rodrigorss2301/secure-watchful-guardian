@@ -13,6 +13,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# Fallback para variáveis de ambiente (permite invocação simples via `iex`)
+if (-not $BaseUrl     -and $env:RMM_URL)   { $BaseUrl     = $env:RMM_URL }
+if (-not $EnrollToken -and $env:RMM_TOKEN) { $EnrollToken = $env:RMM_TOKEN }
+
 $AgentVersion = "1.4.2"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
