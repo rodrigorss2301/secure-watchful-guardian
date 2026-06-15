@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.2.1"
+$AgentVersion = "1.2.2"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
@@ -51,9 +51,23 @@ function Get-SystemInfo {
   $os = Get-CimInstance Win32_OperatingSystem
   $ip = $null
   try {
-    $ip = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop |
-      Where-Object { $_.IPAddress -notlike "169.*" -and $_.IPAddress -ne "127.0.0.1" -and $_.PrefixOrigin -ne "WellKnown" } |
-      Select-Object -First 1).IPAddress
+    # Prefer the IPv4 of the interface used to reach the internet (default route).
+    # This avoids picking Hyper-V / WSL / vEthernet virtual switches like 172.x.
+    $route = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
+      Sort-Object -Property RouteMetric, InterfaceMetric | Select-Object -First 1
+    if ($route) {
+      $ip = (Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+        Where-Object { $_.IPAddress -notlike "169.*" -and $_.IPAddress -ne "127.0.0.1" } |
+        Select-Object -First 1).IPAddress
+    }
+    if (-not $ip) {
+      $ip = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop |
+        Where-Object {
+          $_.IPAddress -notlike "169.*" -and $_.IPAddress -ne "127.0.0.1" -and
+          $_.PrefixOrigin -ne "WellKnown" -and
+          $_.InterfaceAlias -notmatch "vEthernet|Hyper-V|WSL|VMware|VirtualBox|Loopback"
+        } | Select-Object -First 1).IPAddress
+    }
   } catch {}
   $mac = $null
   try {
