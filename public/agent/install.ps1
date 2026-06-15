@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.2.2"
+$AgentVersion = "1.3.0"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
@@ -267,6 +267,26 @@ function Invoke-AgentCommand($cmd, $params) {
   }
 }
 
+function Enable-RdpAccess {
+  try {
+    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0 -ErrorAction SilentlyContinue
+    # Permite NLA (mais seguro). Comente a linha abaixo se precisar de clientes antigos.
+    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name "UserAuthentication" -Value 1 -ErrorAction SilentlyContinue
+    Set-Service -Name "TermService" -StartupType Automatic -ErrorAction SilentlyContinue
+    Start-Service -Name "TermService" -ErrorAction SilentlyContinue
+    Enable-NetFirewallRule -DisplayGroup "Área de Trabalho Remota" -ErrorAction SilentlyContinue | Out-Null
+    Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
+    # Garante que exista uma regra liberando TCP 3389 mesmo em locales/edições sem o grupo padrão
+    if (-not (Get-NetFirewallRule -DisplayName "Autotechs RMM - RDP 3389" -ErrorAction SilentlyContinue)) {
+      New-NetFirewallRule -DisplayName "Autotechs RMM - RDP 3389" -Direction Inbound -Action Allow `
+        -Protocol TCP -LocalPort 3389 -Profile Any -ErrorAction SilentlyContinue | Out-Null
+    }
+    Write-Log "RDP habilitado e regras de firewall aplicadas."
+  } catch {
+    Write-Log ("Falha ao habilitar RDP: {0}" -f $_.Exception.Message)
+  }
+}
+
 function Process-Commands($cfg, $commands) {
   if (-not $commands -or $commands.Count -eq 0) { return }
   foreach ($c in $commands) {
@@ -386,6 +406,7 @@ function Install-AutotechsAgent {
     -Principal $principal -Settings $settings -Description "Autotechs RMM Agent" | Out-Null
 
   Write-Log "Scheduled Task '$TaskName' criada (intervalo: 1 min)."
+  Enable-RdpAccess
   Invoke-Heartbeat
   Write-Log "Instalação concluída."
 }
