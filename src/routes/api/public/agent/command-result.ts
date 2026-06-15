@@ -20,12 +20,13 @@ export const Route = createFileRoute("/api/public/agent/command-result")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data: ep } = await supabaseAdmin
-          .from("endpoints")
-          .select("id")
+        const { data: sec } = await supabaseAdmin
+          .from("endpoint_secrets")
+          .select("endpoint_id")
           .eq("agent_token", b.agent_token)
           .maybeSingle();
-        if (!ep) return jsonErr(401, "invalid_token");
+        if (!sec) return jsonErr(401, "invalid_token");
+        const ep = { id: sec.endpoint_id };
 
         const { error } = await supabaseAdmin
           .from("endpoint_commands")
