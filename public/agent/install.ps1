@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.4.1"
+$AgentVersion = "1.4.2"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
