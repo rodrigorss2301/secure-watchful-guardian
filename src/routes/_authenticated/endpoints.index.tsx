@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
 import { EndpointFormDialog } from "@/components/endpoints/endpoint-form-dialog";
 import { InstallAgentDialog } from "@/components/endpoints/install-agent-dialog";
+import { LATEST_AGENT_VERSION, isAgentOutdated } from "@/lib/agent-version";
 import {
   ENDPOINT_STATUSES, ENDPOINT_TYPES, STATUS_DOT, STATUS_TONE, TYPE_ICON, timeAgo,
   type Endpoint, type EndpointStatus, type EndpointType,
@@ -185,6 +186,7 @@ function EndpointsPage() {
                 <TableHead>{t("endpoints.col.os")}</TableHead>
                 <TableHead>{t("endpoints.col.ip")}</TableHead>
                 <TableHead>{t("endpoints.col.usage")}</TableHead>
+                <TableHead>Agente</TableHead>
                 <TableHead>{t("endpoints.col.heartbeat")}</TableHead>
                 <TableHead>{t("endpoints.col.status")}</TableHead>
                 <TableHead className="text-right">—</TableHead>
@@ -206,6 +208,7 @@ function EndpointsPage() {
                     <TableCell className="text-sm text-muted-foreground">{e.os ?? "—"}</TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{e.ip_address ?? "—"}</TableCell>
                     <TableCell><MiniUsage cpu={e.cpu_usage} ram={e.ram_usage} disk={e.disk_usage} /></TableCell>
+                    <TableCell><AgentVersionCell version={e.agent_version} /></TableCell>
                     <TableCell className="text-xs text-muted-foreground">{timeAgo(e.last_heartbeat, t("endpoints.detail.never"))}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={`gap-1.5 uppercase text-[10px] ${STATUS_TONE[e.status]}`}>
@@ -268,6 +271,29 @@ function MiniUsage({ cpu, ram, disk }: { cpu: number | null; ram: number | null;
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function AgentVersionCell({ version }: { version: string | null }) {
+  const outdated = isAgentOutdated(version);
+  if (!version) {
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+        sem agente
+      </Badge>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="font-mono text-xs">{version}</span>
+      {outdated ? (
+        <Badge variant="outline" className="w-fit gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+          atualizar → {LATEST_AGENT_VERSION}
+        </Badge>
+      ) : (
+        <span className="text-[10px] text-emerald-500">atualizado</span>
+      )}
     </div>
   );
 }

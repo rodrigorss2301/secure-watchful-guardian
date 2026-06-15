@@ -23,6 +23,7 @@ import { EndpointFormDialog } from "@/components/endpoints/endpoint-form-dialog"
 import { RemoteAccessDialog } from "@/components/endpoints/remote-access-dialog";
 import { PowerDialog } from "@/components/endpoints/power-dialog";
 import { InstallAgentDialog } from "@/components/endpoints/install-agent-dialog";
+import { LATEST_AGENT_VERSION, isAgentOutdated } from "@/lib/agent-version";
 import {
   STATUS_DOT, STATUS_TONE, TYPE_ICON, timeAgo, usageTone,
   type Endpoint,
@@ -253,7 +254,7 @@ function EndpointDetailPage() {
                   <Row label="Último reinício" value={e.last_boot_at ? new Date(e.last_boot_at).toLocaleString() : null} />
                   <Row label={<><Clock className="mr-1 inline h-3 w-3" />Uptime</>} value={fmtUptime(e.uptime_seconds)} />
                   <Row label="Fuso horário" value={e.timezone} />
-                  <Row label={t("endpoints.field.agent")} value={endpoint.agent_version} />
+                  <Row label={t("endpoints.field.agent")} value={<AgentVersionInline version={endpoint.agent_version} />} />
                   <Row label="IP público" value={e.public_ip && <span className="font-mono">{e.public_ip}</span>} />
                   <Row label="Data de adição" value={endpoint.created_at ? new Date(endpoint.created_at).toLocaleString() : null} />
                 </dl>
@@ -592,6 +593,31 @@ function ActivityCard({ items }: { items: ActivityItem[] }) {
         </ul>
       )}
     </Card>
+  );
+}
+
+function AgentVersionInline({ version }: { version: string | null }) {
+  if (!version) {
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+        sem agente
+      </Badge>
+    );
+  }
+  const outdated = isAgentOutdated(version);
+  return (
+    <span className="inline-flex items-center gap-2">
+      <span className="font-mono">{version}</span>
+      {outdated ? (
+        <Badge variant="outline" className="gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+          atualizar → {LATEST_AGENT_VERSION}
+        </Badge>
+      ) : (
+        <Badge variant="outline" className="gap-1 border-emerald-500/30 bg-emerald-500/10 text-[10px] text-emerald-500">
+          atualizado
+        </Badge>
+      )}
+    </span>
   );
 }
 
