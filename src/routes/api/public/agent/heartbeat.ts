@@ -58,13 +58,14 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data: ep, error } = await supabaseAdmin
-          .from("endpoints")
-          .select("id, tenant_id")
+        const { data: sec, error } = await supabaseAdmin
+          .from("endpoint_secrets")
+          .select("endpoint_id, tenant_id")
           .eq("agent_token", b.agent_token)
           .maybeSingle();
         if (error) return jsonErr(500, "db_error");
-        if (!ep) return jsonErr(401, "invalid_token");
+        if (!sec) return jsonErr(401, "invalid_token");
+        const ep = { id: sec.endpoint_id, tenant_id: sec.tenant_id };
 
         const ip = b.ip_address ?? request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
 
