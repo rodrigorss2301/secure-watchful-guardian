@@ -97,7 +97,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
   });
 
   const installCmd = token
-    ? `powershell -NoProfile -ExecutionPolicy Bypass -Command "& ([scriptblock]::Create((iwr -useb '${baseUrl}/agent/install.ps1').Content)) -BaseUrl '${baseUrl}' -EnrollToken '${token}'"`
+    ? `powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:RMM_URL='${baseUrl}'; $env:RMM_TOKEN='${token}'; iex (iwr -useb ($env:RMM_URL + '/agent/install.ps1')).Content"`
     : "";
 
   const copy = async (text: string, label: string) => {
