@@ -100,7 +100,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
   // a single line into PowerShell or cmd without any quoting/escaping issues.
   const installCmd = token
     ? (() => {
-        const inner = `$env:RMM_URL='${baseUrl}'; $env:RMM_TOKEN='${token}'; iex (iwr -useb ($env:RMM_URL + '/agent/install.ps1')).Content`;
+        const inner = `$env:RMM_URL='${baseUrl}'; $env:RMM_TOKEN='${token}'; $r=iwr -UseBasicParsing ($env:RMM_URL + '/agent/install.ps1'); $s=if($r.Content -is [byte[]]){[Text.Encoding]::UTF8.GetString($r.Content)}else{[string]$r.Content}; iex $s`;
         // UTF-16LE encode
         const bytes = new Uint8Array(inner.length * 2);
         for (let i = 0; i < inner.length; i++) {
