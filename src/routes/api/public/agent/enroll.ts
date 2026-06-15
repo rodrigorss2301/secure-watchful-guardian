@@ -63,7 +63,6 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
           ip_address: ip,
           mac_address: b.mac_address ?? null,
           agent_version: b.agent_version ?? null,
-          agent_token: agentToken,
           last_heartbeat: new Date().toISOString(),
           last_seen_ip: ip,
         };
@@ -74,6 +73,11 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
 
         const { data: endpoint, error: epErr } = await endpointQuery;
         if (epErr || !endpoint) return jsonErr(500, "endpoint_create_failed", epErr?.message);
+
+        const { error: secErr } = await supabaseAdmin
+          .from("endpoint_secrets")
+          .upsert({ endpoint_id: endpoint.id, tenant_id: enr.tenant_id, agent_token: agentToken });
+        if (secErr) return jsonErr(500, "secret_store_failed", secErr.message);
 
         await supabaseAdmin
           .from("agent_enrollments")
