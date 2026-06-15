@@ -9,6 +9,7 @@ const Body = z.object({
   ip_address: z.string().max(64).optional().nullable(),
   agent_version: z.string().max(40).optional().nullable(),
   os_version: z.string().max(120).optional().nullable(),
+  tailscale_ip: z.string().max(64).optional().nullable(),
   // Inventário expandido (opcional)
   cpu_model: z.string().max(200).optional().nullable(),
   cpu_cores: z.number().int().min(0).max(4096).optional().nullable(),
@@ -91,6 +92,7 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
             last_seen_ip: ip,
             ...(b.agent_version ? { agent_version: b.agent_version } : {}),
             ...(b.os_version ? { os_version: b.os_version } : {}),
+            ...(b.tailscale_ip !== undefined ? { tailscale_ip: b.tailscale_ip } : {}),
             ...inv,
             ...(hasInventory ? { inventory_updated_at: new Date().toISOString() } : {}),
           })

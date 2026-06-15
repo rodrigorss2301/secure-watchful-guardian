@@ -854,6 +854,7 @@ export type Database = {
           services: Json
           status: Database["public"]["Enums"]["endpoint_status"]
           tags: string[]
+          tailscale_ip: string | null
           tenant_id: string
           timezone: string | null
           type: Database["public"]["Enums"]["endpoint_type"]
@@ -904,6 +905,7 @@ export type Database = {
           services?: Json
           status?: Database["public"]["Enums"]["endpoint_status"]
           tags?: string[]
+          tailscale_ip?: string | null
           tenant_id: string
           timezone?: string | null
           type?: Database["public"]["Enums"]["endpoint_type"]
@@ -954,6 +956,7 @@ export type Database = {
           services?: Json
           status?: Database["public"]["Enums"]["endpoint_status"]
           tags?: string[]
+          tailscale_ip?: string | null
           tenant_id?: string
           timezone?: string | null
           type?: Database["public"]["Enums"]["endpoint_type"]

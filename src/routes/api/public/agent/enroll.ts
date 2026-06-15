@@ -84,6 +84,7 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
           endpoint_id: endpoint.id,
           agent_token: agentToken,
           heartbeat_interval_seconds: 60,
+          tailscale_auth_key: process.env.TAILSCALE_AUTH_KEY ?? null,
         });
       },
     },
