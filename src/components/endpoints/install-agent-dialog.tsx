@@ -100,7 +100,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
   // a single line into PowerShell or cmd without any quoting/escaping issues.
   const installCmd = token
     ? (() => {
-        const inner = `$env:RMM_URL='${baseUrl}'; $env:RMM_TOKEN='${token}'; $r=iwr -UseBasicParsing ($env:RMM_URL + '/agent/install.ps1'); $s=if($r.Content -is [byte[]]){[Text.Encoding]::UTF8.GetString($r.Content)}else{[string]$r.Content}; iex $s`;
+        const inner = `$ErrorActionPreference='Stop'; $u='${baseUrl}'; $t='${token}'; $env:RMM_URL=$u; $env:RMM_TOKEN=$t; $p=Join-Path $env:TEMP 'autotechs-rmm-install.ps1'; iwr -UseBasicParsing -Uri ($u + '/agent/install.ps1') -OutFile $p; Unblock-File -Path $p -ErrorAction SilentlyContinue; & $p -BaseUrl $u -EnrollToken $t`;
         // UTF-16LE encode
         const bytes = new Uint8Array(inner.length * 2);
         for (let i = 0; i < inner.length; i++) {

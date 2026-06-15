@@ -18,18 +18,28 @@ $ErrorActionPreference = "Stop"
 if (-not $BaseUrl     -and $env:RMM_URL)   { $BaseUrl     = $env:RMM_URL }
 if (-not $EnrollToken -and $env:RMM_TOKEN) { $EnrollToken = $env:RMM_TOKEN }
 
-$AgentVersion = "1.4.2"
+$AgentVersion = "1.4.3"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
 $LogPath      = Join-Path $InstallDir "agent.log"
 $TaskName     = "AutotechsRMMAgent"
-$TailscaleExe = "C:\Program Files\Tailscale\tailscale.exe"
+$TailscaleExeCandidates = @(
+  "C:\Program Files\Tailscale\tailscale.exe",
+  "C:\Program Files (x86)\Tailscale\tailscale.exe"
+)
 
 function Write-Log($msg) {
   $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $msg
   try { Add-Content -Path $LogPath -Value $line -ErrorAction SilentlyContinue } catch {}
   Write-Host $line
+}
+
+function Get-TailscaleExePath {
+  foreach ($p in $TailscaleExeCandidates) {
+    if (Test-Path $p) { return $p }
+  }
+  return $TailscaleExeCandidates[0]
 }
 
 function Get-Metrics {
@@ -87,8 +97,9 @@ function Get-SystemInfo {
     $tsIp = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
       Where-Object { $_.IPAddress -like "100.*" -and $_.InterfaceAlias -match "Tailscale" } |
       Select-Object -First 1).IPAddress
-    if (-not $tsIp -and (Test-Path $TailscaleExe)) {
-      $tsOut = & $TailscaleExe ip -4 2>$null | Select-Object -First 1
+    $tsExe = Get-TailscaleExePath
+    if (-not $tsIp -and (Test-Path $tsExe)) {
+      $tsOut = & $tsExe ip -4 2>$null | Select-Object -First 1
       if ($tsOut -and $tsOut -match "^100\.") { $tsIp = "$tsOut".Trim() }
     }
   } catch {}
