@@ -96,8 +96,23 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Build a base64 (UTF-16LE) encoded PowerShell command so the user can paste
+  // a single line into PowerShell or cmd without any quoting/escaping issues.
   const installCmd = token
-    ? `powershell -NoProfile -ExecutionPolicy Bypass -Command "$env:RMM_URL='${baseUrl}'; $env:RMM_TOKEN='${token}'; iex (iwr -useb ($env:RMM_URL + '/agent/install.ps1')).Content"`
+    ? (() => {
+        const inner = `$env:RMM_URL='${baseUrl}'; $env:RMM_TOKEN='${token}'; iex (iwr -useb ($env:RMM_URL + '/agent/install.ps1')).Content`;
+        // UTF-16LE encode
+        const bytes = new Uint8Array(inner.length * 2);
+        for (let i = 0; i < inner.length; i++) {
+          const code = inner.charCodeAt(i);
+          bytes[i * 2] = code & 0xff;
+          bytes[i * 2 + 1] = (code >> 8) & 0xff;
+        }
+        let bin = "";
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const b64 = btoa(bin);
+        return `powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${b64}`;
+      })()
     : "";
 
   const copy = async (text: string, label: string) => {
