@@ -13,12 +13,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.3.0"
+$AgentVersion = "1.4.0"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
 $LogPath      = Join-Path $InstallDir "agent.log"
 $TaskName     = "AutotechsRMMAgent"
+$TailscaleExe = "C:\Program Files\Tailscale\tailscale.exe"
 
 function Write-Log($msg) {
   $line = "[{0}] {1}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $msg
@@ -54,7 +55,10 @@ function Get-SystemInfo {
     # Prefer the IPv4 of the interface used to reach the internet (default route).
     # This avoids picking Hyper-V / WSL / vEthernet virtual switches like 172.x.
     $route = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue |
-      Sort-Object -Property RouteMetric, InterfaceMetric | Select-Object -First 1
+      Where-Object { $_.NextHop -and $_.NextHop -ne "0.0.0.0" } |
+      Sort-Object -Property RouteMetric, InterfaceMetric |
+      Where-Object { (Get-NetAdapter -InterfaceIndex $_.InterfaceIndex -ErrorAction SilentlyContinue).InterfaceDescription -notmatch "Tailscale" } |
+      Select-Object -First 1
     if ($route) {
       $ip = (Get-NetIPAddress -InterfaceIndex $route.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
         Where-Object { $_.IPAddress -notlike "169.*" -and $_.IPAddress -ne "127.0.0.1" } |
@@ -65,7 +69,7 @@ function Get-SystemInfo {
         Where-Object {
           $_.IPAddress -notlike "169.*" -and $_.IPAddress -ne "127.0.0.1" -and
           $_.PrefixOrigin -ne "WellKnown" -and
-          $_.InterfaceAlias -notmatch "vEthernet|Hyper-V|WSL|VMware|VirtualBox|Loopback"
+          $_.InterfaceAlias -notmatch "vEthernet|Hyper-V|WSL|VMware|VirtualBox|Loopback|Tailscale"
         } | Select-Object -First 1).IPAddress
     }
   } catch {}
@@ -73,12 +77,23 @@ function Get-SystemInfo {
   try {
     $mac = (Get-NetAdapter -Physical -ErrorAction Stop | Where-Object Status -eq "Up" | Select-Object -First 1).MacAddress
   } catch {}
+  $tsIp = $null
+  try {
+    $tsIp = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+      Where-Object { $_.IPAddress -like "100.*" -and $_.InterfaceAlias -match "Tailscale" } |
+      Select-Object -First 1).IPAddress
+    if (-not $tsIp -and (Test-Path $TailscaleExe)) {
+      $tsOut = & $TailscaleExe ip -4 2>$null | Select-Object -First 1
+      if ($tsOut -and $tsOut -match "^100\.") { $tsIp = "$tsOut".Trim() }
+    }
+  } catch {}
   return @{
     hostname   = $env:COMPUTERNAME
     os         = $os.Caption
     os_version = $os.Version
     ip_address = $ip
     mac_address = $mac
+    tailscale_ip = $tsIp
   }
 }
 
@@ -287,6 +302,35 @@ function Enable-RdpAccess {
   }
 }
 
+function Install-Tailscale($authKey, $hostname) {
+  if (-not $authKey) { Write-Log "Tailscale: auth key não fornecida — pulando."; return }
+  try {
+    if (-not (Test-Path $TailscaleExe)) {
+      Write-Log "Tailscale: baixando MSI..."
+      $msi = Join-Path $env:TEMP "tailscale-setup.msi"
+      Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.msi" `
+        -OutFile $msi -UseBasicParsing -TimeoutSec 180
+      Write-Log "Tailscale: instalando MSI silenciosamente..."
+      $p = Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$msi`" /qn /norestart" -Wait -PassThru
+      if ($p.ExitCode -ne 0) { Write-Log ("Tailscale: msiexec retornou {0}" -f $p.ExitCode) }
+      Remove-Item $msi -ErrorAction SilentlyContinue
+    } else {
+      Write-Log "Tailscale já instalado."
+    }
+    # Garante que o serviço esteja rodando
+    Set-Service -Name "Tailscale" -StartupType Automatic -ErrorAction SilentlyContinue
+    Start-Service -Name "Tailscale" -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 3
+    if (-not (Test-Path $TailscaleExe)) { Write-Log "Tailscale: executável não encontrado após instalação."; return }
+    # Sobe (idempotente: re-rodar com a mesma key não cria duplicata)
+    $tsHost = ($hostname -replace "[^a-zA-Z0-9\-]", "-").ToLower()
+    Write-Log ("Tailscale: autenticando como '{0}'..." -f $tsHost)
+    & $TailscaleExe up --authkey="$authKey" --hostname="$tsHost" --accept-routes --reset --unattended 2>&1 | ForEach-Object { Write-Log ("tailscale: {0}" -f $_) }
+  } catch {
+    Write-Log ("Tailscale falhou: {0}" -f $_.Exception.Message)
+  }
+}
+
 function Process-Commands($cfg, $commands) {
   if (-not $commands -or $commands.Count -eq 0) { return }
   foreach ($c in $commands) {
@@ -326,6 +370,7 @@ function Invoke-Heartbeat {
     ip_address    = $sys.ip_address
     agent_version = $AgentVersion
     os_version    = $sys.os_version
+    tailscale_ip  = $sys.tailscale_ip
   }
   try {
     $inv = Get-Inventory
@@ -407,6 +452,11 @@ function Install-AutotechsAgent {
 
   Write-Log "Scheduled Task '$TaskName' criada (intervalo: 1 min)."
   Enable-RdpAccess
+  if ($resp.tailscale_auth_key) {
+    Install-Tailscale -authKey $resp.tailscale_auth_key -hostname $sys.hostname
+  } else {
+    Write-Log "Tailscale: backend não forneceu auth key — pulando."
+  }
   Invoke-Heartbeat
   Write-Log "Instalação concluída."
 }
