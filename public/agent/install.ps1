@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.4.1"
+$AgentVersion = "1.4.2"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
@@ -312,9 +312,34 @@ function Enable-RdpAccess {
     Remove-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -ErrorAction SilentlyContinue
     New-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -Direction Inbound -Action Allow `
       -Protocol TCP -LocalPort $Port -Profile Any -ErrorAction SilentlyContinue | Out-Null
+    Remove-NetFirewallRule -DisplayName "Autotechs RMM - RDP UDP" -ErrorAction SilentlyContinue
+    New-NetFirewallRule -DisplayName "Autotechs RMM - RDP UDP" -Direction Inbound -Action Allow `
+      -Protocol UDP -LocalPort $Port -Profile Any -ErrorAction SilentlyContinue | Out-Null
     $messages += ("firewall liberado para TCP {0}" -f $Port)
   } catch {
     $messages += ("falha no firewall: {0}" -f $_.Exception.Message)
+  }
+
+  # Tailscale: garantir que o adaptador virtual esteja classificado como rede Privada
+  # (caso contrário, regras padrão de RDP só liberam em Private/Domain e o Windows
+  # bloqueia o tráfego mesh do Tailscale, gerando o erro 0x204 no mstsc).
+  try {
+    $tsAdapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
+      $_.InterfaceDescription -match "Tailscale" -or $_.Name -match "Tailscale"
+    }
+    foreach ($a in $tsAdapters) {
+      try {
+        Set-NetConnectionProfile -InterfaceAlias $a.Name -NetworkCategory Private -ErrorAction Stop
+        $messages += ("perfil de rede '{0}' definido como Private" -f $a.Name)
+      } catch {
+        $messages += ("não foi possível alterar perfil de '{0}': {1}" -f $a.Name, $_.Exception.Message)
+      }
+    }
+    if (-not $tsAdapters) {
+      $messages += "adaptador Tailscale não encontrado (instale/conecte o Tailscale para acesso remoto via mesh)"
+    }
+  } catch {
+    $messages += ("falha ao ajustar perfil de rede do Tailscale: {0}" -f $_.Exception.Message)
   }
 
   Start-Sleep -Seconds 2
