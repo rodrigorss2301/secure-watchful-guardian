@@ -97,7 +97,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
   });
 
   const installCmd = token
-    ? `iwr -useb "${baseUrl}/agent/install.ps1" -OutFile "$env:TEMP\\install.ps1"; & "$env:TEMP\\install.ps1" -BaseUrl "${baseUrl}" -EnrollToken "${token}"`
+    ? `powershell -NoProfile -ExecutionPolicy Bypass -Command "iwr -useb '${baseUrl}/agent/install.ps1' -OutFile \\"$env:TEMP\\install.ps1\\"; & \\"$env:TEMP\\install.ps1\\" -BaseUrl '${baseUrl}' -EnrollToken '${token}'"`
     : "";
 
   const copy = async (text: string, label: string) => {
