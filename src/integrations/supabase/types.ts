@@ -809,9 +809,47 @@ export type Database = {
           },
         ]
       }
+      endpoint_secrets: {
+        Row: {
+          agent_token: string
+          created_at: string
+          endpoint_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          agent_token: string
+          created_at?: string
+          endpoint_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          agent_token?: string
+          created_at?: string
+          endpoint_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_secrets_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: true
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_secrets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoints: {
         Row: {
-          agent_token: string | null
           agent_version: string | null
           bios_date: string | null
           bios_vendor: string | null
@@ -862,7 +900,6 @@ export type Database = {
           uptime_seconds: number | null
         }
         Insert: {
-          agent_token?: string | null
           agent_version?: string | null
           bios_date?: string | null
           bios_vendor?: string | null
@@ -913,7 +950,6 @@ export type Database = {
           uptime_seconds?: number | null
         }
         Update: {
-          agent_token?: string | null
           agent_version?: string | null
           bios_date?: string | null
           bios_vendor?: string | null
