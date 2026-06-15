@@ -378,15 +378,31 @@ function Enable-RdpAccess {
 function Install-Tailscale($authKey, $hostname) {
   if (-not $authKey) { Write-Log "Tailscale: auth key não fornecida — pulando."; return }
   try {
-    if (-not (Test-Path $TailscaleExe)) {
+    $tsExe = Get-TailscaleExePath
+    if (-not (Test-Path $tsExe)) {
       Write-Log "Tailscale: baixando MSI..."
       $msi = Join-Path $env:TEMP "tailscale-setup.msi"
-      Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.msi" `
-        -OutFile $msi -UseBasicParsing -TimeoutSec 180
+      $arch = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "x86" }
+      $urls = @(
+        "https://pkgs.tailscale.com/stable/tailscale-setup-latest-$arch.msi",
+        "https://dl.tailscale.com/stable/tailscale-setup-latest-$arch.msi"
+      )
+      $downloaded = $false
+      foreach ($url in $urls) {
+        try {
+          Invoke-WebRequest -Uri $url -OutFile $msi -UseBasicParsing -TimeoutSec 180
+          $downloaded = $true
+          break
+        } catch {
+          Write-Log ("Tailscale: download falhou em {0}: {1}" -f $url, $_.Exception.Message)
+        }
+      }
+      if (-not $downloaded) { throw "não foi possível baixar o MSI do Tailscale" }
       Write-Log "Tailscale: instalando MSI silenciosamente..."
       $p = Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$msi`" /qn /norestart" -Wait -PassThru
       if ($p.ExitCode -ne 0) { Write-Log ("Tailscale: msiexec retornou {0}" -f $p.ExitCode) }
       Remove-Item $msi -ErrorAction SilentlyContinue
+      $tsExe = Get-TailscaleExePath
     } else {
       Write-Log "Tailscale já instalado."
     }
@@ -394,11 +410,12 @@ function Install-Tailscale($authKey, $hostname) {
     Set-Service -Name "Tailscale" -StartupType Automatic -ErrorAction SilentlyContinue
     Start-Service -Name "Tailscale" -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 3
-    if (-not (Test-Path $TailscaleExe)) { Write-Log "Tailscale: executável não encontrado após instalação."; return }
+    $tsExe = Get-TailscaleExePath
+    if (-not (Test-Path $tsExe)) { Write-Log "Tailscale: executável não encontrado após instalação."; return }
     # Sobe (idempotente: re-rodar com a mesma key não cria duplicata)
     $tsHost = ($hostname -replace "[^a-zA-Z0-9\-]", "-").ToLower()
     Write-Log ("Tailscale: autenticando como '{0}'..." -f $tsHost)
-    & $TailscaleExe up --authkey="$authKey" --hostname="$tsHost" --accept-routes --reset --unattended 2>&1 | ForEach-Object { Write-Log ("tailscale: {0}" -f $_) }
+    & $tsExe up --authkey="$authKey" --hostname="$tsHost" --accept-routes --reset --unattended 2>&1 | ForEach-Object { Write-Log ("tailscale: {0}" -f $_) }
   } catch {
     Write-Log ("Tailscale falhou: {0}" -f $_.Exception.Message)
   }
