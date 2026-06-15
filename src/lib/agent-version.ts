@@ -1,6 +1,6 @@
 // Versão mais recente do agente Windows publicada em /public/agent/install.ps1.
 // Mantenha em sincronia com a variável $AgentVersion daquele script.
-export const LATEST_AGENT_VERSION = "1.4.0";
+export const LATEST_AGENT_VERSION = "1.4.1";
 
 function parse(v: string): number[] {
   return v.replace(/[^0-9.]/g, "").split(".").map((n) => parseInt(n, 10) || 0);

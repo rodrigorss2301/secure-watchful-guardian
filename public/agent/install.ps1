@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$AgentVersion = "1.4.0"
+$AgentVersion = "1.4.1"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
@@ -265,12 +265,9 @@ function Invoke-AgentCommand($cmd, $params) {
 
   switch ($cmd) {
     "enable_rdp"  {
-      Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0
-      Set-Service -Name "TermService" -StartupType Automatic
-      Start-Service -Name "TermService" -ErrorAction SilentlyContinue
-      Enable-NetFirewallRule -DisplayGroup "Área de Trabalho Remota" -ErrorAction SilentlyContinue | Out-Null
-      Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
-      return "RDP enabled, TermService running, Windows Firewall RDP rules enabled"
+      $rdpPort = 3389
+      if ($params -and ($params.PSObject.Properties.Name -contains "port")) { $rdpPort = [int]$params.port }
+      return (Enable-RdpAccess -Port $rdpPort)
     }
     "shutdown"    { Start-Process -FilePath "shutdown.exe" -ArgumentList ("/s /t {0}{1}" -f $delay, $msgArg) -WindowStyle Hidden -Wait; return "shutdown /s /t $delay scheduled" }
     "restart"     { Start-Process -FilePath "shutdown.exe" -ArgumentList ("/r /t {0}{1}" -f $delay, $msgArg) -WindowStyle Hidden -Wait; return "shutdown /r /t $delay scheduled" }
@@ -283,23 +280,58 @@ function Invoke-AgentCommand($cmd, $params) {
 }
 
 function Enable-RdpAccess {
+  [CmdletBinding()]
+  param([int]$Port = 3389)
+
+  if ($Port -lt 1 -or $Port -gt 65535) { $Port = 3389 }
+  $messages = @()
   try {
-    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0 -ErrorAction SilentlyContinue
-    # Permite NLA (mais seguro). Comente a linha abaixo se precisar de clientes antigos.
+    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 0 -ErrorAction Stop
     Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name "UserAuthentication" -Value 1 -ErrorAction SilentlyContinue
+    Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" -Name "PortNumber" -Value $Port -Type DWord -ErrorAction SilentlyContinue
+    $messages += "RDP habilitado no Windows"
+  } catch {
+    $messages += ("falha ao habilitar RDP: {0}" -f $_.Exception.Message)
+  }
+
+  try {
     Set-Service -Name "TermService" -StartupType Automatic -ErrorAction SilentlyContinue
     Start-Service -Name "TermService" -ErrorAction SilentlyContinue
+    Restart-Service -Name "TermService" -Force -ErrorAction SilentlyContinue
+    $messages += "TermService ativo"
+  } catch {
+    $messages += ("falha no TermService: {0}" -f $_.Exception.Message)
+  }
+
+  try {
+    Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-TCP","RemoteDesktop-UserMode-In-UDP" -ErrorAction SilentlyContinue | Out-Null
     Enable-NetFirewallRule -DisplayGroup "Área de Trabalho Remota" -ErrorAction SilentlyContinue | Out-Null
     Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
-    # Garante que exista uma regra liberando TCP 3389 mesmo em locales/edições sem o grupo padrão
-    if (-not (Get-NetFirewallRule -DisplayName "Autotechs RMM - RDP 3389" -ErrorAction SilentlyContinue)) {
-      New-NetFirewallRule -DisplayName "Autotechs RMM - RDP 3389" -Direction Inbound -Action Allow `
-        -Protocol TCP -LocalPort 3389 -Profile Any -ErrorAction SilentlyContinue | Out-Null
-    }
-    Write-Log "RDP habilitado e regras de firewall aplicadas."
+    netsh advfirewall firewall set rule group="remote desktop" new enable=Yes | Out-Null
+    netsh advfirewall firewall set rule group="área de trabalho remota" new enable=Yes | Out-Null
+    Remove-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -ErrorAction SilentlyContinue
+    New-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -Direction Inbound -Action Allow `
+      -Protocol TCP -LocalPort $Port -Profile Any -ErrorAction SilentlyContinue | Out-Null
+    $messages += ("firewall liberado para TCP {0}" -f $Port)
   } catch {
-    Write-Log ("Falha ao habilitar RDP: {0}" -f $_.Exception.Message)
+    $messages += ("falha no firewall: {0}" -f $_.Exception.Message)
   }
+
+  Start-Sleep -Seconds 2
+  try {
+    $listening = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($listening) {
+      $messages += ("porta TCP {0} escutando" -f $Port)
+    } else {
+      $messages += ("atenção: porta TCP {0} ainda não está escutando; reinicie o Windows e tente novamente" -f $Port)
+    }
+  } catch {
+    $messages += "não foi possível validar a porta RDP"
+  }
+
+  $result = ($messages -join "; ")
+  Write-Log $result
+  return $result
 }
 
 function Install-Tailscale($authKey, $hostname) {
