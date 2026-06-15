@@ -107,7 +107,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Terminal className="h-5 w-5" />
@@ -183,7 +183,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
                   Comando de instalação (PowerShell como Administrador)
                 </Label>
                 <div className="relative">
-                  <pre className="overflow-x-auto rounded-md border border-border bg-zinc-950 p-3 text-xs leading-relaxed text-zinc-100">
+                  <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-all rounded-md border border-border bg-zinc-950 p-3 pr-20 text-xs leading-relaxed text-zinc-100">
 {installCmd}
                   </pre>
                   <Button
