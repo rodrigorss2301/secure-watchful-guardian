@@ -1,0 +1,1 @@
+ALTER TABLE public.endpoints ADD COLUMN IF NOT EXISTS tailscale_ip TEXT;
