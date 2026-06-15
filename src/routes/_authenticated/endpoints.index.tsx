@@ -274,3 +274,26 @@ function MiniUsage({ cpu, ram, disk }: { cpu: number | null; ram: number | null;
     </div>
   );
 }
+
+function AgentVersionCell({ version }: { version: string | null }) {
+  const outdated = isAgentOutdated(version);
+  if (!version) {
+    return (
+      <Badge variant="outline" className="gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+        sem agente
+      </Badge>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="font-mono text-xs">{version}</span>
+      {outdated ? (
+        <Badge variant="outline" className="w-fit gap-1 border-amber-500/30 bg-amber-500/10 text-[10px] text-amber-500">
+          atualizar → {LATEST_AGENT_VERSION}
+        </Badge>
+      ) : (
+        <span className="text-[10px] text-emerald-500">atualizado</span>
+      )}
+    </div>
+  );
+}
