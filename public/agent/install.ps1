@@ -579,6 +579,14 @@ switch ($Mode) {
   "Heartbeat" { Invoke-Heartbeat }
   "Install"   {
     if (-not $BaseUrl -or -not $EnrollToken) { throw "BaseUrl e EnrollToken são obrigatórios. Recebido BaseUrl='$BaseUrl' EnrollToken='$(if($EnrollToken){'(definido)'}else{'(vazio)'})'" }
-    Invoke-AutotechsInstall -BaseUrl $BaseUrl -EnrollToken $EnrollToken
+    # Chamada via Get-Command (mais robusto contra problemas de escopo em PS 5.1)
+    $fn = Get-Command -Name Invoke-AutotechsInstall -CommandType Function -ErrorAction SilentlyContinue
+    if (-not $fn) {
+      # Fallback: dot-source o próprio script para garantir registro de funções
+      . $PSCommandPath
+      $fn = Get-Command -Name Invoke-AutotechsInstall -CommandType Function -ErrorAction SilentlyContinue
+    }
+    if (-not $fn) { throw "Função Invoke-AutotechsInstall não foi registrada. Funções disponíveis: $((Get-Command -CommandType Function | Where-Object { $_.Source -eq '' } | Select-Object -ExpandProperty Name) -join ', ')" }
+    & $fn -BaseUrl $BaseUrl -EnrollToken $EnrollToken
   }
 }
