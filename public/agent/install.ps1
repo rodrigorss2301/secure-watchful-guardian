@@ -499,75 +499,6 @@ function Invoke-Heartbeat {
   }
 }
 
-function Invoke-AutotechsInstall($BaseUrl, $EnrollToken) {
-  if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw "Execute o PowerShell como Administrador."
-  }
-
-  New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-  Write-Log "Iniciando instalação do agente Autotechs RMM..."
-
-  # Baixa este script para uso pelo Scheduled Task
-  try {
-    Invoke-WebRequest -Uri ("{0}/agent/install.ps1" -f $BaseUrl.TrimEnd("/")) -OutFile $AgentPath -UseBasicParsing
-  } catch {
-    Copy-Item -Path $PSCommandPath -Destination $AgentPath -Force -ErrorAction SilentlyContinue
-  }
-  if (-not (Test-Path $AgentPath)) { throw "Falha ao gravar agente em $AgentPath" }
-
-  # Enroll
-  $sys = Get-SystemInfo
-  $payload = @{
-    token         = $EnrollToken
-    hostname      = $sys.hostname
-    os            = $sys.os
-    os_version    = $sys.os_version
-    ip_address    = $sys.ip_address
-    mac_address   = $sys.mac_address
-    agent_version = $AgentVersion
-    type          = "workstation"
-  } | ConvertTo-Json -Compress
-
-  Write-Log "Registrando endpoint..."
-  $resp = Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/enroll" -f $BaseUrl.TrimEnd("/")) `
-    -ContentType "application/json" -Body $payload -TimeoutSec 30
-
-  if (-not $resp.agent_token) { throw "Resposta inválida: $($resp | ConvertTo-Json)" }
-
-  $cfg = @{
-    base_url     = $BaseUrl.TrimEnd("/")
-    endpoint_id  = $resp.endpoint_id
-    agent_token  = $resp.agent_token
-    installed_at = (Get-Date).ToString("o")
-  }
-  $cfg | ConvertTo-Json | Set-Content -Path $ConfigPath -Encoding UTF8
-  Write-Log "Endpoint registrado: $($resp.endpoint_id)"
-
-  # Registra Scheduled Task (a cada 1 min, como SYSTEM)
-  Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
-  $action  = New-ScheduledTaskAction -Execute "powershell.exe" `
-    -Argument ("-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"{0}`" -Mode Heartbeat" -f $AgentPath)
-  $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
-    -RepetitionInterval (New-TimeSpan -Minutes 1)
-  $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
-  $settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
-  Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger `
-    -Principal $principal -Settings $settings -Description "Autotechs RMM Agent" | Out-Null
-
-  Write-Log "Scheduled Task '$TaskName' criada (intervalo: 1 min)."
-  Enable-RdpAccess
-  if ($resp.tailscale_auth_key) {
-    Install-Tailscale -authKey $resp.tailscale_auth_key -hostname $sys.hostname
-  } else {
-    Write-Log "Tailscale: backend não forneceu auth key — pulando."
-  }
-  Invoke-Heartbeat
-  Write-Log "Instalação concluída."
-}
-
-# Alias para compatibilidade com chamadas externas (iex)
-Set-Alias -Name Install-AutotechsAgent -Value Invoke-AutotechsInstall -Scope Global -ErrorAction SilentlyContinue
-
 function Uninstall-AutotechsAgent {
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
   Remove-Item -Path $InstallDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -578,15 +509,54 @@ function Uninstall-AutotechsAgent {
 switch ($Mode) {
   "Heartbeat" { Invoke-Heartbeat }
   "Install"   {
-    if (-not $BaseUrl -or -not $EnrollToken) { throw "BaseUrl e EnrollToken são obrigatórios. Recebido BaseUrl='$BaseUrl' EnrollToken='$(if($EnrollToken){'(definido)'}else{'(vazio)'})'" }
-    # Chamada via Get-Command (mais robusto contra problemas de escopo em PS 5.1)
-    $fn = Get-Command -Name Invoke-AutotechsInstall -CommandType Function -ErrorAction SilentlyContinue
-    if (-not $fn) {
-      # Fallback: dot-source o próprio script para garantir registro de funções
-      . $PSCommandPath
-      $fn = Get-Command -Name Invoke-AutotechsInstall -CommandType Function -ErrorAction SilentlyContinue
+    if (-not $BaseUrl -or -not $EnrollToken) { throw "BaseUrl e EnrollToken são obrigatórios." }
+    if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+      throw "Execute o PowerShell como Administrador."
     }
-    if (-not $fn) { throw "Função Invoke-AutotechsInstall não foi registrada. Funções disponíveis: $((Get-Command -CommandType Function | Where-Object { $_.Source -eq '' } | Select-Object -ExpandProperty Name) -join ', ')" }
-    & $fn -BaseUrl $BaseUrl -EnrollToken $EnrollToken
+    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    Write-Log "Iniciando instalação do agente Autotechs RMM..."
+    try {
+      Invoke-WebRequest -Uri ("{0}/agent/install.ps1" -f $BaseUrl.TrimEnd("/")) -OutFile $AgentPath -UseBasicParsing
+    } catch {
+      Copy-Item -Path $PSCommandPath -Destination $AgentPath -Force -ErrorAction SilentlyContinue
+    }
+    if (-not (Test-Path $AgentPath)) { throw "Falha ao gravar agente em $AgentPath" }
+    $sys = Get-SystemInfo
+    $payload = @{
+      token         = $EnrollToken
+      hostname      = $sys.hostname
+      os            = $sys.os
+      os_version    = $sys.os_version
+      ip_address    = $sys.ip_address
+      mac_address   = $sys.mac_address
+      agent_version = $AgentVersion
+      type          = "workstation"
+    } | ConvertTo-Json -Compress
+    Write-Log "Registrando endpoint..."
+    $resp = Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/enroll" -f $BaseUrl.TrimEnd("/")) -ContentType "application/json" -Body $payload -TimeoutSec 30
+    if (-not $resp.agent_token) { throw "Resposta inválida: $($resp | ConvertTo-Json)" }
+    $cfg = @{
+      base_url     = $BaseUrl.TrimEnd("/")
+      endpoint_id  = $resp.endpoint_id
+      agent_token  = $resp.agent_token
+      installed_at = (Get-Date).ToString("o")
+    }
+    $cfg | ConvertTo-Json | Set-Content -Path $ConfigPath -Encoding UTF8
+    Write-Log "Endpoint registrado: $($resp.endpoint_id)"
+    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
+    $action  = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ("-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"{0}`" -Mode Heartbeat" -f $AgentPath)
+    $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) -RepetitionInterval (New-TimeSpan -Minutes 1)
+    $principal = New-ScheduledTaskPrincipal -UserId "SYSTEM" -LogonType ServiceAccount -RunLevel Highest
+    $settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
+    Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description "Autotechs RMM Agent" | Out-Null
+    Write-Log "Scheduled Task '$TaskName' criada (intervalo: 1 min)."
+    Enable-RdpAccess
+    if ($resp.tailscale_auth_key) {
+      Install-Tailscale -authKey $resp.tailscale_auth_key -hostname $sys.hostname
+    } else {
+      Write-Log "Tailscale: backend não forneceu auth key — pulando."
+    }
+    Invoke-Heartbeat
+    Write-Log "Instalação concluída."
   }
 }
