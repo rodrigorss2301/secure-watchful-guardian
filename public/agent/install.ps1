@@ -499,13 +499,7 @@ function Invoke-Heartbeat {
   }
 }
 
-function Install-AutotechsAgent {
-  [CmdletBinding()]
-  param(
-    [Parameter(Mandatory)] [string]$BaseUrl,
-    [Parameter(Mandatory)] [string]$EnrollToken
-  )
-
+function Invoke-AutotechsInstall($BaseUrl, $EnrollToken) {
   if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw "Execute o PowerShell como Administrador."
   }
@@ -571,6 +565,9 @@ function Install-AutotechsAgent {
   Write-Log "Instalação concluída."
 }
 
+# Alias para compatibilidade com chamadas externas (iex)
+Set-Alias -Name Install-AutotechsAgent -Value Invoke-AutotechsInstall -Scope Global -ErrorAction SilentlyContinue
+
 function Uninstall-AutotechsAgent {
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
   Remove-Item -Path $InstallDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -581,6 +578,7 @@ function Uninstall-AutotechsAgent {
 switch ($Mode) {
   "Heartbeat" { Invoke-Heartbeat }
   "Install"   {
-    if ($BaseUrl -and $EnrollToken) { Install-AutotechsAgent -BaseUrl $BaseUrl -EnrollToken $EnrollToken }
+    if (-not $BaseUrl -or -not $EnrollToken) { throw "BaseUrl e EnrollToken são obrigatórios. Recebido BaseUrl='$BaseUrl' EnrollToken='$(if($EnrollToken){'(definido)'}else{'(vazio)'})'" }
+    Invoke-AutotechsInstall -BaseUrl $BaseUrl -EnrollToken $EnrollToken
   }
 }
