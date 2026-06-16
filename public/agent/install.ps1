@@ -24,7 +24,7 @@ $ErrorActionPreference = "Stop"
 if (-not $BaseUrl     -and $env:RMM_URL)   { $BaseUrl     = $env:RMM_URL }
 if (-not $EnrollToken -and $env:RMM_TOKEN) { $EnrollToken = $env:RMM_TOKEN }
 
-$AgentVersion = "1.4.4"
+$AgentVersion = "1.4.5"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $ConfigPath   = Join-Path $InstallDir "config.json"
 $AgentPath    = Join-Path $InstallDir "agent.ps1"
@@ -386,19 +386,33 @@ function Install-Tailscale($authKey, $hostname) {
   try {
     $tsExe = Get-TailscaleExePath
     if (-not (Test-Path $tsExe)) {
-      Write-Log "Tailscale: baixando MSI..."
+      Write-Log "Tailscale: consultando versão estável..."
+      $arch = if ([Environment]::Is64BitOperatingSystem) {
+        if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") { "arm64" } else { "amd64" }
+      } else { "x86" }
       $msi = Join-Path $env:TEMP "tailscale-setup.msi"
-      $arch = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "x86" }
-      $urls = @(
-        "https://pkgs.tailscale.com/stable/tailscale-setup-latest-$arch.msi",
-        "https://dl.tailscale.com/stable/tailscale-setup-latest-$arch.msi"
-      )
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+      $msiName = $null
+      try {
+        $idx = Invoke-RestMethod -Uri "https://pkgs.tailscale.com/stable/?mode=json" -UseBasicParsing -TimeoutSec 60
+        if ($idx -and $idx.MSIs -and $idx.MSIs.$arch) { $msiName = $idx.MSIs.$arch }
+      } catch {
+        Write-Log ("Tailscale: índice falhou: {0}" -f $_.Exception.Message)
+      }
+      $urls = @()
+      if ($msiName) {
+        $urls += "https://pkgs.tailscale.com/stable/$msiName"
+        $urls += "https://dl.tailscale.com/stable/$msiName"
+      }
+      # Fallbacks: versão fixa conhecida caso o índice falhe
+      $urls += "https://pkgs.tailscale.com/stable/tailscale-setup-1.98.4-$arch.msi"
+      $urls += "https://dl.tailscale.com/stable/tailscale-setup-1.98.4-$arch.msi"
       $downloaded = $false
       foreach ($url in $urls) {
         try {
-          Invoke-WebRequest -Uri $url -OutFile $msi -UseBasicParsing -TimeoutSec 180
-          $downloaded = $true
-          break
+          Write-Log ("Tailscale: baixando {0}" -f $url)
+          Invoke-WebRequest -Uri $url -OutFile $msi -UseBasicParsing -TimeoutSec 300
+          if ((Test-Path $msi) -and ((Get-Item $msi).Length -gt 1MB)) { $downloaded = $true; break }
         } catch {
           Write-Log ("Tailscale: download falhou em {0}: {1}" -f $url, $_.Exception.Message)
         }
