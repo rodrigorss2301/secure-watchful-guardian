@@ -20,7 +20,7 @@ if ($Mode -ne "Install" -and $Mode -ne "Heartbeat") { $Mode = "Install" }
 
 $ErrorActionPreference = "Stop"
 
-# Fallback para variáveis de ambiente (permite invocação simples via `iex`)
+# Fallback para variaveis de ambiente (permite invocacao simples via `iex`)
 if (-not $BaseUrl     -and $env:RMM_URL)   { $BaseUrl     = $env:RMM_URL }
 if (-not $EnrollToken -and $env:RMM_TOKEN) { $EnrollToken = $env:RMM_TOKEN }
 
@@ -250,7 +250,7 @@ function Get-Inventory {
     $inv.running_processes = @($procs)
   } catch {}
 
-  # Serviços
+  # Servicos
   try {
     $svcs = Get-Service -ErrorAction SilentlyContinue | ForEach-Object {
       @{ name = $_.Name; display_name = $_.DisplayName; status = "$($_.Status)"; start_type = "$($_.StartType)" }
@@ -258,7 +258,7 @@ function Get-Inventory {
     $inv.services = @($svcs | Select-Object -First 300)
   } catch {}
 
-  # Atualizações pendentes (Windows Update)
+  # Atualizacoes pendentes (Windows Update)
   try {
     $session = New-Object -ComObject Microsoft.Update.Session
     $searcher = $session.CreateUpdateSearcher()
@@ -327,10 +327,10 @@ function Enable-RdpAccess {
 
   try {
     Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-TCP","RemoteDesktop-UserMode-In-UDP" -ErrorAction SilentlyContinue | Out-Null
-    Enable-NetFirewallRule -DisplayGroup "Área de Trabalho Remota" -ErrorAction SilentlyContinue | Out-Null
+    Enable-NetFirewallRule -DisplayGroup "Area de Trabalho Remota" -ErrorAction SilentlyContinue | Out-Null
     Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
     netsh advfirewall firewall set rule group="remote desktop" new enable=Yes | Out-Null
-    netsh advfirewall firewall set rule group="área de trabalho remota" new enable=Yes | Out-Null
+    netsh advfirewall firewall set rule group="area de trabalho remota" new enable=Yes | Out-Null
     Remove-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -ErrorAction SilentlyContinue
     New-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -Direction Inbound -Action Allow `
       -Protocol TCP -LocalPort $Port -Profile Any -ErrorAction SilentlyContinue | Out-Null
@@ -343,8 +343,8 @@ function Enable-RdpAccess {
   }
 
   # Tailscale: garantir que o adaptador virtual esteja classificado como rede Privada
-  # (caso contrário, regras padrão de RDP só liberam em Private/Domain e o Windows
-  # bloqueia o tráfego mesh do Tailscale, gerando o erro 0x204 no mstsc).
+  # (caso contrario, regras padrao de RDP so liberam em Private/Domain e o Windows
+  # bloqueia o trafego mesh do Tailscale, gerando o erro 0x204 no mstsc).
   try {
     $tsAdapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object {
       $_.InterfaceDescription -match "Tailscale" -or $_.Name -match "Tailscale"
@@ -354,11 +354,11 @@ function Enable-RdpAccess {
         Set-NetConnectionProfile -InterfaceAlias $a.Name -NetworkCategory Private -ErrorAction Stop
         $messages += ("perfil de rede '{0}' definido como Private" -f $a.Name)
       } catch {
-        $messages += ("não foi possível alterar perfil de '{0}': {1}" -f $a.Name, $_.Exception.Message)
+        $messages += ("nao foi possivel alterar perfil de '{0}': {1}" -f $a.Name, $_.Exception.Message)
       }
     }
     if (-not $tsAdapters) {
-      $messages += "adaptador Tailscale não encontrado (instale/conecte o Tailscale para acesso remoto via mesh)"
+      $messages += "adaptador Tailscale nao encontrado (instale/conecte o Tailscale para acesso remoto via mesh)"
     }
   } catch {
     $messages += ("falha ao ajustar perfil de rede do Tailscale: {0}" -f $_.Exception.Message)
@@ -370,10 +370,10 @@ function Enable-RdpAccess {
     if ($listening) {
       $messages += ("porta TCP {0} escutando" -f $Port)
     } else {
-      $messages += ("atenção: porta TCP {0} ainda não está escutando; reinicie o Windows e tente novamente" -f $Port)
+      $messages += ("atencao: porta TCP {0} ainda nao esta escutando; reinicie o Windows e tente novamente" -f $Port)
     }
   } catch {
-    $messages += "não foi possível validar a porta RDP"
+    $messages += "nao foi possivel validar a porta RDP"
   }
 
   $result = ($messages -join "; ")
@@ -382,11 +382,11 @@ function Enable-RdpAccess {
 }
 
 function Install-Tailscale($authKey, $hostname) {
-  if (-not $authKey) { Write-Log "Tailscale: auth key não fornecida — pulando."; return }
+  if (-not $authKey) { Write-Log "Tailscale: auth key nao fornecida - pulando."; return }
   try {
     $tsExe = Get-TailscaleExePath
     if (-not (Test-Path $tsExe)) {
-      Write-Log "Tailscale: consultando versão estável..."
+      Write-Log "Tailscale: consultando versao estavel..."
       $arch = if ([Environment]::Is64BitOperatingSystem) {
         if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64" -or $env:PROCESSOR_ARCHITEW6432 -eq "ARM64") { "arm64" } else { "amd64" }
       } else { "x86" }
@@ -397,14 +397,14 @@ function Install-Tailscale($authKey, $hostname) {
         $idx = Invoke-RestMethod -Uri "https://pkgs.tailscale.com/stable/?mode=json" -UseBasicParsing -TimeoutSec 60
         if ($idx -and $idx.MSIs -and $idx.MSIs.$arch) { $msiName = $idx.MSIs.$arch }
       } catch {
-        Write-Log ("Tailscale: índice falhou: {0}" -f $_.Exception.Message)
+        Write-Log ("Tailscale: indice falhou: {0}" -f $_.Exception.Message)
       }
       $urls = @()
       if ($msiName) {
         $urls += "https://pkgs.tailscale.com/stable/$msiName"
         $urls += "https://dl.tailscale.com/stable/$msiName"
       }
-      # Fallbacks: versão fixa conhecida caso o índice falhe
+      # Fallbacks: versao fixa conhecida caso o indice falhe
       $urls += "https://pkgs.tailscale.com/stable/tailscale-setup-1.98.4-$arch.msi"
       $urls += "https://dl.tailscale.com/stable/tailscale-setup-1.98.4-$arch.msi"
       $downloaded = $false
@@ -417,22 +417,22 @@ function Install-Tailscale($authKey, $hostname) {
           Write-Log ("Tailscale: download falhou em {0}: {1}" -f $url, $_.Exception.Message)
         }
       }
-      if (-not $downloaded) { throw "não foi possível baixar o MSI do Tailscale" }
+      if (-not $downloaded) { throw "nao foi possivel baixar o MSI do Tailscale" }
       Write-Log "Tailscale: instalando MSI silenciosamente..."
       $p = Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$msi`" /qn /norestart" -Wait -PassThru
       if ($p.ExitCode -ne 0) { Write-Log ("Tailscale: msiexec retornou {0}" -f $p.ExitCode) }
       Remove-Item $msi -ErrorAction SilentlyContinue
       $tsExe = Get-TailscaleExePath
     } else {
-      Write-Log "Tailscale já instalado."
+      Write-Log "Tailscale ja instalado."
     }
-    # Garante que o serviço esteja rodando
+    # Garante que o servico esteja rodando
     Set-Service -Name "Tailscale" -StartupType Automatic -ErrorAction SilentlyContinue
     Start-Service -Name "Tailscale" -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 3
     $tsExe = Get-TailscaleExePath
-    if (-not (Test-Path $tsExe)) { Write-Log "Tailscale: executável não encontrado após instalação."; return }
-    # Sobe (idempotente: re-rodar com a mesma key não cria duplicata)
+    if (-not (Test-Path $tsExe)) { Write-Log "Tailscale: executavel nao encontrado apos instalacao."; return }
+    # Sobe (idempotente: re-rodar com a mesma key nao cria duplicata)
     $tsHost = ($hostname -replace "[^a-zA-Z0-9\-]", "-").ToLower()
     Write-Log ("Tailscale: autenticando como '{0}'..." -f $tsHost)
     & $tsExe up --authkey="$authKey" --hostname="$tsHost" --accept-routes --reset --unattended 2>&1 | ForEach-Object { Write-Log ("tailscale: {0}" -f $_) }
@@ -468,7 +468,7 @@ function Process-Commands($cfg, $commands) {
 }
 
 function Invoke-Heartbeat {
-  if (-not (Test-Path $ConfigPath)) { Write-Log "Config não encontrado: $ConfigPath"; return }
+  if (-not (Test-Path $ConfigPath)) { Write-Log "Config nao encontrado: $ConfigPath"; return }
   $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
   $m = Get-Metrics
   $sys = Get-SystemInfo
@@ -486,7 +486,7 @@ function Invoke-Heartbeat {
     $inv = Get-Inventory
     foreach ($k in $inv.Keys) { $body[$k] = $inv[$k] }
   } catch {
-    Write-Log ("Inventário falhou: {0}" -f $_.Exception.Message)
+    Write-Log ("Inventario falhou: {0}" -f $_.Exception.Message)
   }
   $json = $body | ConvertTo-Json -Compress -Depth 6
   try {
@@ -505,17 +505,17 @@ function Uninstall-AutotechsAgent {
   Write-Host "Agente removido."
 }
 
-# Modo de execução
+# Modo de execucao
 if ($Mode -eq "Heartbeat") {
   Invoke-Heartbeat
 }
 else {
-  if (-not $BaseUrl -or -not $EnrollToken) { throw "BaseUrl e EnrollToken são obrigatórios." }
+  if (-not $BaseUrl -or -not $EnrollToken) { throw "BaseUrl e EnrollToken sao obrigatorios." }
   if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw "Execute o PowerShell como Administrador."
   }
   New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-  Write-Log "Iniciando instalação do agente Autotechs RMM..."
+  Write-Log "Iniciando instalacao do agente Autotechs RMM..."
   try {
     Invoke-WebRequest -Uri ("{0}/agent/install.ps1" -f $BaseUrl.TrimEnd("/")) -OutFile $AgentPath -UseBasicParsing
   } catch {
@@ -535,7 +535,7 @@ else {
   } | ConvertTo-Json -Compress
   Write-Log "Registrando endpoint..."
   $resp = Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/enroll" -f $BaseUrl.TrimEnd("/")) -ContentType "application/json" -Body $payload -TimeoutSec 30
-  if (-not $resp.agent_token) { throw "Resposta inválida: $($resp | ConvertTo-Json)" }
+  if (-not $resp.agent_token) { throw "Resposta invalida: $($resp | ConvertTo-Json)" }
   $cfg = @{
     base_url     = $BaseUrl.TrimEnd("/")
     endpoint_id  = $resp.endpoint_id
