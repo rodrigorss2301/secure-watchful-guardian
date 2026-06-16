@@ -19,6 +19,8 @@ type Props = {
   mode?: "install" | "update";
 };
 
+const AGENT_BASE_URL = "https://secure-watchful-guardian.lovable.app";
+
 function generateToken(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -32,7 +34,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
   const [token, setToken] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const baseUrl = AGENT_BASE_URL;
 
   const { data: clients } = useQuery({
     queryKey: ["clients-lite", tenant?.id],
@@ -100,7 +102,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
   // a single line into PowerShell or cmd without any quoting/escaping issues.
   const installCmd = token
     ? (() => {
-        const inner = `$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='${baseUrl}'; $t='${token}'; $env:RMM_URL=$u; $env:RMM_TOKEN=$t; $p=Join-Path $env:TEMP 'autotechs-rmm-install.ps1'; $url=$u + '/agent/install.ps1?v=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds(); $r=Invoke-WebRequest -UseBasicParsing -Uri $url; if($r.Content -is [byte[]]){[IO.File]::WriteAllBytes($p,$r.Content)}else{[IO.File]::WriteAllText($p,[string]$r.Content,[Text.UTF8Encoding]::new($false))}; Unblock-File -Path $p -ErrorAction SilentlyContinue; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p -BaseUrl $u -EnrollToken $t`;
+        const inner = `$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $u='${baseUrl}'; $t='${token}'; $env:RMM_URL=$u; $env:RMM_TOKEN=$t; $p=Join-Path $env:TEMP 'autotechs-rmm-install.ps1'; $url=$u + '/agent/install.ps1?v=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds(); $r=Invoke-WebRequest -UseBasicParsing -Uri $url; $c=[string]$r.Content; if($c.TrimStart().StartsWith('<!DOCTYPE') -or $c.TrimStart().StartsWith('<html')){throw 'Download retornou HTML em vez do instalador. Gere um novo comando no painel atualizado.'}; if($c -notmatch 'Autotechs RMM - Agente Windows'){throw 'Instalador baixado invalido.'}; [IO.File]::WriteAllText($p,$c,[Text.UTF8Encoding]::new($false)); Unblock-File -Path $p -ErrorAction SilentlyContinue; powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p -BaseUrl $u -EnrollToken $t`;
         // UTF-16LE encode
         const bytes = new Uint8Array(inner.length * 2);
         for (let i = 0; i < inner.length; i++) {
@@ -216,7 +218,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
 
               <div className="flex gap-2">
                 <Button variant="outline" asChild className="flex-1">
-                  <a href="/agent/install.ps1" download>
+                  <a href={`${AGENT_BASE_URL}/agent/install.ps1`} download>
                     <Download className="mr-2 h-4 w-4" /> Baixar install.ps1
                   </a>
                 </Button>
