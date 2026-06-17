@@ -200,7 +200,12 @@ function EndpointsPage() {
                     <TableCell>
                       <Link to="/endpoints/$id" params={{ id: e.id }} className="flex items-center gap-2 font-medium hover:text-primary">
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        {e.hostname}
+                        <span className="flex flex-col leading-tight">
+                          <span>{e.display_name || e.hostname}</span>
+                          {e.display_name && (
+                            <span className="font-mono text-[10px] text-muted-foreground">{e.hostname}</span>
+                          )}
+                        </span>
                         <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-60" />
                       </Link>
                     </TableCell>

@@ -176,7 +176,7 @@ function EndpointDetailPage() {
           </Button>
           <div className="flex flex-wrap items-center gap-3">
             <Icon className="h-7 w-7 text-primary" />
-            <h1 className="font-display text-3xl font-bold tracking-tight">{endpoint.hostname}</h1>
+            <h1 className="font-display text-3xl font-bold tracking-tight">{endpoint.display_name || endpoint.hostname}</h1>
             <Badge variant="outline" className={`gap-1.5 uppercase text-[10px] ${STATUS_TONE[endpoint.status]}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[endpoint.status]}`} />
               {t(`endpoints.status.${endpoint.status}` as TKey)}

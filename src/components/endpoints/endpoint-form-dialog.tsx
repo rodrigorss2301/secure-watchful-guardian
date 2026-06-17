@@ -25,6 +25,7 @@ type Props = {
 type FormState = {
   client_id: string;
   hostname: string;
+  display_name: string;
   type: EndpointType;
   status: EndpointStatus;
   os: string;
@@ -42,6 +43,7 @@ type FormState = {
 const empty: FormState = {
   client_id: "",
   hostname: "",
+  display_name: "",
   type: "workstation",
   status: "offline",
   os: "",
@@ -84,6 +86,7 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
       setForm({
         client_id: endpoint.client_id,
         hostname: endpoint.hostname,
+        display_name: endpoint.display_name ?? "",
         type: endpoint.type,
         status: endpoint.status,
         os: endpoint.os ?? "",
@@ -108,6 +111,7 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
       if (!form.client_id) throw new Error("Selecione um cliente");
       const payload = {
         hostname: form.hostname.trim(),
+        display_name: form.display_name.trim() || null,
         client_id: form.client_id,
         type: form.type,
         status: form.status,
@@ -151,6 +155,17 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
           className="space-y-4"
         >
           <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Nome de exibição" className="md:col-span-2">
+              <Input
+                maxLength={120}
+                value={form.display_name}
+                onChange={(e) => setForm({ ...form, display_name: e.target.value })}
+                placeholder="Ex.: PC do João - Recepção"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Apelido amigável mostrado na interface. O hostname real do equipamento não é alterado.
+              </p>
+            </Field>
             <Field label={t("endpoints.field.hostname")} required>
               <Input required maxLength={120} value={form.hostname} onChange={(e) => setForm({ ...form, hostname: e.target.value })} />
             </Field>

@@ -1,0 +1,1 @@
+ALTER TABLE public.endpoints ADD COLUMN display_name TEXT;
