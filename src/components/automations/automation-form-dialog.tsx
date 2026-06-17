@@ -18,6 +18,17 @@ import {
   AUTOMATION_KINDS, AUTOMATION_LANGUAGES, AUTOMATION_SCOPES, AUTOMATION_TRIGGERS,
   type Automation, type AutomationKind, type AutomationLanguage, type AutomationScope, type AutomationTrigger,
 } from "@/lib/automations";
+import type { Database } from "@/integrations/supabase/types";
+
+type PowerAction = Database["public"]["Enums"]["endpoint_command_type"];
+const POWER_ACTIONS: PowerAction[] = ["wake_on_lan", "shutdown", "restart", "sleep", "hibernate", "logoff"];
+const CRON_PRESETS: { key: string; expr: string }[] = [
+  { key: "automations.cron.preset.daily8", expr: "0 8 * * *" },
+  { key: "automations.cron.preset.daily19", expr: "0 19 * * *" },
+  { key: "automations.cron.preset.weekdays8", expr: "0 8 * * 1-5" },
+  { key: "automations.cron.preset.weekdays19", expr: "0 19 * * 1-5" },
+  { key: "automations.cron.preset.hourly", expr: "0 * * * *" },
+];
 
 type Props = { open: boolean; onOpenChange: (o: boolean) => void; automation?: Automation | null };
 
@@ -34,12 +45,16 @@ type FormState = {
   endpoint_id: string;
   notify_email: string;
   enabled: boolean;
+  power_action: PowerAction | "";
+  power_delay_seconds: number;
+  power_message: string;
 };
 
 const empty: FormState = {
   name: "", description: "", kind: "script", language: "powershell", code: "",
   trigger: "manual", cron_expr: "", scope: "all", client_id: "", endpoint_id: "",
   notify_email: "", enabled: true,
+  power_action: "", power_delay_seconds: 30, power_message: "",
 };
 
 export function AutomationFormDialog({ open, onOpenChange, automation }: Props) {
@@ -64,6 +79,9 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
         endpoint_id: automation.endpoint_id ?? "",
         notify_email: automation.notify_email ?? "",
         enabled: automation.enabled,
+        power_action: (automation.power_action ?? "") as PowerAction | "",
+        power_delay_seconds: automation.power_delay_seconds ?? 30,
+        power_message: automation.power_message ?? "",
       });
     } else setForm(empty);
   }, [open, automation]);
@@ -93,13 +111,16 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
   const save = useMutation({
     mutationFn: async () => {
       if (!tenant) throw new Error("no tenant");
+      if (form.kind === "power" && !form.power_action) {
+        throw new Error(t("automations.power.required"));
+      }
       const payload = {
         tenant_id: tenant.id,
         name: form.name.trim(),
         description: form.description.trim() || null,
         kind: form.kind,
         language: form.language,
-        code: form.code,
+        code: form.kind === "power" ? "" : form.code,
         trigger: form.trigger,
         cron_expr: form.trigger === "schedule" ? form.cron_expr.trim() || null : null,
         scope: form.scope,
@@ -107,6 +128,9 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
         endpoint_id: form.scope === "endpoint" ? form.endpoint_id || null : null,
         notify_email: form.notify_email.trim() || null,
         enabled: form.enabled,
+        power_action: form.kind === "power" ? (form.power_action || null) : null,
+        power_delay_seconds: form.kind === "power" ? form.power_delay_seconds : 30,
+        power_message: form.kind === "power" ? (form.power_message.trim() || null) : null,
       };
       if (automation) {
         const { error } = await supabase.from("automations").update(payload).eq("id", automation.id);
@@ -144,13 +168,21 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
 
           <div className="grid gap-4 md:grid-cols-3">
             <Field label={t("automations.field.kind")}>
-              <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v as AutomationKind })}>
+              <Select value={form.kind} onValueChange={(v) => {
+                const k = v as AutomationKind;
+                setForm({
+                  ...form,
+                  kind: k,
+                  trigger: k === "power" && form.trigger === "manual" ? "schedule" : form.trigger,
+                });
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {AUTOMATION_KINDS.map((k) => <SelectItem key={k} value={k}>{t(`automations.kind.${k}` as TKey)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
+            {form.kind !== "power" && (
             <Field label={t("automations.field.language")}>
               <Select value={form.language} onValueChange={(v) => setForm({ ...form, language: v as AutomationLanguage })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -159,6 +191,19 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
                 </SelectContent>
               </Select>
             </Field>
+            )}
+            {form.kind === "power" && (
+            <Field label={t("automations.power.action")}>
+              <Select value={form.power_action} onValueChange={(v) => setForm({ ...form, power_action: v as PowerAction })}>
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  {POWER_ACTIONS.map((a) => (
+                    <SelectItem key={a} value={a}>{t(`automations.power.action.${a}` as TKey)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            )}
             <Field label={t("automations.field.trigger")}>
               <Select value={form.trigger} onValueChange={(v) => setForm({ ...form, trigger: v as AutomationTrigger })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -172,15 +217,37 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
           {form.trigger === "schedule" && (
             <Field label={t("automations.field.cron")}>
               <Input value={form.cron_expr} onChange={(e) => setForm({ ...form, cron_expr: e.target.value })}
-                placeholder="0 3 * * *" className="font-mono" />
+                placeholder="0 8 * * *" className="font-mono" />
+              <div className="flex flex-wrap gap-1.5">
+                {CRON_PRESETS.map((p) => (
+                  <Button key={p.expr} type="button" size="sm" variant="outline"
+                    onClick={() => setForm({ ...form, cron_expr: p.expr })}
+                    className="h-7 text-xs">
+                    {t(p.key as TKey)}
+                  </Button>
+                ))}
+              </div>
               <p className="text-xs text-muted-foreground">{t("automations.cron.hint")}</p>
             </Field>
           )}
 
-          <Field label={t("automations.field.code")}>
-            <Textarea rows={10} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })}
-              className="font-mono text-xs" placeholder={t("automations.code.placeholder")} />
-          </Field>
+          {form.kind === "power" ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label={t("automations.power.delay")}>
+                <Input type="number" min={0} max={3600} value={form.power_delay_seconds}
+                  onChange={(e) => setForm({ ...form, power_delay_seconds: Math.max(0, Math.min(3600, Number(e.target.value) || 0)) })} />
+              </Field>
+              <Field label={t("automations.power.message")}>
+                <Input value={form.power_message} maxLength={120}
+                  onChange={(e) => setForm({ ...form, power_message: e.target.value })} />
+              </Field>
+            </div>
+          ) : (
+            <Field label={t("automations.field.code")}>
+              <Textarea rows={10} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })}
+                className="font-mono text-xs" placeholder={t("automations.code.placeholder")} />
+            </Field>
+          )}
 
           <div className="grid gap-4 md:grid-cols-3">
             <Field label={t("automations.field.scope")}>
