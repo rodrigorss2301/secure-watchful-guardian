@@ -862,6 +862,7 @@ export type Database = {
           created_at: string
           disk_usage: number | null
           disks: Json
+          display_name: string | null
           dns_servers: Json
           domain: string | null
           gateway: string | null
@@ -912,6 +913,7 @@ export type Database = {
           created_at?: string
           disk_usage?: number | null
           disks?: Json
+          display_name?: string | null
           dns_servers?: Json
           domain?: string | null
           gateway?: string | null
@@ -962,6 +964,7 @@ export type Database = {
           created_at?: string
           disk_usage?: number | null
           disks?: Json
+          display_name?: string | null
           dns_servers?: Json
           domain?: string | null
           gateway?: string | null
