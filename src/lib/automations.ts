@@ -1,4 +1,4 @@
-import { FileCode2, Terminal, FileText, Clock, MousePointerClick, BellRing, type LucideIcon } from "lucide-react";
+import { FileCode2, Terminal, FileText, Clock, MousePointerClick, BellRing, Zap, type LucideIcon } from "lucide-react";
 import type { Database } from "@/integrations/supabase/types";
 
 export type Automation = Database["public"]["Tables"]["automations"]["Row"];
@@ -9,7 +9,7 @@ export type AutomationTrigger = Database["public"]["Enums"]["automation_trigger"
 export type AutomationScope = Database["public"]["Enums"]["automation_scope"];
 export type AutomationRunStatus = Database["public"]["Enums"]["automation_run_status"];
 
-export const AUTOMATION_KINDS: AutomationKind[] = ["script", "task"];
+export const AUTOMATION_KINDS: AutomationKind[] = ["script", "task", "power"];
 export const AUTOMATION_LANGUAGES: AutomationLanguage[] = ["powershell", "bash", "python"];
 export const AUTOMATION_TRIGGERS: AutomationTrigger[] = ["manual", "schedule", "alert"];
 export const AUTOMATION_SCOPES: AutomationScope[] = ["all", "client", "endpoint"];
@@ -29,6 +29,7 @@ export const TRIGGER_ICON: Record<AutomationTrigger, LucideIcon> = {
 export const KIND_ICON: Record<AutomationKind, LucideIcon> = {
   script: Terminal,
   task: FileText,
+  power: Zap,
 };
 
 export const RUN_STATUS_TONE: Record<AutomationRunStatus, string> = {
