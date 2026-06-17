@@ -383,6 +383,11 @@ export type Database = {
           language: Database["public"]["Enums"]["automation_language"]
           name: string
           notify_email: string | null
+          power_action:
+            | Database["public"]["Enums"]["endpoint_command_type"]
+            | null
+          power_delay_seconds: number
+          power_message: string | null
           scope: Database["public"]["Enums"]["automation_scope"]
           tenant_id: string
           trigger: Database["public"]["Enums"]["automation_trigger"]
@@ -402,6 +407,11 @@ export type Database = {
           language?: Database["public"]["Enums"]["automation_language"]
           name: string
           notify_email?: string | null
+          power_action?:
+            | Database["public"]["Enums"]["endpoint_command_type"]
+            | null
+          power_delay_seconds?: number
+          power_message?: string | null
           scope?: Database["public"]["Enums"]["automation_scope"]
           tenant_id: string
           trigger?: Database["public"]["Enums"]["automation_trigger"]
@@ -421,6 +431,11 @@ export type Database = {
           language?: Database["public"]["Enums"]["automation_language"]
           name?: string
           notify_email?: string | null
+          power_action?:
+            | Database["public"]["Enums"]["endpoint_command_type"]
+            | null
+          power_delay_seconds?: number
+          power_message?: string | null
           scope?: Database["public"]["Enums"]["automation_scope"]
           tenant_id?: string
           trigger?: Database["public"]["Enums"]["automation_trigger"]
@@ -1622,6 +1637,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cron_field_matches: {
+        Args: { _field: string; _value: number }
+        Returns: boolean
+      }
+      cron_matches: { Args: { _expr: string; _ts: string }; Returns: boolean }
       evaluate_alert_rules: { Args: never; Returns: number }
       generate_invoice_from_contract: {
         Args: {
@@ -1642,6 +1662,7 @@ export type Database = {
       }
       mark_invoice_paid: { Args: { _invoice_id: string }; Returns: undefined }
       run_automation: { Args: { _automation_id: string }; Returns: number }
+      run_scheduled_automations: { Args: never; Returns: number }
     }
     Enums: {
       alert_comparator: "gt" | "gte" | "lt" | "lte"
@@ -1650,7 +1671,7 @@ export type Database = {
       alert_severity: "info" | "warning" | "critical"
       alert_status: "open" | "acknowledged" | "resolved"
       app_role: "admin" | "technician" | "viewer" | "portal"
-      automation_kind: "script" | "task"
+      automation_kind: "script" | "task" | "power"
       automation_language: "powershell" | "bash" | "python"
       automation_run_status:
         | "queued"
@@ -1826,7 +1847,7 @@ export const Constants = {
       alert_severity: ["info", "warning", "critical"],
       alert_status: ["open", "acknowledged", "resolved"],
       app_role: ["admin", "technician", "viewer", "portal"],
-      automation_kind: ["script", "task"],
+      automation_kind: ["script", "task", "power"],
       automation_language: ["powershell", "bash", "python"],
       automation_run_status: [
         "queued",
