@@ -170,44 +170,44 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
               onValueChange={(v) => setTarget(v as typeof target)}
               className="space-y-1"
             >
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 text-sm">
-                <span className="flex items-center gap-2">
+              <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
                   <RadioGroupItem value="tailscale" disabled={!tailscaleIp} />
-                  <span className="font-medium">Tailscale (recomendado)</span>
+                  <span className="truncate font-medium">Tailscale (recomendado)</span>
                 </span>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="truncate font-mono text-xs text-muted-foreground">
                   {tailscaleIp ?? "indisponível"}
                 </span>
               </label>
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
-                <span className="flex items-center gap-2">
+              <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
                   <RadioGroupItem value="private" disabled={!privateIp} />
-                  <span>IP privado</span>
+                  <span className="truncate">IP privado</span>
                 </span>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="truncate font-mono text-xs text-muted-foreground">
                   {privateIp ?? "indisponível"}
                 </span>
               </label>
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
-                <span className="flex items-center gap-2">
+              <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
                   <RadioGroupItem value="public" disabled={!publicIp} />
-                  <span>IP público</span>
+                  <span className="truncate">IP público</span>
                 </span>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="truncate font-mono text-xs text-muted-foreground">
                   {publicIp ?? "indisponível"}
                 </span>
               </label>
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
-                <span className="flex items-center gap-2">
+              <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
                   <RadioGroupItem value="custom" />
-                  <span>Host / IP personalizado</span>
+                  <span className="truncate">Host / IP personalizado</span>
                 </span>
                 <Input
                   value={customHost}
                   onChange={(e) => setCustomHost(e.target.value)}
                   onFocus={() => setTarget("custom")}
                   placeholder="ex: vpn.empresa.local"
-                  className="h-7 w-44 text-xs"
+                  className="h-7 w-40 min-w-0 shrink text-xs"
                 />
               </label>
             </RadioGroup>
