@@ -150,27 +150,27 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MonitorPlay className="h-5 w-5" /> Área de Trabalho Remota
+      <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-4 sm:p-5 gap-3">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <MonitorPlay className="h-4 w-4" /> Área de Trabalho Remota
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs">
             Gere um arquivo <code className="font-mono">.rdp</code> pronto para conectar a{" "}
             <span className="font-medium text-foreground">{endpoint.hostname}</span> via RDP nativo
             do Windows.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="space-y-2">
             <Label className="text-xs font-medium text-muted-foreground">Endereço de destino</Label>
             <RadioGroup
               value={target}
               onValueChange={(v) => setTarget(v as typeof target)}
-              className="space-y-1.5"
+              className="space-y-1"
             >
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-sm">
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 text-sm">
                 <span className="flex items-center gap-2">
                   <RadioGroupItem value="tailscale" disabled={!tailscaleIp} />
                   <span className="font-medium">Tailscale (recomendado)</span>
@@ -179,7 +179,7 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
                   {tailscaleIp ?? "indisponível"}
                 </span>
               </label>
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
                 <span className="flex items-center gap-2">
                   <RadioGroupItem value="private" disabled={!privateIp} />
                   <span>IP privado</span>
@@ -188,7 +188,7 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
                   {privateIp ?? "indisponível"}
                 </span>
               </label>
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
                 <span className="flex items-center gap-2">
                   <RadioGroupItem value="public" disabled={!publicIp} />
                   <span>IP público</span>
@@ -197,7 +197,7 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
                   {publicIp ?? "indisponível"}
                 </span>
               </label>
-              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
                 <span className="flex items-center gap-2">
                   <RadioGroupItem value="custom" />
                   <span>Host / IP personalizado</span>
@@ -207,7 +207,7 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
                   onChange={(e) => setCustomHost(e.target.value)}
                   onFocus={() => setTarget("custom")}
                   placeholder="ex: vpn.empresa.local"
-                  className="h-7 w-48 text-xs"
+                  className="h-7 w-44 text-xs"
                 />
               </label>
             </RadioGroup>
@@ -234,34 +234,27 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
             </div>
           </div>
 
-          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-[11px] text-amber-700 dark:text-amber-400">
-            <div className="flex gap-2">
-              <ShieldAlert className="h-4 w-4 shrink-0" />
-              <div className="space-y-1">
-                <p className="font-medium">Pré-requisitos no endpoint</p>
-                <ul className="list-disc space-y-0.5 pl-4 opacity-90">
-                  <li>
-                    <strong>Tailscale:</strong> instale o cliente no seu PC e logue na mesma
-                    tailnet. O agente já entra automaticamente na rede durante a instalação.
-                  </li>
-                  <li>RDP habilitado (Sistema → Área de Trabalho Remota).</li>
-                  <li>Porta {port} liberada no firewall do Windows e na rede.</li>
-                  <li>
-                    Para IP público, configure port-forwarding ou VPN — exposição direta na internet
-                    não é recomendada.
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          <details className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-400">
+            <summary className="flex cursor-pointer items-center gap-2 font-medium">
+              <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+              Pré-requisitos no endpoint
+            </summary>
+            <ul className="mt-1.5 list-disc space-y-0.5 pl-6 opacity-90">
+              <li>
+                <strong>Tailscale:</strong> instale o cliente no seu PC e logue na mesma tailnet.
+              </li>
+              <li>RDP habilitado (Sistema → Área de Trabalho Remota).</li>
+              <li>Porta {port} liberada no firewall do Windows e na rede.</li>
+              <li>Para IP público, configure port-forwarding ou VPN.</li>
+            </ul>
+          </details>
 
-          <div className="rounded-md border border-border bg-muted/20 p-3">
+          <div className="rounded-md border border-border bg-muted/20 p-2.5">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium">Preparar endpoint para RDP</p>
-                <p className="text-xs text-muted-foreground">
-                  Ativa Área de Trabalho Remota, serviço TermService e regras do firewall do
-                  Windows.
+                <p className="text-[11px] text-muted-foreground">
+                  Ativa RDP, TermService e regras do firewall do Windows.
                 </p>
               </div>
               <Button
