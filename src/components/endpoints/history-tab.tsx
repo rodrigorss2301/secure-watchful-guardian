@@ -79,6 +79,38 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
     return { pct, downSeconds: down, outageCount: (outages ?? []).length };
   }, [outages, since, periodDays]);
 
+  // Build connectivity timeseries (uptime % per bucket) from outages
+  const connectivity = useMemo(() => {
+    const sinceMs = new Date(since).getTime();
+    const nowMs = Date.now();
+    // For 24h: hourly buckets; otherwise daily buckets
+    const hourly = periodDays === 1;
+    const bucketMs = hourly ? 3600_000 : 86400_000;
+    const start = hourly
+      ? Math.floor(sinceMs / bucketMs) * bucketMs
+      : (() => { const d = new Date(sinceMs); d.setHours(0,0,0,0); return d.getTime(); })();
+    const buckets: { ts: number; downMs: number }[] = [];
+    for (let t = start; t <= nowMs; t += bucketMs) buckets.push({ ts: t, downMs: 0 });
+    for (const o of outages ?? []) {
+      const s = new Date(o.started_at).getTime();
+      const e = o.ended_at ? new Date(o.ended_at).getTime() : nowMs;
+      for (const b of buckets) {
+        const bs = b.ts, be = b.ts + bucketMs;
+        const overlap = Math.max(0, Math.min(e, be) - Math.max(s, bs));
+        if (overlap > 0) b.downMs += overlap;
+      }
+    }
+    return buckets.map((b) => {
+      const span = Math.min(bucketMs, nowMs - b.ts);
+      const pct = span > 0 ? Math.max(0, Math.min(100, ((span - b.downMs) / span) * 100)) : 100;
+      const d = new Date(b.ts);
+      const label = hourly
+        ? `${String(d.getHours()).padStart(2, "0")}:00`
+        : d.toISOString().slice(5, 10);
+      return { label, uptime: Math.round(pct * 100) / 100 };
+    });
+  }, [outages, since, periodDays]);
+
   const { data: changes, isLoading } = useQuery({
     queryKey: ["endpoint-history", endpointId, cat, periodDays],
     queryFn: async () => {
@@ -169,6 +201,30 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
           <Stat label="Uptime" value={`${uptime.pct.toFixed(2)}%`} tone={uptime.pct >= 99 ? "text-emerald-500" : uptime.pct >= 95 ? "text-amber-500" : "text-destructive"} />
           <Stat label="Quedas" value={String(uptime.outageCount)} tone="text-foreground" />
           <Stat label="Tempo fora" value={formatDuration(uptime.downSeconds)} tone={uptime.downSeconds > 0 ? "text-destructive" : "text-foreground"} />
+        </div>
+        <div className="mb-3 h-44">
+          {connectivity.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Sem dados de conectividade.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={connectivity} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="h-net" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
+                <Tooltip
+                  contentStyle={{ fontSize: 11, background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                  formatter={(v: number) => [`${v}%`, "Uptime"]}
+                />
+                <Area type="monotone" dataKey="uptime" stroke="#10b981" fill="url(#h-net)" strokeWidth={1.5} name="Uptime" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
         {(outages ?? []).length === 0 ? (
           <p className="py-4 text-center text-xs text-muted-foreground">Sem quedas registradas nos últimos {periodLabel}.</p>
