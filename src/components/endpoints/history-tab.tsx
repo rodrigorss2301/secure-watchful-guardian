@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Cpu, Network, Package, MonitorSmartphone, History, ArrowRight, Plus, Minus } from "lucide-react";
+import { Cpu, Network, Package, MonitorSmartphone, History, ArrowRight, Plus, Minus, WifiOff, Wifi } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,6 +40,35 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
   const since = useMemo(() => {
     const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString();
   }, []);
+
+  const { data: outages } = useQuery({
+    queryKey: ["endpoint-outages", endpointId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("endpoint_outages" as never)
+        .select("id, started_at, ended_at, duration_seconds, reason")
+        .eq("endpoint_id", endpointId)
+        .gte("started_at", since)
+        .order("started_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as unknown as { id: string; started_at: string; ended_at: string | null; duration_seconds: number | null; reason: string }[];
+    },
+    refetchInterval: 60_000,
+  });
+
+  const uptime = useMemo(() => {
+    const total = 30 * 24 * 3600;
+    const sinceMs = new Date(since).getTime();
+    let down = 0;
+    for (const o of outages ?? []) {
+      const start = Math.max(new Date(o.started_at).getTime(), sinceMs);
+      const end = o.ended_at ? new Date(o.ended_at).getTime() : Date.now();
+      down += Math.max(0, Math.round((end - start) / 1000));
+    }
+    const pct = Math.max(0, Math.min(100, ((total - down) / total) * 100));
+    return { pct, downSeconds: down, outageCount: (outages ?? []).length };
+  }, [outages, since]);
 
   const { data: changes, isLoading } = useQuery({
     queryKey: ["endpoint-history", endpointId, cat],
@@ -103,6 +132,49 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
 
   return (
     <div className="space-y-5">
+      <Card className="border-border/60 p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold">
+            <Wifi className="h-4 w-4" /> Conectividade
+          </h3>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Últimos 30 dias</span>
+        </div>
+        <div className="mb-3 grid grid-cols-3 gap-2 text-center">
+          <Stat label="Uptime" value={`${uptime.pct.toFixed(2)}%`} tone={uptime.pct >= 99 ? "text-emerald-500" : uptime.pct >= 95 ? "text-amber-500" : "text-destructive"} />
+          <Stat label="Quedas" value={String(uptime.outageCount)} tone="text-foreground" />
+          <Stat label="Tempo fora" value={formatDuration(uptime.downSeconds)} tone={uptime.downSeconds > 0 ? "text-destructive" : "text-foreground"} />
+        </div>
+        {(outages ?? []).length === 0 ? (
+          <p className="py-4 text-center text-xs text-muted-foreground">Sem quedas registradas nos últimos 30 dias.</p>
+        ) : (
+          <ul className="space-y-2">
+            {(outages ?? []).slice(0, 20).map((o) => {
+              const ongoing = !o.ended_at;
+              return (
+                <li key={o.id} className="flex items-center gap-3 rounded-md border border-border/40 bg-card/30 px-3 py-2 text-xs">
+                  <WifiOff className={`h-4 w-4 shrink-0 ${ongoing ? "text-destructive" : "text-muted-foreground"}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {ongoing ? (
+                        <Badge variant="outline" className="border-destructive/40 text-[10px] text-destructive">offline agora</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">recuperado</Badge>
+                      )}
+                      <span className="font-medium">{formatDuration(o.duration_seconds ?? Math.max(0, Math.round((Date.now() - new Date(o.started_at).getTime()) / 1000)))}</span>
+                      <span className="text-muted-foreground">sem heartbeat</span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">
+                      Início: {new Date(o.started_at).toLocaleString()}
+                      {o.ended_at ? ` · Fim: ${new Date(o.ended_at).toLocaleString()}` : ""}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+
       <Card className="border-border/60 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Utilização média diária</h3>
@@ -212,4 +284,25 @@ function ValueDiff({ old, next, type }: { old: string | null; next: string | nul
       <span className="truncate text-foreground">{show(next)}</span>
     </div>
   );
+}
+
+function Stat({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-md border border-border/40 bg-card/30 px-2 py-2">
+      <p className={`text-base font-semibold ${tone}`}>{value}</p>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+    </div>
+  );
+}
+
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds < 1) return "0s";
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
 }
