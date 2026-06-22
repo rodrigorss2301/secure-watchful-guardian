@@ -10,6 +10,8 @@ const Body = z.object({
   agent_version: z.string().max(40).optional().nullable(),
   os_version: z.string().max(120).optional().nullable(),
   tailscale_ip: z.string().max(64).optional().nullable(),
+  gateway_rtt_ms: z.number().min(0).max(60000).optional().nullable(),
+  os_last_update_at: z.string().max(40).optional().nullable(),
   // Inventário expandido (opcional)
   cpu_model: z.string().max(200).optional().nullable(),
   cpu_cores: z.number().int().min(0).max(4096).optional().nullable(),
