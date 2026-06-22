@@ -60,7 +60,11 @@ export function LibraryDialog({ open, onOpenChange }: { open: boolean; onOpenCha
               <div key={tpl.id} className="rounded-md border p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <p className="font-medium text-sm">{tpl.name}</p>
-                  {tpl.destructive && <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" title="Destrutiva — requer aprovação por padrão" />}
+                  {tpl.destructive && (
+                    <span title="Destrutiva — requer aprovação por padrão">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{tpl.description}</p>
                 <div className="flex flex-wrap gap-1">
