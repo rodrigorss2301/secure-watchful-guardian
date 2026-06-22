@@ -8,6 +8,13 @@ import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
 type Category = "all" | "hardware" | "network" | "software" | "os";
+type PeriodDays = 1 | 7 | 14 | 30;
+const PERIOD_OPTIONS: { days: PeriodDays; label: string }[] = [
+  { days: 1,  label: "24h" },
+  { days: 7,  label: "7 dias" },
+  { days: 14, label: "14 dias" },
+  { days: 30, label: "30 dias" },
+];
 type HistoryRow = {
   id: string;
   category: string;
@@ -36,13 +43,15 @@ const FIELD_LABEL: Record<string, string> = {
 
 export function HistoryTab({ endpointId }: { endpointId: string }) {
   const [cat, setCat] = useState<Category>("all");
+  const [periodDays, setPeriodDays] = useState<PeriodDays>(30);
+  const periodLabel = PERIOD_OPTIONS.find((p) => p.days === periodDays)!.label;
 
   const since = useMemo(() => {
-    const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString();
-  }, []);
+    const d = new Date(); d.setDate(d.getDate() - periodDays); return d.toISOString();
+  }, [periodDays]);
 
   const { data: outages } = useQuery({
-    queryKey: ["endpoint-outages", endpointId],
+    queryKey: ["endpoint-outages", endpointId, periodDays],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("endpoint_outages" as never)
@@ -58,7 +67,7 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
   });
 
   const uptime = useMemo(() => {
-    const total = 30 * 24 * 3600;
+    const total = periodDays * 24 * 3600;
     const sinceMs = new Date(since).getTime();
     let down = 0;
     for (const o of outages ?? []) {
@@ -68,10 +77,10 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
     }
     const pct = Math.max(0, Math.min(100, ((total - down) / total) * 100));
     return { pct, downSeconds: down, outageCount: (outages ?? []).length };
-  }, [outages, since]);
+  }, [outages, since, periodDays]);
 
   const { data: changes, isLoading } = useQuery({
-    queryKey: ["endpoint-history", endpointId, cat],
+    queryKey: ["endpoint-history", endpointId, cat, periodDays],
     queryFn: async () => {
       let q = supabase
         .from("endpoint_inventory_history" as never)
@@ -89,7 +98,7 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
   });
 
   const { data: samples } = useQuery({
-    queryKey: ["endpoint-samples-30d", endpointId],
+    queryKey: ["endpoint-samples", endpointId, periodDays],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("endpoint_metric_samples")
@@ -132,12 +141,29 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
 
   return (
     <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Período</span>
+        <div className="flex flex-wrap gap-1">
+          {PERIOD_OPTIONS.map((p) => (
+            <Button
+              key={p.days}
+              type="button" size="sm"
+              variant={periodDays === p.days ? "default" : "outline"}
+              onClick={() => setPeriodDays(p.days)}
+              className="h-7 px-2.5 text-[11px]"
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <Card className="border-border/60 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             <Wifi className="h-4 w-4" /> Conectividade
           </h3>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Últimos 30 dias</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Últimos {periodLabel}</span>
         </div>
         <div className="mb-3 grid grid-cols-3 gap-2 text-center">
           <Stat label="Uptime" value={`${uptime.pct.toFixed(2)}%`} tone={uptime.pct >= 99 ? "text-emerald-500" : uptime.pct >= 95 ? "text-amber-500" : "text-destructive"} />
@@ -145,7 +171,7 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
           <Stat label="Tempo fora" value={formatDuration(uptime.downSeconds)} tone={uptime.downSeconds > 0 ? "text-destructive" : "text-foreground"} />
         </div>
         {(outages ?? []).length === 0 ? (
-          <p className="py-4 text-center text-xs text-muted-foreground">Sem quedas registradas nos últimos 30 dias.</p>
+          <p className="py-4 text-center text-xs text-muted-foreground">Sem quedas registradas nos últimos {periodLabel}.</p>
         ) : (
           <ul className="space-y-2">
             {(outages ?? []).slice(0, 20).map((o) => {
@@ -178,11 +204,11 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
       <Card className="border-border/60 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Utilização média diária</h3>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Últimos 30 dias</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Últimos {periodLabel}</span>
         </div>
         <div className="h-56">
           {daily.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Sem amostras suficientes para os últimos 30 dias.</div>
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Sem amostras suficientes para os últimos {periodLabel}.</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={daily} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -222,7 +248,7 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
           <p className="py-8 text-center text-xs text-muted-foreground">Carregando…</p>
         ) : (changes ?? []).length === 0 ? (
           <p className="py-8 text-center text-xs text-muted-foreground">
-            Nenhuma mudança registrada nos últimos 30 dias. As mudanças aparecem aqui assim que o agente reportar diferenças.
+            Nenhuma mudança registrada nos últimos {periodLabel}. As mudanças aparecem aqui assim que o agente reportar diferenças.
           </p>
         ) : (
           <ul className="space-y-2">
