@@ -79,6 +79,38 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
     return { pct, downSeconds: down, outageCount: (outages ?? []).length };
   }, [outages, since, periodDays]);
 
+  // Build connectivity timeseries (uptime % per bucket) from outages
+  const connectivity = useMemo(() => {
+    const sinceMs = new Date(since).getTime();
+    const nowMs = Date.now();
+    // For 24h: hourly buckets; otherwise daily buckets
+    const hourly = periodDays === 1;
+    const bucketMs = hourly ? 3600_000 : 86400_000;
+    const start = hourly
+      ? Math.floor(sinceMs / bucketMs) * bucketMs
+      : (() => { const d = new Date(sinceMs); d.setHours(0,0,0,0); return d.getTime(); })();
+    const buckets: { ts: number; downMs: number }[] = [];
+    for (let t = start; t <= nowMs; t += bucketMs) buckets.push({ ts: t, downMs: 0 });
+    for (const o of outages ?? []) {
+      const s = new Date(o.started_at).getTime();
+      const e = o.ended_at ? new Date(o.ended_at).getTime() : nowMs;
+      for (const b of buckets) {
+        const bs = b.ts, be = b.ts + bucketMs;
+        const overlap = Math.max(0, Math.min(e, be) - Math.max(s, bs));
+        if (overlap > 0) b.downMs += overlap;
+      }
+    }
+    return buckets.map((b) => {
+      const span = Math.min(bucketMs, nowMs - b.ts);
+      const pct = span > 0 ? Math.max(0, Math.min(100, ((span - b.downMs) / span) * 100)) : 100;
+      const d = new Date(b.ts);
+      const label = hourly
+        ? `${String(d.getHours()).padStart(2, "0")}:00`
+        : d.toISOString().slice(5, 10);
+      return { label, uptime: Math.round(pct * 100) / 100 };
+    });
+  }, [outages, since, periodDays]);
+
   const { data: changes, isLoading } = useQuery({
     queryKey: ["endpoint-history", endpointId, cat, periodDays],
     queryFn: async () => {
