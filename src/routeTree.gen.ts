@@ -35,6 +35,7 @@ import { Route as ApiPublicWhatsappInboundRouteImport } from './routes/api/publi
 import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicAgentEnrollRouteImport } from './routes/api/public/agent/enroll'
 import { Route as ApiPublicAgentCommandResultRouteImport } from './routes/api/public/agent/command-result'
+import { Route as ApiPublicAgentCommandLogRouteImport } from './routes/api/public/agent/command-log'
 import { Route as AuthenticatedPortalTicketsNewRouteImport } from './routes/_authenticated/portal.tickets.new'
 import { Route as AuthenticatedPortalTicketsIdRouteImport } from './routes/_authenticated/portal.tickets.$id'
 
@@ -174,6 +175,12 @@ const ApiPublicAgentCommandResultRoute =
     path: '/api/public/agent/command-result',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicAgentCommandLogRoute =
+  ApiPublicAgentCommandLogRouteImport.update({
+    id: '/api/public/agent/command-log',
+    path: '/api/public/agent/command-log',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedPortalTicketsNewRoute =
   AuthenticatedPortalTicketsNewRouteImport.update({
     id: '/new',
@@ -211,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
+  '/api/public/agent/command-log': typeof ApiPublicAgentCommandLogRoute
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
@@ -240,6 +248,7 @@ export interface FileRoutesByTo {
   '/endpoints': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
+  '/api/public/agent/command-log': typeof ApiPublicAgentCommandLogRoute
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
@@ -271,6 +280,7 @@ export interface FileRoutesById {
   '/_authenticated/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/_authenticated/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/_authenticated/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
+  '/api/public/agent/command-log': typeof ApiPublicAgentCommandLogRoute
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/endpoints/'
     | '/portal/tickets/$id'
     | '/portal/tickets/new'
+    | '/api/public/agent/command-log'
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/endpoints'
     | '/portal/tickets/$id'
     | '/portal/tickets/new'
+    | '/api/public/agent/command-log'
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
@@ -361,6 +373,7 @@ export interface FileRouteTypes {
     | '/_authenticated/endpoints/'
     | '/_authenticated/portal/tickets/$id'
     | '/_authenticated/portal/tickets/new'
+    | '/api/public/agent/command-log'
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
@@ -373,6 +386,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicAgentCommandLogRoute: typeof ApiPublicAgentCommandLogRoute
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
   ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
@@ -563,6 +577,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgentCommandResultRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/agent/command-log': {
+      id: '/api/public/agent/command-log'
+      path: '/api/public/agent/command-log'
+      fullPath: '/api/public/agent/command-log'
+      preLoaderRoute: typeof ApiPublicAgentCommandLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/portal/tickets/new': {
       id: '/_authenticated/portal/tickets/new'
       path: '/new'
@@ -673,6 +694,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicAgentCommandLogRoute: ApiPublicAgentCommandLogRoute,
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,
   ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,

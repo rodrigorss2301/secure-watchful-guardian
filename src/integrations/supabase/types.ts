@@ -75,6 +75,36 @@ export type Database = {
           },
         ]
       }
+      agent_releases: {
+        Row: {
+          channel: string
+          id: string
+          notes: string | null
+          released_at: string
+          script_url: string
+          sha256: string | null
+          version: string
+        }
+        Insert: {
+          channel: string
+          id?: string
+          notes?: string | null
+          released_at?: string
+          script_url: string
+          sha256?: string | null
+          version: string
+        }
+        Update: {
+          channel?: string
+          id?: string
+          notes?: string | null
+          released_at?: string
+          script_url?: string
+          sha256?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
       alert_rules: {
         Row: {
           channel_ids: string[] | null
@@ -828,47 +858,117 @@ export type Database = {
           },
         ]
       }
+      endpoint_command_logs: {
+        Row: {
+          command_id: string
+          created_at: string
+          endpoint_id: string
+          id: number
+          level: string
+          message: string
+          tenant_id: string
+        }
+        Insert: {
+          command_id: string
+          created_at?: string
+          endpoint_id: string
+          id?: number
+          level?: string
+          message: string
+          tenant_id: string
+        }
+        Update: {
+          command_id?: string
+          created_at?: string
+          endpoint_id?: string
+          id?: number
+          level?: string
+          message?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_command_logs_command_id_fkey"
+            columns: ["command_id"]
+            isOneToOne: false
+            referencedRelation: "endpoint_commands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_command_logs_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_command_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoint_commands: {
         Row: {
+          attempted_at: string | null
           command: Database["public"]["Enums"]["endpoint_command_type"]
           completed_at: string | null
           created_at: string
           endpoint_id: string
+          expires_at: string | null
+          failed_reason: string | null
           id: string
           output: string | null
           params: Json
           requested_by: string | null
           sent_at: string | null
+          signature: string | null
+          signed_at: string | null
           status: Database["public"]["Enums"]["endpoint_command_status"]
           tenant_id: string
+          timeout_seconds: number
           updated_at: string
         }
         Insert: {
+          attempted_at?: string | null
           command: Database["public"]["Enums"]["endpoint_command_type"]
           completed_at?: string | null
           created_at?: string
           endpoint_id: string
+          expires_at?: string | null
+          failed_reason?: string | null
           id?: string
           output?: string | null
           params?: Json
           requested_by?: string | null
           sent_at?: string | null
+          signature?: string | null
+          signed_at?: string | null
           status?: Database["public"]["Enums"]["endpoint_command_status"]
           tenant_id: string
+          timeout_seconds?: number
           updated_at?: string
         }
         Update: {
+          attempted_at?: string | null
           command?: Database["public"]["Enums"]["endpoint_command_type"]
           completed_at?: string | null
           created_at?: string
           endpoint_id?: string
+          expires_at?: string | null
+          failed_reason?: string | null
           id?: string
           output?: string | null
           params?: Json
           requested_by?: string | null
           sent_at?: string | null
+          signature?: string | null
+          signed_at?: string | null
           status?: Database["public"]["Enums"]["endpoint_command_status"]
           tenant_id?: string
+          timeout_seconds?: number
           updated_at?: string
         }
         Relationships: [
@@ -881,6 +981,63 @@ export type Database = {
           },
           {
             foreignKeyName: "endpoint_commands_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      endpoint_events: {
+        Row: {
+          created_at: string
+          endpoint_id: string
+          event_id: number | null
+          id: number
+          level: Database["public"]["Enums"]["endpoint_event_level"]
+          message: string
+          occurred_at: string
+          provider: string | null
+          raw: Json | null
+          source: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint_id: string
+          event_id?: number | null
+          id?: number
+          level?: Database["public"]["Enums"]["endpoint_event_level"]
+          message: string
+          occurred_at: string
+          provider?: string | null
+          raw?: Json | null
+          source?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          endpoint_id?: string
+          event_id?: number | null
+          id?: number
+          level?: Database["public"]["Enums"]["endpoint_event_level"]
+          message?: string
+          occurred_at?: string
+          provider?: string | null
+          raw?: Json | null
+          source?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_events_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_events_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1069,6 +1226,13 @@ export type Database = {
       }
       endpoints: {
         Row: {
+          agent_cpu_pct: number | null
+          agent_heartbeat_duration_ms: number | null
+          agent_last_error: string | null
+          agent_last_error_at: string | null
+          agent_last_update_at: string | null
+          agent_queue_size: number | null
+          agent_ram_mb: number | null
           agent_version: string | null
           bios_date: string | null
           bios_vendor: string | null
@@ -1117,10 +1281,18 @@ export type Database = {
           tenant_id: string
           timezone: string | null
           type: Database["public"]["Enums"]["endpoint_type"]
+          update_channel: string
           updated_at: string
           uptime_seconds: number | null
         }
         Insert: {
+          agent_cpu_pct?: number | null
+          agent_heartbeat_duration_ms?: number | null
+          agent_last_error?: string | null
+          agent_last_error_at?: string | null
+          agent_last_update_at?: string | null
+          agent_queue_size?: number | null
+          agent_ram_mb?: number | null
           agent_version?: string | null
           bios_date?: string | null
           bios_vendor?: string | null
@@ -1169,10 +1341,18 @@ export type Database = {
           tenant_id: string
           timezone?: string | null
           type?: Database["public"]["Enums"]["endpoint_type"]
+          update_channel?: string
           updated_at?: string
           uptime_seconds?: number | null
         }
         Update: {
+          agent_cpu_pct?: number | null
+          agent_heartbeat_duration_ms?: number | null
+          agent_last_error?: string | null
+          agent_last_error_at?: string | null
+          agent_last_update_at?: string | null
+          agent_queue_size?: number | null
+          agent_ram_mb?: number | null
           agent_version?: string | null
           bios_date?: string | null
           bios_vendor?: string | null
@@ -1221,6 +1401,7 @@ export type Database = {
           tenant_id?: string
           timezone?: string | null
           type?: Database["public"]["Enums"]["endpoint_type"]
+          update_channel?: string
           updated_at?: string
           uptime_seconds?: number | null
         }
@@ -1609,18 +1790,21 @@ export type Database = {
       }
       tenants: {
         Row: {
+          command_signing_key: string
           created_at: string
           id: string
           name: string
           slug: string
         }
         Insert: {
+          command_signing_key?: string
           created_at?: string
           id?: string
           name: string
           slug: string
         }
         Update: {
+          command_signing_key?: string
           created_at?: string
           id?: string
           name?: string
@@ -1970,6 +2154,16 @@ export type Database = {
         }
         Returns: string
       }
+      get_latest_agent_release: {
+        Args: { _channel: string }
+        Returns: {
+          channel: string
+          released_at: string
+          script_url: string
+          sha256: string
+          version: string
+        }[]
+      }
       get_user_client: { Args: { _user_id: string }; Returns: string }
       get_user_tenant: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -2014,6 +2208,8 @@ export type Database = {
         | "succeeded"
         | "failed"
         | "cancelled"
+        | "timeout"
+        | "expired"
       endpoint_command_type:
         | "shutdown"
         | "restart"
@@ -2022,6 +2218,7 @@ export type Database = {
         | "wake_on_lan"
         | "logoff"
         | "enable_rdp"
+      endpoint_event_level: "info" | "warning" | "error" | "critical"
       endpoint_status: "online" | "offline" | "warning" | "critical"
       endpoint_type: "workstation" | "server" | "mobile" | "network"
       invoice_status: "draft" | "sent" | "paid" | "overdue" | "void"
@@ -2200,6 +2397,8 @@ export const Constants = {
         "succeeded",
         "failed",
         "cancelled",
+        "timeout",
+        "expired",
       ],
       endpoint_command_type: [
         "shutdown",
@@ -2210,6 +2409,7 @@ export const Constants = {
         "logoff",
         "enable_rdp",
       ],
+      endpoint_event_level: ["info", "warning", "error", "critical"],
       endpoint_status: ["online", "offline", "warning", "critical"],
       endpoint_type: ["workstation", "server", "mobile", "network"],
       invoice_status: ["draft", "sent", "paid", "overdue", "void"],

@@ -4,8 +4,9 @@ import { z } from "zod";
 const Body = z.object({
   agent_token: z.string().min(40).max(128),
   command_id: z.string().uuid(),
-  status: z.enum(["succeeded", "failed"]),
+  status: z.enum(["succeeded", "failed", "timeout"]),
   output: z.string().max(8000).optional().nullable(),
+  failed_reason: z.string().max(400).optional().nullable(),
 });
 
 export const Route = createFileRoute("/api/public/agent/command-result")({
@@ -28,11 +29,26 @@ export const Route = createFileRoute("/api/public/agent/command-result")({
         if (!sec) return jsonErr(401, "invalid_token");
         const ep = { id: sec.endpoint_id };
 
+        // Verifica expiração antes de aceitar resultado
+        const { data: cmd } = await supabaseAdmin
+          .from("endpoint_commands").select("expires_at, status")
+          .eq("id", b.command_id).eq("endpoint_id", ep.id).maybeSingle();
+        if (!cmd) return jsonErr(404, "command_not_found");
+        if (cmd.expires_at && new Date(cmd.expires_at).getTime() < Date.now()) {
+          await supabaseAdmin.from("endpoint_commands").update({
+            status: "expired",
+            failed_reason: "result_after_expiration",
+            completed_at: new Date().toISOString(),
+          }).eq("id", b.command_id);
+          return jsonErr(410, "expired");
+        }
+
         const { error } = await supabaseAdmin
           .from("endpoint_commands")
           .update({
             status: b.status,
             output: b.output ?? null,
+            failed_reason: b.failed_reason ?? null,
             completed_at: new Date().toISOString(),
           })
           .eq("id", b.command_id)

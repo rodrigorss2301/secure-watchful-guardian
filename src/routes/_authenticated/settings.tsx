@@ -18,6 +18,7 @@ import { useAuth, type AppRole, type ProfileStatus } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
 import { ChannelsTab } from "@/components/settings/channels-tab";
 import { WhatsAppTab } from "@/components/settings/whatsapp-tab";
+import { AgentReleasesSection } from "@/components/settings/agent-releases-section";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — Autotechs RMM" }] }),
@@ -45,12 +46,14 @@ function SettingsPage() {
           {isAdmin && <TabsTrigger value="company">{t("settings.tab.company")}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="channels">Canais</TabsTrigger>}
           {isAdmin && <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="agent">Agente</TabsTrigger>}
         </TabsList>
         <TabsContent value="profile"><ProfileTab /></TabsContent>
         {isAdmin && <TabsContent value="team"><TeamTab /></TabsContent>}
         {isAdmin && <TabsContent value="company"><CompanyTab /></TabsContent>}
         {isAdmin && <TabsContent value="channels"><ChannelsTab /></TabsContent>}
         {isAdmin && <TabsContent value="whatsapp"><WhatsAppTab /></TabsContent>}
+        {isAdmin && <TabsContent value="agent"><AgentReleasesSection /></TabsContent>}
       </Tabs>
     </>
   );
