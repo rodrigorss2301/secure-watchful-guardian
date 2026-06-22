@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Server, TicketCheck, Workflow, BarChart3, Settings, Building2, Bell, ScrollText, BookOpen, LifeBuoy, PlusCircle, Receipt } from "lucide-react";
+import { LayoutDashboard, Server, TicketCheck, Workflow, BarChart3, Settings, Building2, Bell, ScrollText, BookOpen, LifeBuoy, PlusCircle, Receipt, Package } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +32,7 @@ const operations: NavItem[] = [
 
 const management: NavItem[] = [
   { titleKey: "nav.reports", url: "/reports", icon: BarChart3 },
+  { titleKey: "nav.softwareHistory" as TKey, url: "/inventory/software", icon: Package, roles: ["admin", "technician"] },
   { titleKey: "nav.billing", url: "/billing", icon: Receipt, roles: ["admin", "technician"] },
   { titleKey: "nav.audit", url: "/audit", icon: ScrollText, roles: ["admin"] },
   { titleKey: "nav.settings", url: "/settings", icon: Settings, roles: ["admin"] },
