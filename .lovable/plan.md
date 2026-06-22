@@ -1,94 +1,133 @@
+# Plano — 3 frentes (1 completo + 3 parcial + 4 WhatsApp)
 
-# Melhorias sugeridas para o sistema (visão geral)
-
-Baseado no que já existe (endpoints, tickets, alertas, automações, billing, KB, portal, agente, RLS multi-tenant), organizei por área. Você escolhe o que entra e eu transformo em planos focados.
-
-## 1. Monitoramento de endpoints
-
-- **Mapa de saúde da frota** no dashboard: heatmap de status (online/warning/critical/offline) por cliente e por tipo.
-- **Latência/RTT** no histórico de rede (agente envia ping pro gateway/Tailscale; linha sobreposta ao gráfico de uptime).
-- **Top N endpoints com mais quedas / maior downtime** no período (widget no dashboard).
-- **Detecção de anomalia simples** em CPU/RAM/disco (média móvel + desvio) gerando alertas automáticos.
-- **Histórico de software instalado**: ver o que foi instalado/removido nos últimos X dias em toda a frota (útil pra compliance).
-- **Patch status**: última atualização do SO + lista de KBs/pacotes pendentes.
-
-## 2. Tickets & SLA
-
-- **SLA por contrato**: tempo de primeira resposta e resolução, com semáforo e relatório mensal.
-- **Templates de resposta** + macros (fechar com motivo, pedir info, escalar).
-- **Vinculação ticket ↔ endpoint ↔ alerta** (já parcial?): criar ticket automaticamente de um alerta crítico não reconhecido em N minutos.
-- **Mesclar tickets duplicados** e **tickets recorrentes** (mesmo alerta repete = agrupar).
-- **Satisfação (CSAT)** ao fechar ticket no portal.
-
-## 3. Alertas & automações
-
-- **Janelas de manutenção** (silencia alertas de um endpoint/cliente num intervalo).
-- **Deduplicação e agrupamento**: 50 endpoints offline ao mesmo tempo viram 1 incidente.
-- **Escalonamento**: se não reconhecido em X min, notifica próximo nível.
-- **Canais**: e-mail, webhook, Slack/Teams, WhatsApp (via connector).
-- **Biblioteca de automações** prontas (limpar temp, reiniciar serviço, rodar Windows Update, coletar logs).
-- **Aprovação humana** opcional antes de executar automação destrutiva.
-
-## 4. Portal do cliente
-
-- **Visão de saúde** dos próprios endpoints (somente leitura) — gráficos simples e estado atual.
-- **Aprovar/rejeitar orçamentos** e ver faturas pagas/pendentes.
-- **Base de conhecimento pública** com busca e categorias.
-- **Notificações por e-mail** de atualização de ticket.
-
-## 5. Billing
-
-- **Cobrança recorrente** automática por contrato (mensal) gerando invoice em rascunho.
-- **Itens medidos**: por endpoint ativo, por ticket fora do escopo, por hora extra.
-- **Integração Stripe** (já temos connector disponível) para link de pagamento na fatura.
-- **Relatório de rentabilidade por cliente** (receita − horas gastas em tickets).
-
-## 6. Agente (instalação & operação)
-
-- **Auto-update** do agente com canal stable/beta.
-- **Comandos remotos seguros** com log assinado e timeout (já existe `endpoint_commands` — expandir UI).
-- **Coleta opcional de eventos do Event Viewer / journald** filtrados (erros críticos).
-- **Modo offline**: bufferizar métricas e enviar quando voltar.
-- **Health check do próprio agente** (versão, último erro, uso de CPU dele mesmo).
-
-## 7. Segurança & compliance
-
-- **2FA obrigatório** para staff/admin.
-- **Sessões ativas** + revogação manual no perfil.
-- **Audit log com filtros e exportação** (já existe a tabela — falta UI rica).
-- **Política de retenção** configurável (métricas, histórico, logs).
-- **Revisão periódica de RLS**: rodar o linter e o scanner como parte do release.
-- **Secrets do endpoint** (`endpoint_secrets`) — garantir que nunca trafegam pro client; expor só via server function com role check.
-
-## 8. UX / Produto
-
-- **Busca global** (Cmd/Ctrl+K) por endpoint, ticket, cliente, KB.
-- **Favoritos / pins** por usuário (clientes ou endpoints).
-- **Salvable views** (filtros + colunas) em endpoints e tickets.
-- **Modo denso / confortável** nas tabelas grandes.
-- **Atalhos de teclado** nas listas (j/k navegação, e editar, etc.).
-- **i18n completo**: revisar strings hardcoded em PT/EN (já temos `i18n.tsx`).
-- **Acessibilidade**: foco visível, labels em ícones-only, contraste nos badges.
-
-## 9. Performance & infra
-
-- **Paginação real** em listas grandes (tickets, endpoints, audit) — hoje muitas usam `.limit(500)`.
-- **Realtime seletivo** (assinar só o que está visível, não a tabela inteira).
-- **Índices** em colunas usadas em `ORDER BY`/`WHERE` recorrentes (`endpoint_id, created_at`, etc.) — vale uma passagem.
-- **Cache de queries** com `staleTime` adequado por tipo de dado (configs raramente mudam, métricas mudam toda hora).
-- **Job de housekeeping** (pg_cron): comprimir métricas antigas, fechar outages órfãs, expirar enrollments.
-
-## 10. Observabilidade interna do SaaS
-
-- **Página de status** interna: filas, último heartbeat agregado, erros recentes de edge functions.
-- **Métricas de uso** por tenant (endpoints ativos, tickets/mês) — base para planos.
+Vou entregar em **3 PRs lógicos** dentro do projeto (mesmo branch, commits separados). Estimo 1 entrega grande.
 
 ---
 
-## Sugestão de prioridade (próximas 2-3 entregas)
+## Frente A — Monitoramento de endpoints (item 1 completo)
 
-1. **SLA + janelas de manutenção + agrupamento de alertas** → resolve a dor diária do operador.
-2. **Portal do cliente com visão de saúde + KB pública** → reduz tickets.
-3. **Busca global (Cmd+K) + paginação real + salvable views** → escala a operação.
+### A1. Mapa de saúde da frota (heatmap no dashboard)
+- Novo card no `dashboard.tsx`: grid colorido (online=verde, warning=âmbar, critical=vermelho, offline=cinza) agrupado por cliente.
+- Hover: hostname + último heartbeat. Click: abre endpoint.
+- Fonte: `endpoints` (já existe).
 
-Me diga em quais áreas/itens quer focar (pode citar números, ex.: "3 todo + 1.1 + 1.2 + 8.1") e eu volto com um plano detalhado por feature.
+### A2. Latência/RTT
+- Agente (PowerShell `public/agent/install.ps1` + heartbeat) envia `gateway_rtt_ms` no heartbeat.
+- Coluna nova em `endpoint_metric_samples`: `gateway_rtt_ms numeric`.
+- Edge route `api/public/agent/heartbeat.ts` aceita o campo.
+- Gráfico no `history-tab.tsx` (linha extra sobreposta ao uptime).
+
+### A3. Top N quedas / downtime (widget)
+- Query agregada em `endpoint_outages` últimos 7d → componente no dashboard com top 10 por nº de quedas e por minutos offline.
+
+### A4. Detecção de anomalia simples
+- Função SQL `detect_metric_anomalies()`: média móvel 24h + 2σ em cpu/ram/disk por endpoint, gera `alerts` com severity=warning.
+- Agendar via `run_scheduled_automations` ou novo cron (executar a cada 15 min — via pg_cron se disponível, senão botão "Run now" em settings).
+
+### A5. Histórico de software instalado (frota)
+- Nova página `_authenticated/inventory.software.tsx` listando `endpoint_inventory_history` onde `category='software'` com filtros: cliente, ação (added/removed), período. Já existe a tabela; só falta UI.
+
+### A6. Patch status
+- Campo `os_last_update_at timestamptz` e `pending_updates jsonb` em `endpoints`.
+- Heartbeat passa a aceitar. UI: badge no detalhe do endpoint + coluna opcional na lista.
+
+---
+
+## Frente B — Alertas & automações (item 3, partes pedidas)
+
+### B1. Canais de notificação
+- Nova tabela `notification_channels`: `{id, tenant_id, kind, name, config jsonb, enabled}` onde `kind ∈ ('email','webhook','slack','teams','whatsapp')`.
+- UI em `settings.tsx` aba "Canais": CRUD + teste.
+- `alert_rules` ganha `channel_ids uuid[]`.
+- Edge function `alert-dispatch` consome novos alertas (trigger AFTER INSERT em `alerts`) e envia pelos canais (e-mail via Resend já-conectado se existir; webhook genérico; Slack/Teams via webhook URL; WhatsApp via Twilio gateway).
+
+### B2. Biblioteca de automações prontas
+- Seed migration insere ~8 automações de exemplo (script, marcadas `is_template=true`, sem `scope` ativo):
+  - Limpar `%TEMP%` (Windows)
+  - Reiniciar serviço (param)
+  - `Get-WindowsUpdate -Install` (PSWindowsUpdate)
+  - Coletar últimas 200 linhas de Event Viewer (System/Application)
+  - Flush DNS
+  - Reiniciar Spooler
+  - Limpar lixeira de todos os usuários
+  - Forçar `gpupdate /force`
+- Coluna nova `automations.is_template boolean default false`.
+- Botão "Da biblioteca" no `automations.tsx`: lista templates e cria cópia editável no tenant.
+
+### B3. Aprovação humana para destrutivas
+- Coluna `automations.requires_approval boolean default false`.
+- Nova tabela `automation_approvals {id, tenant_id, automation_id, requested_by, approved_by, status('pending'|'approved'|'rejected'), reason, created_at, decided_at}`.
+- Quando `requires_approval=true`, `run_automation()` em vez de executar, cria `automation_approvals` pending e marca run como `queued` esperando aprovação.
+- UI: aba "Aprovações" em automations; admin aprova → dispara execução real.
+
+---
+
+## Frente C — Portal do cliente via WhatsApp (item 4)
+
+Fluxo: cliente envia mensagem no WhatsApp → bot responde com status dos tickets dele e aceita comandos simples.
+
+### C1. Vincular telefone ao contato
+- `client_contacts` já tem `phone`. Adicionar `whatsapp_opt_in boolean default false` e índice em `phone`.
+
+### C2. Inbound do WhatsApp
+- Endpoint público `src/routes/api/public/whatsapp/inbound.ts` recebe webhook do Twilio WhatsApp.
+- Verifica assinatura `X-Twilio-Signature`.
+- Resolve `From` (E.164) → `client_contacts.phone` → `client_id`.
+- Comandos suportados (texto livre + parsing simples):
+  - `oi`, `menu` → menu
+  - `tickets` → lista últimos 5 abertos com número + título + status
+  - `ticket TKT-00012` ou só `TKT-00012` → detalhes + últimos 2 comentários públicos
+  - `novo <título>` → cria ticket com priority=medium, category=null, description="Aberto via WhatsApp"
+  - `comentar TKT-00012 <texto>` → adiciona comentário público
+  - qualquer outra coisa → fallback menu
+- Resposta via Twilio (gateway connector) ao `From`.
+
+### C3. Outbound (notificações)
+- Quando ticket muda de status ou recebe comentário público (trigger), enfileira mensagem WhatsApp se o contato principal do client tem `whatsapp_opt_in=true`.
+- Tabela `whatsapp_messages {id, tenant_id, direction, from, to, body, ticket_id?, status, created_at}` (log + para reprocessar).
+- Worker simples: edge function chamada por trigger ou por novo registro `direction=outbound, status=pending`.
+
+### C4. Configuração
+- Pede conectar Twilio (connector já documentado) — se não conectado, mostra aviso em settings.
+- Em `settings.tsx` aba "WhatsApp": número Twilio (`from`), toggle "Notificações para clientes", botão de teste.
+
+---
+
+## Detalhes técnicos consolidados
+
+**Migrations (uma só, transacional):**
+1. `endpoint_metric_samples.gateway_rtt_ms numeric`
+2. `endpoints.os_last_update_at`, `endpoints.pending_updates`
+3. `notification_channels` + grants + RLS por tenant
+4. `alert_rules.channel_ids uuid[]`
+5. `automations.is_template`, `automations.requires_approval`
+6. `automation_approvals` + grants + RLS
+7. `client_contacts.whatsapp_opt_in`
+8. `whatsapp_messages` + grants + RLS (apenas admin/technician leem)
+9. Seed templates de automação
+10. Função `detect_metric_anomalies()`
+
+**Edge / server fns:**
+- `api/public/agent/heartbeat.ts` — aceitar novos campos
+- `api/public/whatsapp/inbound.ts` — webhook
+- `lib/notifications.functions.ts` — `dispatchAlert`, `sendWhatsApp`
+- `lib/approvals.functions.ts` — `approveAutomation`, `rejectAutomation`
+
+**UI nova:**
+- `components/dashboard/fleet-heatmap.tsx`
+- `components/dashboard/top-outages.tsx`
+- `routes/_authenticated/inventory.software.tsx`
+- `components/settings/channels-tab.tsx`
+- `components/settings/whatsapp-tab.tsx`
+- `components/automations/library-dialog.tsx`
+- `components/automations/approvals-tab.tsx`
+
+**Conector externo necessário:** Twilio (para WhatsApp). Eu peço o conector no momento certo.
+
+**O que NÃO entra agora** (para não inchar):
+- Slack/Teams já como integrações nativas (vai como webhook genérico)
+- App mobile do cliente
+- Pagamento via WhatsApp
+- Voz/IVR
+
+Confirma que posso seguir nesse escopo? Se quiser que eu corte alguma sub-tarefa (ex: deixar Patch status A6 para depois), me diga antes de eu começar.

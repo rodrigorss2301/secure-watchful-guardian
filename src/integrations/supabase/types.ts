@@ -77,6 +77,7 @@ export type Database = {
       }
       alert_rules: {
         Row: {
+          channel_ids: string[] | null
           client_id: string | null
           comparator: Database["public"]["Enums"]["alert_comparator"]
           created_at: string
@@ -96,6 +97,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          channel_ids?: string[] | null
           client_id?: string | null
           comparator?: Database["public"]["Enums"]["alert_comparator"]
           created_at?: string
@@ -115,6 +117,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          channel_ids?: string[] | null
           client_id?: string | null
           comparator?: Database["public"]["Enums"]["alert_comparator"]
           created_at?: string
@@ -285,6 +288,57 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_approvals: {
+        Row: {
+          approved_by: string | null
+          automation_id: string
+          created_at: string
+          decided_at: string | null
+          id: string
+          reason: string | null
+          requested_by: string | null
+          status: Database["public"]["Enums"]["automation_approval_status"]
+          tenant_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          automation_id: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["automation_approval_status"]
+          tenant_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          automation_id?: string
+          created_at?: string
+          decided_at?: string | null
+          id?: string
+          reason?: string | null
+          requested_by?: string | null
+          status?: Database["public"]["Enums"]["automation_approval_status"]
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_approvals_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_approvals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_runs: {
         Row: {
           automation_id: string
@@ -368,6 +422,45 @@ export type Database = {
           },
         ]
       }
+      automation_templates: {
+        Row: {
+          code: string | null
+          created_at: string
+          description: string | null
+          destructive: boolean
+          id: string
+          kind: Database["public"]["Enums"]["automation_kind"]
+          language: Database["public"]["Enums"]["automation_language"] | null
+          name: string
+          power_action: string | null
+          tags: string[] | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          destructive?: boolean
+          id?: string
+          kind: Database["public"]["Enums"]["automation_kind"]
+          language?: Database["public"]["Enums"]["automation_language"] | null
+          name: string
+          power_action?: string | null
+          tags?: string[] | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          description?: string | null
+          destructive?: boolean
+          id?: string
+          kind?: Database["public"]["Enums"]["automation_kind"]
+          language?: Database["public"]["Enums"]["automation_language"] | null
+          name?: string
+          power_action?: string | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
       automations: {
         Row: {
           client_id: string | null
@@ -379,6 +472,7 @@ export type Database = {
           enabled: boolean
           endpoint_id: string | null
           id: string
+          is_template: boolean
           kind: Database["public"]["Enums"]["automation_kind"]
           language: Database["public"]["Enums"]["automation_language"]
           name: string
@@ -388,6 +482,7 @@ export type Database = {
             | null
           power_delay_seconds: number
           power_message: string | null
+          requires_approval: boolean
           scope: Database["public"]["Enums"]["automation_scope"]
           tenant_id: string
           trigger: Database["public"]["Enums"]["automation_trigger"]
@@ -403,6 +498,7 @@ export type Database = {
           enabled?: boolean
           endpoint_id?: string | null
           id?: string
+          is_template?: boolean
           kind?: Database["public"]["Enums"]["automation_kind"]
           language?: Database["public"]["Enums"]["automation_language"]
           name: string
@@ -412,6 +508,7 @@ export type Database = {
             | null
           power_delay_seconds?: number
           power_message?: string | null
+          requires_approval?: boolean
           scope?: Database["public"]["Enums"]["automation_scope"]
           tenant_id: string
           trigger?: Database["public"]["Enums"]["automation_trigger"]
@@ -427,6 +524,7 @@ export type Database = {
           enabled?: boolean
           endpoint_id?: string | null
           id?: string
+          is_template?: boolean
           kind?: Database["public"]["Enums"]["automation_kind"]
           language?: Database["public"]["Enums"]["automation_language"]
           name?: string
@@ -436,6 +534,7 @@ export type Database = {
             | null
           power_delay_seconds?: number
           power_message?: string | null
+          requires_approval?: boolean
           scope?: Database["public"]["Enums"]["automation_scope"]
           tenant_id?: string
           trigger?: Database["public"]["Enums"]["automation_trigger"]
@@ -477,6 +576,7 @@ export type Database = {
           role: string | null
           tenant_id: string
           updated_at: string
+          whatsapp_opt_in: boolean
         }
         Insert: {
           client_id: string
@@ -489,6 +589,7 @@ export type Database = {
           role?: string | null
           tenant_id: string
           updated_at?: string
+          whatsapp_opt_in?: boolean
         }
         Update: {
           client_id?: string
@@ -501,6 +602,7 @@ export type Database = {
           role?: string | null
           tenant_id?: string
           updated_at?: string
+          whatsapp_opt_in?: boolean
         }
         Relationships: [
           {
@@ -842,6 +944,7 @@ export type Database = {
           cpu_usage: number | null
           disk_usage: number | null
           endpoint_id: string
+          gateway_rtt_ms: number | null
           id: number
           ram_usage: number | null
           sampled_at: string
@@ -851,6 +954,7 @@ export type Database = {
           cpu_usage?: number | null
           disk_usage?: number | null
           endpoint_id: string
+          gateway_rtt_ms?: number | null
           id?: number
           ram_usage?: number | null
           sampled_at?: string
@@ -860,6 +964,7 @@ export type Database = {
           cpu_usage?: number | null
           disk_usage?: number | null
           endpoint_id?: string
+          gateway_rtt_ms?: number | null
           id?: number
           ram_usage?: number | null
           sampled_at?: string
@@ -997,6 +1102,7 @@ export type Database = {
           network_interfaces: Json
           notes: string | null
           os: string | null
+          os_last_update_at: string | null
           os_version: string | null
           pending_updates: Json
           public_ip: string | null
@@ -1048,6 +1154,7 @@ export type Database = {
           network_interfaces?: Json
           notes?: string | null
           os?: string | null
+          os_last_update_at?: string | null
           os_version?: string | null
           pending_updates?: Json
           public_ip?: string | null
@@ -1099,6 +1206,7 @@ export type Database = {
           network_interfaces?: Json
           notes?: string | null
           os?: string | null
+          os_last_update_at?: string | null
           os_version?: string | null
           pending_updates?: Json
           public_ip?: string | null
@@ -1353,6 +1461,47 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_channels: {
+        Row: {
+          config: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          kind: Database["public"]["Enums"]["notification_channel_kind"]
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind: Database["public"]["Enums"]["notification_channel_kind"]
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          kind?: Database["public"]["Enums"]["notification_channel_kind"]
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_channels_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1731,11 +1880,79 @@ export type Database = {
           },
         ]
       }
+      whatsapp_messages: {
+        Row: {
+          body: string
+          client_id: string | null
+          created_at: string
+          direction: Database["public"]["Enums"]["whatsapp_direction"]
+          error: string | null
+          from_number: string
+          id: string
+          provider_sid: string | null
+          status: Database["public"]["Enums"]["whatsapp_status"]
+          tenant_id: string
+          ticket_id: string | null
+          to_number: string
+        }
+        Insert: {
+          body: string
+          client_id?: string | null
+          created_at?: string
+          direction: Database["public"]["Enums"]["whatsapp_direction"]
+          error?: string | null
+          from_number: string
+          id?: string
+          provider_sid?: string | null
+          status?: Database["public"]["Enums"]["whatsapp_status"]
+          tenant_id: string
+          ticket_id?: string | null
+          to_number: string
+        }
+        Update: {
+          body?: string
+          client_id?: string | null
+          created_at?: string
+          direction?: Database["public"]["Enums"]["whatsapp_direction"]
+          error?: string | null
+          from_number?: string
+          id?: string
+          provider_sid?: string | null
+          status?: Database["public"]["Enums"]["whatsapp_status"]
+          tenant_id?: string
+          ticket_id?: string | null
+          to_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      approve_automation: { Args: { _approval_id: string }; Returns: number }
       cleanup_endpoint_history: { Args: never; Returns: undefined }
       cron_field_matches: {
         Args: { _field: string; _value: number }
@@ -1743,6 +1960,7 @@ export type Database = {
       }
       cron_matches: { Args: { _expr: string; _ts: string }; Returns: boolean }
       detect_endpoint_outages: { Args: never; Returns: number }
+      detect_metric_anomalies: { Args: never; Returns: number }
       evaluate_alert_rules: { Args: never; Returns: number }
       generate_invoice_from_contract: {
         Args: {
@@ -1762,6 +1980,10 @@ export type Database = {
         Returns: boolean
       }
       mark_invoice_paid: { Args: { _invoice_id: string }; Returns: undefined }
+      reject_automation: {
+        Args: { _approval_id: string; _reason?: string }
+        Returns: undefined
+      }
       run_automation: { Args: { _automation_id: string }; Returns: number }
       run_scheduled_automations: { Args: never; Returns: number }
     }
@@ -1772,6 +1994,7 @@ export type Database = {
       alert_severity: "info" | "warning" | "critical"
       alert_status: "open" | "acknowledged" | "resolved"
       app_role: "admin" | "technician" | "viewer" | "portal"
+      automation_approval_status: "pending" | "approved" | "rejected"
       automation_kind: "script" | "task" | "power"
       automation_language: "powershell" | "bash" | "python"
       automation_run_status:
@@ -1804,6 +2027,12 @@ export type Database = {
       invoice_status: "draft" | "sent" | "paid" | "overdue" | "void"
       kb_status: "draft" | "published" | "archived"
       kb_visibility: "internal" | "public"
+      notification_channel_kind:
+        | "email"
+        | "webhook"
+        | "slack"
+        | "teams"
+        | "whatsapp"
       service_unit: "hour" | "month" | "endpoint" | "user" | "license" | "fixed"
       sla_tier: "bronze" | "silver" | "gold" | "platinum"
       ticket_category:
@@ -1815,6 +2044,8 @@ export type Database = {
       ticket_priority: "low" | "medium" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"
       user_status: "pending" | "active" | "disabled"
+      whatsapp_direction: "inbound" | "outbound"
+      whatsapp_status: "pending" | "sent" | "delivered" | "failed" | "received"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1948,6 +2179,7 @@ export const Constants = {
       alert_severity: ["info", "warning", "critical"],
       alert_status: ["open", "acknowledged", "resolved"],
       app_role: ["admin", "technician", "viewer", "portal"],
+      automation_approval_status: ["pending", "approved", "rejected"],
       automation_kind: ["script", "task", "power"],
       automation_language: ["powershell", "bash", "python"],
       automation_run_status: [
@@ -1983,12 +2215,21 @@ export const Constants = {
       invoice_status: ["draft", "sent", "paid", "overdue", "void"],
       kb_status: ["draft", "published", "archived"],
       kb_visibility: ["internal", "public"],
+      notification_channel_kind: [
+        "email",
+        "webhook",
+        "slack",
+        "teams",
+        "whatsapp",
+      ],
       service_unit: ["hour", "month", "endpoint", "user", "license", "fixed"],
       sla_tier: ["bronze", "silver", "gold", "platinum"],
       ticket_category: ["incident", "request", "problem", "change", "question"],
       ticket_priority: ["low", "medium", "high", "urgent"],
       ticket_status: ["open", "in_progress", "waiting", "resolved", "closed"],
       user_status: ["pending", "active", "disabled"],
+      whatsapp_direction: ["inbound", "outbound"],
+      whatsapp_status: ["pending", "sent", "delivered", "failed", "received"],
     },
   },
 } as const

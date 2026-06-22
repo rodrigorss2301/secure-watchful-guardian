@@ -25,6 +25,8 @@ import {
   STATUS_TONE as TK_TONE, PRIORITY_TONE, TICKET_STATUSES, TICKET_PRIORITIES,
   slaState, type TicketStatus, type TicketPriority,
 } from "@/lib/tickets";
+import { FleetHeatmap } from "@/components/dashboard/fleet-heatmap";
+import { TopOutages } from "@/components/dashboard/top-outages";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Autotechs RMM" }] }),
@@ -371,6 +373,11 @@ function DashboardPage() {
             </ul>
           )}
         </Card>
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <FleetHeatmap />
+        <TopOutages />
       </div>
     </>
   );

@@ -28,8 +28,10 @@ import { Route as AuthenticatedEndpointsIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
 import { Route as AuthenticatedPortalTicketsRouteImport } from './routes/_authenticated/portal.tickets'
 import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
+import { Route as AuthenticatedInventorySoftwareRouteImport } from './routes/_authenticated/inventory.software'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
+import { Route as ApiPublicWhatsappInboundRouteImport } from './routes/api/public/whatsapp/inbound'
 import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicAgentEnrollRouteImport } from './routes/api/public/agent/enroll'
 import { Route as ApiPublicAgentCommandResultRouteImport } from './routes/api/public/agent/command-result'
@@ -133,6 +135,12 @@ const AuthenticatedKbSlugRoute = AuthenticatedKbSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => AuthenticatedKbRoute,
 } as any)
+const AuthenticatedInventorySoftwareRoute =
+  AuthenticatedInventorySoftwareRouteImport.update({
+    id: '/inventory/software',
+    path: '/inventory/software',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEndpointsIdRoute =
   AuthenticatedEndpointsIdRouteImport.update({
     id: '/endpoints/$id',
@@ -144,6 +152,12 @@ const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedClientsRoute,
 } as any)
+const ApiPublicWhatsappInboundRoute =
+  ApiPublicWhatsappInboundRouteImport.update({
+    id: '/api/public/whatsapp/inbound',
+    path: '/api/public/whatsapp/inbound',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
   id: '/api/public/agent/heartbeat',
   path: '/api/public/agent/heartbeat',
@@ -190,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
@@ -199,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -217,6 +233,7 @@ export interface FileRoutesByTo {
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
@@ -226,6 +243,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -246,6 +264,7 @@ export interface FileRoutesById {
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
+  '/_authenticated/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/_authenticated/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/_authenticated/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
@@ -255,6 +274,7 @@ export interface FileRoutesById {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -275,6 +295,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/clients/$id'
     | '/endpoints/$id'
+    | '/inventory/software'
     | '/kb/$slug'
     | '/portal/tickets'
     | '/tickets/$id'
@@ -284,6 +305,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/whatsapp/inbound'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -302,6 +324,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/clients/$id'
     | '/endpoints/$id'
+    | '/inventory/software'
     | '/kb/$slug'
     | '/portal/tickets'
     | '/tickets/$id'
@@ -311,6 +334,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/whatsapp/inbound'
   id:
     | '__root__'
     | '/'
@@ -330,6 +354,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tickets'
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
+    | '/_authenticated/inventory/software'
     | '/_authenticated/kb/$slug'
     | '/_authenticated/portal/tickets'
     | '/_authenticated/tickets/$id'
@@ -339,6 +364,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/whatsapp/inbound'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -350,6 +376,7 @@ export interface RootRouteChildren {
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
   ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
+  ApiPublicWhatsappInboundRoute: typeof ApiPublicWhatsappInboundRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -487,6 +514,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKbSlugRouteImport
       parentRoute: typeof AuthenticatedKbRoute
     }
+    '/_authenticated/inventory/software': {
+      id: '/_authenticated/inventory/software'
+      path: '/inventory/software'
+      fullPath: '/inventory/software'
+      preLoaderRoute: typeof AuthenticatedInventorySoftwareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/endpoints/$id': {
       id: '/_authenticated/endpoints/$id'
       path: '/endpoints/$id'
@@ -500,6 +534,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/clients/$id'
       preLoaderRoute: typeof AuthenticatedClientsIdRouteImport
       parentRoute: typeof AuthenticatedClientsRoute
+    }
+    '/api/public/whatsapp/inbound': {
+      id: '/api/public/whatsapp/inbound'
+      path: '/api/public/whatsapp/inbound'
+      fullPath: '/api/public/whatsapp/inbound'
+      preLoaderRoute: typeof ApiPublicWhatsappInboundRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/agent/heartbeat': {
       id: '/api/public/agent/heartbeat'
@@ -601,6 +642,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
   AuthenticatedEndpointsIdRoute: typeof AuthenticatedEndpointsIdRoute
+  AuthenticatedInventorySoftwareRoute: typeof AuthenticatedInventorySoftwareRoute
   AuthenticatedPortalTicketsRoute: typeof AuthenticatedPortalTicketsRouteWithChildren
   AuthenticatedEndpointsIndexRoute: typeof AuthenticatedEndpointsIndexRoute
 }
@@ -617,6 +659,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
   AuthenticatedEndpointsIdRoute: AuthenticatedEndpointsIdRoute,
+  AuthenticatedInventorySoftwareRoute: AuthenticatedInventorySoftwareRoute,
   AuthenticatedPortalTicketsRoute: AuthenticatedPortalTicketsRouteWithChildren,
   AuthenticatedEndpointsIndexRoute: AuthenticatedEndpointsIndexRoute,
 }
@@ -633,6 +676,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,
   ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,
+  ApiPublicWhatsappInboundRoute: ApiPublicWhatsappInboundRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

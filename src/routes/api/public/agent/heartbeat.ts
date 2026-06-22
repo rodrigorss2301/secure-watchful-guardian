@@ -10,6 +10,8 @@ const Body = z.object({
   agent_version: z.string().max(40).optional().nullable(),
   os_version: z.string().max(120).optional().nullable(),
   tailscale_ip: z.string().max(64).optional().nullable(),
+  gateway_rtt_ms: z.number().min(0).max(60000).optional().nullable(),
+  os_last_update_at: z.string().max(40).optional().nullable(),
   // Inventário expandido (opcional)
   cpu_model: z.string().max(200).optional().nullable(),
   cpu_cores: z.number().int().min(0).max(4096).optional().nullable(),
@@ -94,6 +96,7 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
             ...(b.agent_version ? { agent_version: b.agent_version } : {}),
             ...(b.os_version ? { os_version: b.os_version } : {}),
             ...(b.tailscale_ip !== undefined ? { tailscale_ip: b.tailscale_ip } : {}),
+            ...(b.os_last_update_at !== undefined ? { os_last_update_at: b.os_last_update_at } : {}),
             ...inv,
             ...(hasInventory ? { inventory_updated_at: new Date().toISOString() } : {}),
           })
@@ -108,6 +111,7 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
             cpu_usage: b.cpu_usage ?? null,
             ram_usage: b.ram_usage ?? null,
             disk_usage: b.disk_usage ?? null,
+            gateway_rtt_ms: b.gateway_rtt_ms ?? null,
           });
         }
 
