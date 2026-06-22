@@ -23,6 +23,7 @@ import { EndpointFormDialog } from "@/components/endpoints/endpoint-form-dialog"
 import { RemoteAccessDialog } from "@/components/endpoints/remote-access-dialog";
 import { PowerDialog } from "@/components/endpoints/power-dialog";
 import { InstallAgentDialog } from "@/components/endpoints/install-agent-dialog";
+import { HistoryTab } from "@/components/endpoints/history-tab";
 import { LATEST_AGENT_VERSION, isAgentOutdated } from "@/lib/agent-version";
 import {
   STATUS_DOT, STATUS_TONE, TYPE_ICON, timeAgo, usageTone,
@@ -233,6 +234,7 @@ function EndpointDetailPage() {
               <TabsTrigger value="software">Software</TabsTrigger>
               <TabsTrigger value="processes">Processos</TabsTrigger>
               <TabsTrigger value="services">Serviços</TabsTrigger>
+              <TabsTrigger value="history">Histórico</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-5 p-5 pt-0">
@@ -273,6 +275,7 @@ function EndpointDetailPage() {
             <TabsContent value="software" className="p-5 pt-0"><SoftwareTab e={e} /></TabsContent>
             <TabsContent value="processes" className="p-5 pt-0"><ProcessesTab e={e} /></TabsContent>
             <TabsContent value="services" className="p-5 pt-0"><ServicesTab e={e} /></TabsContent>
+            <TabsContent value="history" className="p-5 pt-0"><HistoryTab endpointId={endpoint.id} /></TabsContent>
           </Tabs>
         </Card>
 
