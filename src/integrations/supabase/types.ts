@@ -875,6 +875,54 @@ export type Database = {
           },
         ]
       }
+      endpoint_outages: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          endpoint_id: string
+          id: string
+          reason: string
+          started_at: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          endpoint_id: string
+          id?: string
+          reason?: string
+          started_at: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          endpoint_id?: string
+          id?: string
+          reason?: string
+          started_at?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_outages_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_outages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoint_secrets: {
         Row: {
           agent_token: string
@@ -1694,6 +1742,7 @@ export type Database = {
         Returns: boolean
       }
       cron_matches: { Args: { _expr: string; _ts: string }; Returns: boolean }
+      detect_endpoint_outages: { Args: never; Returns: number }
       evaluate_alert_rules: { Args: never; Returns: number }
       generate_invoice_from_contract: {
         Args: {
