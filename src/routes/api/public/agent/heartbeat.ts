@@ -96,6 +96,7 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
             ...(b.agent_version ? { agent_version: b.agent_version } : {}),
             ...(b.os_version ? { os_version: b.os_version } : {}),
             ...(b.tailscale_ip !== undefined ? { tailscale_ip: b.tailscale_ip } : {}),
+            ...(b.os_last_update_at !== undefined ? { os_last_update_at: b.os_last_update_at } : {}),
             ...inv,
             ...(hasInventory ? { inventory_updated_at: new Date().toISOString() } : {}),
           })
@@ -110,6 +111,7 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
             cpu_usage: b.cpu_usage ?? null,
             ram_usage: b.ram_usage ?? null,
             disk_usage: b.disk_usage ?? null,
+            gateway_rtt_ms: b.gateway_rtt_ms ?? null,
           });
         }
 
