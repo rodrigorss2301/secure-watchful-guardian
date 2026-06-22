@@ -1,133 +1,107 @@
-# Plano — 3 frentes (1 completo + 3 parcial + 4 WhatsApp)
+## Item 6 — Agente (instalação & operação) — completo
 
-Vou entregar em **3 PRs lógicos** dentro do projeto (mesmo branch, commits separados). Estimo 1 entrega grande.
-
----
-
-## Frente A — Monitoramento de endpoints (item 1 completo)
-
-### A1. Mapa de saúde da frota (heatmap no dashboard)
-- Novo card no `dashboard.tsx`: grid colorido (online=verde, warning=âmbar, critical=vermelho, offline=cinza) agrupado por cliente.
-- Hover: hostname + último heartbeat. Click: abre endpoint.
-- Fonte: `endpoints` (já existe).
-
-### A2. Latência/RTT
-- Agente (PowerShell `public/agent/install.ps1` + heartbeat) envia `gateway_rtt_ms` no heartbeat.
-- Coluna nova em `endpoint_metric_samples`: `gateway_rtt_ms numeric`.
-- Edge route `api/public/agent/heartbeat.ts` aceita o campo.
-- Gráfico no `history-tab.tsx` (linha extra sobreposta ao uptime).
-
-### A3. Top N quedas / downtime (widget)
-- Query agregada em `endpoint_outages` últimos 7d → componente no dashboard com top 10 por nº de quedas e por minutos offline.
-
-### A4. Detecção de anomalia simples
-- Função SQL `detect_metric_anomalies()`: média móvel 24h + 2σ em cpu/ram/disk por endpoint, gera `alerts` com severity=warning.
-- Agendar via `run_scheduled_automations` ou novo cron (executar a cada 15 min — via pg_cron se disponível, senão botão "Run now" em settings).
-
-### A5. Histórico de software instalado (frota)
-- Nova página `_authenticated/inventory.software.tsx` listando `endpoint_inventory_history` onde `category='software'` com filtros: cliente, ação (added/removed), período. Já existe a tabela; só falta UI.
-
-### A6. Patch status
-- Campo `os_last_update_at timestamptz` e `pending_updates jsonb` em `endpoints`.
-- Heartbeat passa a aceitar. UI: badge no detalhe do endpoint + coluna opcional na lista.
+Vou entregar as 5 sub-tarefas pedidas em 3 frentes (banco → backend → agente PowerShell → UI).
 
 ---
 
-## Frente B — Alertas & automações (item 3, partes pedidas)
+### 6.1 Auto-update com canais `stable` / `beta`
 
-### B1. Canais de notificação
-- Nova tabela `notification_channels`: `{id, tenant_id, kind, name, config jsonb, enabled}` onde `kind ∈ ('email','webhook','slack','teams','whatsapp')`.
-- UI em `settings.tsx` aba "Canais": CRUD + teste.
-- `alert_rules` ganha `channel_ids uuid[]`.
-- Edge function `alert-dispatch` consome novos alertas (trigger AFTER INSERT em `alerts`) e envia pelos canais (e-mail via Resend já-conectado se existir; webhook genérico; Slack/Teams via webhook URL; WhatsApp via Twilio gateway).
+**Banco**
+- `agent_releases (id, channel enum stable|beta, version, script_url, sha256, released_at, notes)` — tabela global, leitura aberta (SELECT TO anon) só do release mais recente por canal.
+- `endpoints.update_channel` (`stable` default) + `endpoints.agent_last_update_at`.
+- Função `get_latest_agent_release(_channel)` SECURITY DEFINER.
 
-### B2. Biblioteca de automações prontas
-- Seed migration insere ~8 automações de exemplo (script, marcadas `is_template=true`, sem `scope` ativo):
-  - Limpar `%TEMP%` (Windows)
-  - Reiniciar serviço (param)
-  - `Get-WindowsUpdate -Install` (PSWindowsUpdate)
-  - Coletar últimas 200 linhas de Event Viewer (System/Application)
-  - Flush DNS
-  - Reiniciar Spooler
-  - Limpar lixeira de todos os usuários
-  - Forçar `gpupdate /force`
-- Coluna nova `automations.is_template boolean default false`.
-- Botão "Da biblioteca" no `automations.tsx`: lista templates e cria cópia editável no tenant.
+**Backend (heartbeat)**
+- Resposta passa a incluir `latest_agent: { version, channel, script_url, sha256 }` do canal do endpoint.
 
-### B3. Aprovação humana para destrutivas
-- Coluna `automations.requires_approval boolean default false`.
-- Nova tabela `automation_approvals {id, tenant_id, automation_id, requested_by, approved_by, status('pending'|'approved'|'rejected'), reason, created_at, decided_at}`.
-- Quando `requires_approval=true`, `run_automation()` em vez de executar, cria `automation_approvals` pending e marca run como `queued` esperando aprovação.
-- UI: aba "Aprovações" em automations; admin aprova → dispara execução real.
+**Agente (`install.ps1`)**
+- Ao receber heartbeat, se `latest_agent.version > $AgentVersion`: baixa o novo script, valida SHA-256, escreve em `agent.ps1`, log "self-update ok", próxima execução já roda a nova versão (tarefa agendada relê o arquivo).
+- Fallback: se SHA não bate, mantém versão atual.
+
+**UI**
+- Aba `Endpoints → detalhe` mostra canal (badge) e botão "Mudar para beta/stable".
+- `settings.tsx` nova seção "Agente" lista releases atuais por canal e permite admin publicar novo release (apenas metadados — script segue em `/public/agent/install.ps1` por enquanto, mas suporta `script_url` externo).
 
 ---
 
-## Frente C — Portal do cliente via WhatsApp (item 4)
+### 6.2 Comandos remotos com log assinado e timeout
 
-Fluxo: cliente envia mensagem no WhatsApp → bot responde com status dos tickets dele e aceita comandos simples.
+**Banco**
+- `endpoint_commands` ganha: `timeout_seconds INT DEFAULT 300`, `signature TEXT` (HMAC do payload), `signed_at TIMESTAMPTZ`, `expires_at TIMESTAMPTZ`, `attempted_at`, `failed_reason`.
+- Trigger `BEFORE INSERT`: assina (`HMAC-SHA256(tenant_secret, id||command||params||timeout)`) usando uma chave por tenant (`tenants.command_signing_key` — gerada no signup).
+- `endpoint_command_logs (id, command_id, level, message, created_at)` para log estruturado de execução.
 
-### C1. Vincular telefone ao contato
-- `client_contacts` já tem `phone`. Adicionar `whatsapp_opt_in boolean default false` e índice em `phone`.
+**Backend**
+- Heartbeat retorna `signature` + `expires_at` junto de cada comando pendente.
+- Novo endpoint `POST /api/public/agent/command-log` aceita lotes de linhas de log + verifica `agent_token`.
+- `command-result.ts` rejeita resultados depois de `expires_at`.
 
-### C2. Inbound do WhatsApp
-- Endpoint público `src/routes/api/public/whatsapp/inbound.ts` recebe webhook do Twilio WhatsApp.
-- Verifica assinatura `X-Twilio-Signature`.
-- Resolve `From` (E.164) → `client_contacts.phone` → `client_id`.
-- Comandos suportados (texto livre + parsing simples):
-  - `oi`, `menu` → menu
-  - `tickets` → lista últimos 5 abertos com número + título + status
-  - `ticket TKT-00012` ou só `TKT-00012` → detalhes + últimos 2 comentários públicos
-  - `novo <título>` → cria ticket com priority=medium, category=null, description="Aberto via WhatsApp"
-  - `comentar TKT-00012 <texto>` → adiciona comentário público
-  - qualquer outra coisa → fallback menu
-- Resposta via Twilio (gateway connector) ao `From`.
+**Agente**
+- Verifica HMAC antes de executar (calcula localmente com a chave gravada em `config.json` no enroll — backend passa a devolver `command_signing_key`).
+- Wrappa execução em `Start-Job` com `Wait-Job -Timeout $timeout_seconds`; mata o job se estourar e devolve `status=timeout`.
+- Captura `stdout`/`stderr` linha a linha e envia para `command-log`.
 
-### C3. Outbound (notificações)
-- Quando ticket muda de status ou recebe comentário público (trigger), enfileira mensagem WhatsApp se o contato principal do client tem `whatsapp_opt_in=true`.
-- Tabela `whatsapp_messages {id, tenant_id, direction, from, to, body, ticket_id?, status, created_at}` (log + para reprocessar).
-- Worker simples: edge function chamada por trigger ou por novo registro `direction=outbound, status=pending`.
-
-### C4. Configuração
-- Pede conectar Twilio (connector já documentado) — se não conectado, mostra aviso em settings.
-- Em `settings.tsx` aba "WhatsApp": número Twilio (`from`), toggle "Notificações para clientes", botão de teste.
+**UI**
+- `endpoints.$id.tsx` → aba "Comandos" mostra histórico com timeline de logs (expand), status (succeeded/failed/timeout/expired) e timeout configurável no formulário "Enviar comando".
 
 ---
 
-## Detalhes técnicos consolidados
+### 6.3 Coleta de eventos críticos (Event Viewer / journald)
 
-**Migrations (uma só, transacional):**
-1. `endpoint_metric_samples.gateway_rtt_ms numeric`
-2. `endpoints.os_last_update_at`, `endpoints.pending_updates`
-3. `notification_channels` + grants + RLS por tenant
-4. `alert_rules.channel_ids uuid[]`
-5. `automations.is_template`, `automations.requires_approval`
-6. `automation_approvals` + grants + RLS
-7. `client_contacts.whatsapp_opt_in`
-8. `whatsapp_messages` + grants + RLS (apenas admin/technician leem)
-9. Seed templates de automação
-10. Função `detect_metric_anomalies()`
+**Banco**
+- `endpoint_events (id, tenant_id, endpoint_id, source, level enum info|warning|error|critical, event_id, provider, message, occurred_at, raw JSONB)` — RLS por tenant.
+- Retenção 30 dias via `cleanup_endpoint_history()` existente.
 
-**Edge / server fns:**
-- `api/public/agent/heartbeat.ts` — aceitar novos campos
-- `api/public/whatsapp/inbound.ts` — webhook
-- `lib/notifications.functions.ts` — `dispatchAlert`, `sendWhatsApp`
-- `lib/approvals.functions.ts` — `approveAutomation`, `rejectAutomation`
+**Backend**
+- Heartbeat aceita `events: [{source, level, event_id, provider, message, occurred_at}]` (máx 50 por POST). Insere em lote.
 
-**UI nova:**
-- `components/dashboard/fleet-heatmap.tsx`
-- `components/dashboard/top-outages.tsx`
-- `routes/_authenticated/inventory.software.tsx`
-- `components/settings/channels-tab.tsx`
-- `components/settings/whatsapp-tab.tsx`
-- `components/automations/library-dialog.tsx`
-- `components/automations/approvals-tab.tsx`
+**Agente**
+- Após heartbeat, lê `Get-WinEvent -FilterHashtable @{LogName='System','Application'; Level=1,2; StartTime=$lastEventTs}` (Level 1=Critical, 2=Error), limita 50 por ciclo, guarda `lastEventTs` em `config.json`.
 
-**Conector externo necessário:** Twilio (para WhatsApp). Eu peço o conector no momento certo.
+**UI**
+- Nova aba `endpoints.$id.tsx → "Eventos"` com filtro por level, busca por provider/mensagem, paginação.
+- Card no dashboard "Eventos críticos (24h)" com Top 10.
 
-**O que NÃO entra agora** (para não inchar):
-- Slack/Teams já como integrações nativas (vai como webhook genérico)
-- App mobile do cliente
-- Pagamento via WhatsApp
-- Voz/IVR
+---
 
-Confirma que posso seguir nesse escopo? Se quiser que eu corte alguma sub-tarefa (ex: deixar Patch status A6 para depois), me diga antes de eu começar.
+### 6.4 Modo offline (buffer + reenvio)
+
+**Agente** (só agente — sem mudança de schema)
+- Se heartbeat falha (timeout/HTTP erro), serializa o payload em `C:\ProgramData\AutotechsRMM\queue\<timestamp>.json` (limite 500 arquivos / 50 MB; descarta os mais antigos).
+- A cada ciclo, antes do heartbeat novo, tenta reenviar a fila em ordem (máx 20 por ciclo). Sucesso → apaga arquivo. Falha → para e segue.
+- Métricas e eventos enfileirados preservam `sampled_at` / `occurred_at` originais.
+
+**Backend (heartbeat)**
+- Já aceita `sampled_at` opcional em `endpoint_metric_samples`? — adiciono coluna `sampled_at` no insert atual + campo opcional `metrics_batch: [{sampled_at, cpu, ram, disk, rtt}]` no body do heartbeat para drenar buffer em lote.
+
+---
+
+### 6.5 Health-check do próprio agente
+
+**Banco**
+- `endpoints` ganha: `agent_cpu_pct NUMERIC`, `agent_ram_mb INT`, `agent_last_error TEXT`, `agent_last_error_at TIMESTAMPTZ`, `agent_heartbeat_duration_ms INT`, `agent_queue_size INT`.
+
+**Backend**
+- Heartbeat aceita os 6 campos acima (opcionais) e grava na linha do endpoint.
+
+**Agente**
+- Mede tempo da chamada de heartbeat, lê o próprio processo (`Get-Process -Id $PID`) → CPU%/RAM MB, conta arquivos em `queue/`, registra `agent_last_error` quando algo falha (trecho do `Write-Log` do último ciclo).
+
+**UI**
+- `endpoints.$id.tsx → "Visão geral"`: card "Agente" com versão, canal, último erro, CPU/RAM do agente, latência média do heartbeat, tamanho da fila offline. Badge vermelho se erro nas últimas 2h ou fila > 50.
+
+---
+
+### Arquivos a criar/alterar (resumo)
+
+- **Migrations (1 grande)**: `agent_releases`, `endpoints` (8 colunas novas), `endpoint_commands` (5 colunas), `endpoint_command_logs`, `endpoint_events`, `tenants.command_signing_key`, função `get_latest_agent_release`, trigger de assinatura, ajuste em `cleanup_endpoint_history()`.
+- **Rotas**: edita `heartbeat.ts`, `command-result.ts`, cria `command-log.ts`, edita `enroll.ts` (devolver `command_signing_key` + canal).
+- **Agente**: `public/agent/install.ps1` (++300 linhas: self-update, HMAC, timeout/jobs, eventos, fila offline, self-health). `LATEST_AGENT_VERSION` vira `1.6.0` em `src/lib/agent-version.ts`.
+- **UI**: `endpoints.$id.tsx` (+ tabs Eventos, Comandos com timeline, card Agente), `settings.tsx` (seção Agente / releases), `dashboard.tsx` (card Eventos críticos), `components/endpoints/agent-health-card.tsx` (novo), `components/endpoints/events-tab.tsx` (novo), `components/endpoints/commands-timeline.tsx` (novo), `components/settings/agent-releases-section.tsx` (novo).
+
+### Fora do escopo (caso queira cortar)
+- Editor de releases por canal com upload do `.ps1` (mantenho apenas metadados; o script vivo continua em `/public/agent/install.ps1`).
+- Eventos Linux (`journald`) — agente Linux ainda não existe; deixo schema pronto, implementação só quando houver agente.
+- Replay de comando assinado entre instâncias de agente (proteção replay via `expires_at` já cobre janela curta).
+
+Confirma que posso seguir com tudo isso, ou quer cortar algum item?
