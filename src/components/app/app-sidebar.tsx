@@ -18,7 +18,7 @@ import { useI18n, type TKey } from "@/lib/i18n";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 
-type NavItem = { titleKey: TKey; url: string; icon: typeof LayoutDashboard; roles?: AppRole[] };
+type NavItem = { titleKey: TKey; url: string; icon: typeof LayoutDashboard; roles?: AppRole[]; literal?: string };
 
 const operations: NavItem[] = [
   { titleKey: "nav.dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -32,7 +32,7 @@ const operations: NavItem[] = [
 
 const management: NavItem[] = [
   { titleKey: "nav.reports", url: "/reports", icon: BarChart3 },
-  { titleKey: "nav.softwareHistory" as TKey, url: "/inventory/software", icon: Package, roles: ["admin", "technician"] },
+  { titleKey: "nav.reports", url: "/inventory/software", icon: Package, roles: ["admin", "technician"], literal: "Software" },
   { titleKey: "nav.billing", url: "/billing", icon: Receipt, roles: ["admin", "technician"] },
   { titleKey: "nav.audit", url: "/audit", icon: ScrollText, roles: ["admin"] },
   { titleKey: "nav.settings", url: "/settings", icon: Settings, roles: ["admin"] },
@@ -75,7 +75,7 @@ function NavSection({ labelKey, items }: { labelKey: TKey; items: NavItem[] }) {
                 >
                   <Link to={item.url}>
                     <item.icon className="h-4 w-4 shrink-0" />
-                    <span>{t(item.titleKey)}</span>
+                    <span>{item.literal ?? t(item.titleKey)}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
