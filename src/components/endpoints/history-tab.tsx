@@ -202,6 +202,30 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
           <Stat label="Quedas" value={String(uptime.outageCount)} tone="text-foreground" />
           <Stat label="Tempo fora" value={formatDuration(uptime.downSeconds)} tone={uptime.downSeconds > 0 ? "text-destructive" : "text-foreground"} />
         </div>
+        <div className="mb-3 h-44">
+          {connectivity.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Sem dados de conectividade.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={connectivity} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="h-net" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.5} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
+                <Tooltip
+                  contentStyle={{ fontSize: 11, background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                  formatter={(v: number) => [`${v}%`, "Uptime"]}
+                />
+                <Area type="monotone" dataKey="uptime" stroke="#10b981" fill="url(#h-net)" strokeWidth={1.5} name="Uptime" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
         {(outages ?? []).length === 0 ? (
           <p className="py-4 text-center text-xs text-muted-foreground">Sem quedas registradas nos últimos {periodLabel}.</p>
         ) : (
