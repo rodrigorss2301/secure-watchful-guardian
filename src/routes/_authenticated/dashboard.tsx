@@ -27,6 +27,7 @@ import {
 } from "@/lib/tickets";
 import { FleetHeatmap } from "@/components/dashboard/fleet-heatmap";
 import { TopOutages } from "@/components/dashboard/top-outages";
+import { CriticalEventsCard } from "@/components/dashboard/critical-events-card";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Autotechs RMM" }] }),
@@ -378,6 +379,10 @@ function DashboardPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <FleetHeatmap />
         <TopOutages />
+      </div>
+
+      <div className="mt-6">
+        <CriticalEventsCard />
       </div>
     </>
   );
