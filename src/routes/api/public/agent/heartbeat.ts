@@ -12,6 +12,29 @@ const Body = z.object({
   tailscale_ip: z.string().max(64).optional().nullable(),
   gateway_rtt_ms: z.number().min(0).max(60000).optional().nullable(),
   os_last_update_at: z.string().max(40).optional().nullable(),
+  // Health do próprio agente
+  agent_cpu_pct: z.number().min(0).max(100).optional().nullable(),
+  agent_ram_mb: z.number().int().min(0).max(20000).optional().nullable(),
+  agent_last_error: z.string().max(2000).optional().nullable(),
+  agent_heartbeat_duration_ms: z.number().int().min(0).max(600000).optional().nullable(),
+  agent_queue_size: z.number().int().min(0).max(100000).optional().nullable(),
+  // Lote de métricas (modo offline drenando fila)
+  metrics_batch: z.array(z.object({
+    sampled_at: z.string().max(40),
+    cpu_usage: z.number().min(0).max(100).optional().nullable(),
+    ram_usage: z.number().min(0).max(100).optional().nullable(),
+    disk_usage: z.number().min(0).max(100).optional().nullable(),
+    gateway_rtt_ms: z.number().min(0).max(60000).optional().nullable(),
+  })).max(500).optional(),
+  // Eventos do SO
+  events: z.array(z.object({
+    source: z.string().max(40).optional(),
+    level: z.enum(["info","warning","error","critical"]),
+    event_id: z.number().int().optional().nullable(),
+    provider: z.string().max(160).optional().nullable(),
+    message: z.string().max(4000),
+    occurred_at: z.string().max(40),
+  })).max(50).optional(),
   // Inventário expandido (opcional)
   cpu_model: z.string().max(200).optional().nullable(),
   cpu_cores: z.number().int().min(0).max(4096).optional().nullable(),
@@ -97,6 +120,11 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
             ...(b.os_version ? { os_version: b.os_version } : {}),
             ...(b.tailscale_ip !== undefined ? { tailscale_ip: b.tailscale_ip } : {}),
             ...(b.os_last_update_at !== undefined ? { os_last_update_at: b.os_last_update_at } : {}),
+            ...(b.agent_cpu_pct !== undefined && b.agent_cpu_pct !== null ? { agent_cpu_pct: b.agent_cpu_pct } : {}),
+            ...(b.agent_ram_mb !== undefined && b.agent_ram_mb !== null ? { agent_ram_mb: b.agent_ram_mb } : {}),
+            ...(b.agent_heartbeat_duration_ms !== undefined && b.agent_heartbeat_duration_ms !== null ? { agent_heartbeat_duration_ms: b.agent_heartbeat_duration_ms } : {}),
+            ...(b.agent_queue_size !== undefined && b.agent_queue_size !== null ? { agent_queue_size: b.agent_queue_size } : {}),
+            ...(b.agent_last_error ? { agent_last_error: b.agent_last_error, agent_last_error_at: new Date().toISOString() } : {}),
             ...inv,
             ...(hasInventory ? { inventory_updated_at: new Date().toISOString() } : {}),
           })
@@ -115,23 +143,77 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
           });
         }
 
+        // Drenar lote de métricas offline
+        if (b.metrics_batch && b.metrics_batch.length > 0) {
+          const rows = b.metrics_batch.map((s) => ({
+            tenant_id: ep.tenant_id,
+            endpoint_id: ep.id,
+            sampled_at: s.sampled_at,
+            cpu_usage: s.cpu_usage ?? null,
+            ram_usage: s.ram_usage ?? null,
+            disk_usage: s.disk_usage ?? null,
+            gateway_rtt_ms: s.gateway_rtt_ms ?? null,
+          }));
+          await supabaseAdmin.from("endpoint_metric_samples").insert(rows);
+        }
+
+        // Eventos do SO
+        if (b.events && b.events.length > 0) {
+          const rows = b.events.map((ev) => ({
+            tenant_id: ep.tenant_id,
+            endpoint_id: ep.id,
+            source: ev.source ?? "windows",
+            level: ev.level,
+            event_id: ev.event_id ?? null,
+            provider: ev.provider ?? null,
+            message: ev.message,
+            occurred_at: ev.occurred_at,
+          }));
+          await supabaseAdmin.from("endpoint_events").insert(rows);
+        }
+
         // Pega comandos pendentes para o agente executar agora
         const { data: pending } = await supabaseAdmin
           .from("endpoint_commands")
-          .select("id, command, params, created_at")
+          .select("id, command, params, created_at, timeout_seconds, signature, expires_at")
           .eq("endpoint_id", ep.id)
           .eq("status", "pending")
           .order("created_at", { ascending: true })
           .limit(10);
 
-        if (pending && pending.length > 0) {
+        // Marca como expirado o que passou de expires_at, sem enviar pro agente
+        const now = Date.now();
+        const expired = (pending ?? []).filter((c) => c.expires_at && new Date(c.expires_at).getTime() < now);
+        const sendable = (pending ?? []).filter((c) => !(c.expires_at && new Date(c.expires_at).getTime() < now));
+        if (expired.length > 0) {
           await supabaseAdmin
             .from("endpoint_commands")
-            .update({ status: "sent", sent_at: new Date().toISOString() })
-            .in("id", pending.map((c) => c.id));
+            .update({ status: "expired", failed_reason: "expired_before_pickup", completed_at: new Date().toISOString() })
+            .in("id", expired.map((c) => c.id));
+        }
+        if (sendable.length > 0) {
+          await supabaseAdmin
+            .from("endpoint_commands")
+            .update({ status: "sent", sent_at: new Date().toISOString(), attempted_at: new Date().toISOString() })
+            .in("id", sendable.map((c) => c.id));
         }
 
-        return Response.json({ ok: true, interval_seconds: 60, commands: pending ?? [] });
+        // Último release do canal do endpoint
+        const { data: epRow } = await supabaseAdmin
+          .from("endpoints").select("update_channel").eq("id", ep.id).maybeSingle();
+        const channel = (epRow?.update_channel as string | null) ?? "stable";
+        const { data: rel } = await supabaseAdmin.rpc("get_latest_agent_release", { _channel: channel });
+        const latest = Array.isArray(rel) && rel.length > 0 ? rel[0] : null;
+
+        return Response.json({
+          ok: true,
+          interval_seconds: 60,
+          commands: sendable,
+          latest_agent: latest ? {
+            channel: latest.channel, version: latest.version,
+            script_url: latest.script_url, sha256: latest.sha256,
+          } : null,
+        });
       },
     },
   },
