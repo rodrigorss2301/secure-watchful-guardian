@@ -786,6 +786,57 @@ export type Database = {
           },
         ]
       }
+      endpoint_inventory_history: {
+        Row: {
+          category: string
+          change_type: string
+          created_at: string
+          endpoint_id: string
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          tenant_id: string
+        }
+        Insert: {
+          category: string
+          change_type: string
+          created_at?: string
+          endpoint_id: string
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          tenant_id: string
+        }
+        Update: {
+          category?: string
+          change_type?: string
+          created_at?: string
+          endpoint_id?: string
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_inventory_history_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_inventory_history_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoint_metric_samples: {
         Row: {
           cpu_usage: number | null
@@ -1637,6 +1688,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_endpoint_history: { Args: never; Returns: undefined }
       cron_field_matches: {
         Args: { _field: string; _value: number }
         Returns: boolean
