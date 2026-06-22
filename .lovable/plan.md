@@ -1,44 +1,94 @@
-## Objetivo
-Permitir criar automações que **ligam (Wake-on-LAN)**, **desligam**, **reiniciam**, **suspendem**, **hibernam** ou **encerram sessão** de computadores em horários definidos (cron).
 
-## Como vai funcionar
+# Melhorias sugeridas para o sistema (visão geral)
 
-Hoje as automações suportam apenas `script` e `task` (código PowerShell/Bash/Python). Vou adicionar um novo tipo **"Energia"** que dispensa código e enfileira diretamente um comando para o agente em cada endpoint do escopo selecionado, exatamente como a tela "Controle de energia" já faz hoje, só que de forma agendada.
+Baseado no que já existe (endpoints, tickets, alertas, automações, billing, KB, portal, agente, RLS multi-tenant), organizei por área. Você escolhe o que entra e eu transformo em planos focados.
 
-### Mudanças no banco
-1. Adicionar valor `'power'` ao enum `automation_kind`.
-2. Adicionar colunas em `automations`:
-   - `power_action endpoint_command_type` (shutdown / restart / sleep / hibernate / wake_on_lan / logoff)
-   - `power_delay_seconds integer default 30`
-   - `power_message text`
-3. Atualizar `run_automation()`: quando `kind = 'power'`, inserir em `endpoint_commands` (em vez de criar run simulada) para cada endpoint do escopo. Continua gravando linha em `automation_runs` para histórico.
-4. Criar função `run_scheduled_automations()` (SECURITY DEFINER) que percorre automações `enabled = true`, `trigger = 'schedule'`, e cujo `cron_expr` "casa" com o minuto atual — executa cada uma.
-5. Agendar `pg_cron`: rodar `run_scheduled_automations()` a cada minuto.
+## 1. Monitoramento de endpoints
 
-### Mudanças na UI
-**`automation-form-dialog.tsx`:**
-- Adicionar opção "Energia" na lista de tipos (`AUTOMATION_KINDS`).
-- Quando `kind = 'power'`:
-  - Esconder: linguagem, código.
-  - Mostrar: select de ação (Ligar / Desligar / Reiniciar / Suspender / Hibernar / Encerrar sessão), atraso (segundos) e mensagem opcional.
-  - Forçar `trigger = 'schedule'` como padrão e destacar campo cron (com presets: "Todo dia às 08:00", "Todo dia às 19:00", "Segunda a sexta 08:00", custom).
-- Validação: `kind = 'power'` exige `power_action`.
+- **Mapa de saúde da frota** no dashboard: heatmap de status (online/warning/critical/offline) por cliente e por tipo.
+- **Latência/RTT** no histórico de rede (agente envia ping pro gateway/Tailscale; linha sobreposta ao gráfico de uptime).
+- **Top N endpoints com mais quedas / maior downtime** no período (widget no dashboard).
+- **Detecção de anomalia simples** em CPU/RAM/disco (média móvel + desvio) gerando alertas automáticos.
+- **Histórico de software instalado**: ver o que foi instalado/removido nos últimos X dias em toda a frota (útil pra compliance).
+- **Patch status**: última atualização do SO + lista de KBs/pacotes pendentes.
 
-**Lista de automações:** mostrar ícone ⚡ + descrição da ação quando for energia.
+## 2. Tickets & SLA
 
-### Detalhes técnicos
-- `power_action` reusa o enum `endpoint_command_type` que já existe.
-- Cron simples (5 campos). Suporte aos padrões `* * * * *`, `M H * * *`, `M H * * 1-5` etc. `run_scheduled_automations` faz match básico de minuto/hora/dia.
-- WoL só faz sentido com endpoint offline → manter regra: ação `wake_on_lan` é enviada mesmo offline; demais aguardam heartbeat (lógica do agente já existe).
-- `automation_runs.output` recebe resumo "Comando shutdown enfileirado em N endpoints".
+- **SLA por contrato**: tempo de primeira resposta e resolução, com semáforo e relatório mensal.
+- **Templates de resposta** + macros (fechar com motivo, pedir info, escalar).
+- **Vinculação ticket ↔ endpoint ↔ alerta** (já parcial?): criar ticket automaticamente de um alerta crítico não reconhecido em N minutos.
+- **Mesclar tickets duplicados** e **tickets recorrentes** (mesmo alerta repete = agrupar).
+- **Satisfação (CSAT)** ao fechar ticket no portal.
 
-### Arquivos a editar/criar
-- `supabase/migrations/<novo>.sql` — alterações de enum/colunas + funções + cron.
-- `src/lib/automations.ts` — adicionar `'power'` em `AUTOMATION_KINDS`, ícone e helpers.
-- `src/components/automations/automation-form-dialog.tsx` — UI condicional.
-- `src/integrations/supabase/types.ts` — regenerado automaticamente.
-- `src/lib/i18n.tsx` — strings novas (kind.power, power.action.*, presets cron).
+## 3. Alertas & automações
 
-## Fora do escopo
-- Editor visual de cron (vou usar input + presets clicáveis).
-- Fuso horário por tenant (usa TZ do servidor — pode ser melhorado depois).
+- **Janelas de manutenção** (silencia alertas de um endpoint/cliente num intervalo).
+- **Deduplicação e agrupamento**: 50 endpoints offline ao mesmo tempo viram 1 incidente.
+- **Escalonamento**: se não reconhecido em X min, notifica próximo nível.
+- **Canais**: e-mail, webhook, Slack/Teams, WhatsApp (via connector).
+- **Biblioteca de automações** prontas (limpar temp, reiniciar serviço, rodar Windows Update, coletar logs).
+- **Aprovação humana** opcional antes de executar automação destrutiva.
+
+## 4. Portal do cliente
+
+- **Visão de saúde** dos próprios endpoints (somente leitura) — gráficos simples e estado atual.
+- **Aprovar/rejeitar orçamentos** e ver faturas pagas/pendentes.
+- **Base de conhecimento pública** com busca e categorias.
+- **Notificações por e-mail** de atualização de ticket.
+
+## 5. Billing
+
+- **Cobrança recorrente** automática por contrato (mensal) gerando invoice em rascunho.
+- **Itens medidos**: por endpoint ativo, por ticket fora do escopo, por hora extra.
+- **Integração Stripe** (já temos connector disponível) para link de pagamento na fatura.
+- **Relatório de rentabilidade por cliente** (receita − horas gastas em tickets).
+
+## 6. Agente (instalação & operação)
+
+- **Auto-update** do agente com canal stable/beta.
+- **Comandos remotos seguros** com log assinado e timeout (já existe `endpoint_commands` — expandir UI).
+- **Coleta opcional de eventos do Event Viewer / journald** filtrados (erros críticos).
+- **Modo offline**: bufferizar métricas e enviar quando voltar.
+- **Health check do próprio agente** (versão, último erro, uso de CPU dele mesmo).
+
+## 7. Segurança & compliance
+
+- **2FA obrigatório** para staff/admin.
+- **Sessões ativas** + revogação manual no perfil.
+- **Audit log com filtros e exportação** (já existe a tabela — falta UI rica).
+- **Política de retenção** configurável (métricas, histórico, logs).
+- **Revisão periódica de RLS**: rodar o linter e o scanner como parte do release.
+- **Secrets do endpoint** (`endpoint_secrets`) — garantir que nunca trafegam pro client; expor só via server function com role check.
+
+## 8. UX / Produto
+
+- **Busca global** (Cmd/Ctrl+K) por endpoint, ticket, cliente, KB.
+- **Favoritos / pins** por usuário (clientes ou endpoints).
+- **Salvable views** (filtros + colunas) em endpoints e tickets.
+- **Modo denso / confortável** nas tabelas grandes.
+- **Atalhos de teclado** nas listas (j/k navegação, e editar, etc.).
+- **i18n completo**: revisar strings hardcoded em PT/EN (já temos `i18n.tsx`).
+- **Acessibilidade**: foco visível, labels em ícones-only, contraste nos badges.
+
+## 9. Performance & infra
+
+- **Paginação real** em listas grandes (tickets, endpoints, audit) — hoje muitas usam `.limit(500)`.
+- **Realtime seletivo** (assinar só o que está visível, não a tabela inteira).
+- **Índices** em colunas usadas em `ORDER BY`/`WHERE` recorrentes (`endpoint_id, created_at`, etc.) — vale uma passagem.
+- **Cache de queries** com `staleTime` adequado por tipo de dado (configs raramente mudam, métricas mudam toda hora).
+- **Job de housekeeping** (pg_cron): comprimir métricas antigas, fechar outages órfãs, expirar enrollments.
+
+## 10. Observabilidade interna do SaaS
+
+- **Página de status** interna: filas, último heartbeat agregado, erros recentes de edge functions.
+- **Métricas de uso** por tenant (endpoints ativos, tickets/mês) — base para planos.
+
+---
+
+## Sugestão de prioridade (próximas 2-3 entregas)
+
+1. **SLA + janelas de manutenção + agrupamento de alertas** → resolve a dor diária do operador.
+2. **Portal do cliente com visão de saúde + KB pública** → reduz tickets.
+3. **Busca global (Cmd+K) + paginação real + salvable views** → escala a operação.
+
+Me diga em quais áreas/itens quer focar (pode citar números, ex.: "3 todo + 1.1 + 1.2 + 8.1") e eu volto com um plano detalhado por feature.
