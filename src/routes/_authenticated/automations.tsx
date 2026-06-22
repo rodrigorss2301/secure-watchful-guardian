@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Loader2, Play, Pencil, Trash2, Plus, Search, Workflow, Power, PowerOff,
-  CheckCircle2, AlertTriangle, History,
+  CheckCircle2, AlertTriangle, History, Library,
 } from "lucide-react";
 import { PageHeader } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
 import { AutomationFormDialog } from "@/components/automations/automation-form-dialog";
+import { LibraryDialog } from "@/components/automations/library-dialog";
+import { ApprovalsTab } from "@/components/automations/approvals-tab";
 import {
   KIND_ICON, LANGUAGE_ICON, RUN_STATUS_TONE, TRIGGER_ICON, TRIGGER_TONE,
   formatDuration, relTime,
@@ -44,6 +46,7 @@ function AutomationsPage() {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Automation | null>(null);
   const [openForm, setOpenForm] = useState(false);
+  const [openLibrary, setOpenLibrary] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Automation | null>(null);
   const [runDetail, setRunDetail] = useState<AutomationRun | null>(null);
 
@@ -128,9 +131,14 @@ function AutomationsPage() {
         title={t("automations.title")}
         description={t("automations.subtitle")}
         actions={canEdit && (
-          <Button onClick={() => { setEditing(null); setOpenForm(true); }} className="shadow-glow">
-            <Plus className="mr-2 h-4 w-4" /> {t("automations.new")}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setOpenLibrary(true)}>
+              <Library className="mr-2 h-4 w-4" /> Biblioteca
+            </Button>
+            <Button onClick={() => { setEditing(null); setOpenForm(true); }} className="shadow-glow">
+              <Plus className="mr-2 h-4 w-4" /> {t("automations.new")}
+            </Button>
+          </div>
         )}
       />
 
@@ -145,6 +153,7 @@ function AutomationsPage() {
         <TabsList>
           <TabsTrigger value="list">{t("automations.tab.list")}</TabsTrigger>
           <TabsTrigger value="runs">{t("automations.tab.runs")}</TabsTrigger>
+          <TabsTrigger value="approvals">Aprovações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
@@ -271,9 +280,14 @@ function AutomationsPage() {
             </Table>
           </div>
         </TabsContent>
+
+        <TabsContent value="approvals" className="space-y-4">
+          <ApprovalsTab />
+        </TabsContent>
       </Tabs>
 
       <AutomationFormDialog open={openForm} onOpenChange={setOpenForm} automation={editing} />
+      <LibraryDialog open={openLibrary} onOpenChange={setOpenLibrary} />
 
       <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
         <AlertDialogContent>
