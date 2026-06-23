@@ -84,13 +84,19 @@ export function AgentReleasesSection() {
 
   const quickPush = useMutation({
     mutationFn: async (targetChannel: "stable" | "beta") => {
-      const { error } = await supabase.from("agent_releases").insert({
-        channel: targetChannel,
-        version: LATEST_AGENT_VERSION,
-        script_url: "/agent/install.ps1",
-        sha256: null,
-        notes: `Push do servidor — ${new Date().toLocaleString()}`,
-      });
+      const { error } = await supabase
+        .from("agent_releases")
+        .upsert(
+          {
+            channel: targetChannel,
+            version: LATEST_AGENT_VERSION,
+            script_url: "/agent/install.ps1",
+            sha256: null,
+            notes: `Push do servidor — ${new Date().toLocaleString()}`,
+            released_at: new Date().toISOString(),
+          },
+          { onConflict: "channel,version" },
+        );
       if (error) throw error;
     },
     onSuccess: (_d, ch) => {
