@@ -7,8 +7,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Package } from "lucide-react";
+import { Loader2, Package, Rocket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { LATEST_AGENT_VERSION } from "@/lib/agent-version";
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border bg-muted/30 p-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-lg font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
 
 export function AgentReleasesSection() {
   const qc = useQueryClient();
@@ -22,6 +32,30 @@ export function AgentReleasesSection() {
         .limit(20);
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: fleet } = useQuery({
+    queryKey: ["fleet-agent-versions"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("endpoints")
+        .select("agent_version, update_channel");
+      if (error) throw error;
+      const byVersion = new Map<string, number>();
+      const byChannel = { stable: 0, beta: 0 } as Record<string, number>;
+      for (const e of data ?? []) {
+        const v = e.agent_version ?? "—";
+        byVersion.set(v, (byVersion.get(v) ?? 0) + 1);
+        const c = (e.update_channel ?? "stable") as "stable" | "beta";
+        byChannel[c] = (byChannel[c] ?? 0) + 1;
+      }
+      return {
+        total: data?.length ?? 0,
+        upToDate: byVersion.get(LATEST_AGENT_VERSION) ?? 0,
+        versions: Array.from(byVersion.entries()).sort((a, b) => b[1] - a[1]),
+        byChannel,
+      };
     },
   });
 
@@ -43,12 +77,73 @@ export function AgentReleasesSection() {
       toast.success(`Release ${version} publicada em ${channel}`);
       setVersion(""); setSha(""); setNotes("");
       qc.invalidateQueries({ queryKey: ["agent-releases"] });
+      qc.invalidateQueries({ queryKey: ["fleet-agent-versions"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Falha ao publicar"),
+  });
+
+  const quickPush = useMutation({
+    mutationFn: async (targetChannel: "stable" | "beta") => {
+      const { error } = await supabase.from("agent_releases").insert({
+        channel: targetChannel,
+        version: LATEST_AGENT_VERSION,
+        script_url: "/agent/install.ps1",
+        sha256: null,
+        notes: `Push do servidor — ${new Date().toLocaleString()}`,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_d, ch) => {
+      toast.success(`v${LATEST_AGENT_VERSION} publicada em ${ch} — agentes vão atualizar no próximo heartbeat (~60s)`);
+      qc.invalidateQueries({ queryKey: ["agent-releases"] });
+      qc.invalidateQueries({ queryKey: ["fleet-agent-versions"] });
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Falha ao publicar"),
   });
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Rocket className="h-4 w-4" /> Atualizar frota agora</CardTitle>
+          <CardDescription>
+            Publica a versão atual do servidor (<code className="font-mono">v{LATEST_AGENT_VERSION}</code>) como release.
+            Cada agente baixa e aplica sozinho no próximo heartbeat — sem acesso à máquina.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Endpoints" value={String(fleet?.total ?? 0)} />
+            <Stat label={`Em v${LATEST_AGENT_VERSION}`} value={`${fleet?.upToDate ?? 0}/${fleet?.total ?? 0}`} />
+            <Stat label="Canal stable" value={String(fleet?.byChannel.stable ?? 0)} />
+            <Stat label="Canal beta" value={String(fleet?.byChannel.beta ?? 0)} />
+          </div>
+
+          {fleet && fleet.versions.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {fleet.versions.map(([v, n]) => (
+                <Badge key={v} variant={v === LATEST_AGENT_VERSION ? "default" : "outline"} className="font-mono text-xs">
+                  v{v} · {n}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" disabled={quickPush.isPending} onClick={() => quickPush.mutate("stable")}>
+              {quickPush.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Publicar v{LATEST_AGENT_VERSION} em stable
+            </Button>
+            <Button size="sm" variant="outline" disabled={quickPush.isPending} onClick={() => quickPush.mutate("beta")}>
+              Publicar em beta
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Dica: teste primeiro em <strong>beta</strong> (mude o canal de alguns endpoints na aba do agente) e depois promova para <strong>stable</strong>.
+          </p>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Package className="h-4 w-4" /> Releases do agente</CardTitle>
