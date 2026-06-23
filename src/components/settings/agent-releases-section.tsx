@@ -11,6 +11,15 @@ import { Loader2, Package, Rocket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LATEST_AGENT_VERSION } from "@/lib/agent-version";
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border bg-muted/30 p-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-0.5 text-lg font-semibold tabular-nums">{value}</p>
+    </div>
+  );
+}
+
 export function AgentReleasesSection() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({
