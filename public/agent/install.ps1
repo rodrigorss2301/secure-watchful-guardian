@@ -18,7 +18,7 @@ $ErrorActionPreference = "Stop"
 if (-not $BaseUrl     -and $env:RMM_URL)   { $BaseUrl     = $env:RMM_URL }
 if (-not $EnrollToken -and $env:RMM_TOKEN) { $EnrollToken = $env:RMM_TOKEN }
 
-$AgentVersion = "1.6.0"
+$AgentVersion = "1.6.1"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $QueueDir     = Join-Path $InstallDir "queue"
 $ConfigPath   = Join-Path $InstallDir "config.json"
