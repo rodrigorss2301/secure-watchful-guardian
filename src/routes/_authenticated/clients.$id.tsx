@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Pencil, Plus, Trash2, Globe, Mail, Phone, MapPin, Calendar,
-  FileText, Star, Building2,
+  FileText, Star, Building2, LinkIcon, Copy, Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -37,6 +39,7 @@ function ClientDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [contactDialog, setContactDialog] = useState<{ open: boolean; contact: ClientContact | null }>({ open: false, contact: null });
   const [deletingContact, setDeletingContact] = useState<ClientContact | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data: client, isLoading } = useQuery({
     queryKey: ["client", id],
@@ -67,6 +70,26 @@ function ClientDetailPage() {
       qc.invalidateQueries({ queryKey: ["contacts", id] });
       toast.success(t("clients.deleted"));
       setDeletingContact(null);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const publicIntakeMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!client) return;
+      let slug = (client as unknown as { public_intake_slug: string | null }).public_intake_slug;
+      if (enabled && !slug) {
+        slug = randomSlug();
+      }
+      const { error } = await supabase
+        .from("clients")
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update({ public_intake_enabled: enabled, public_intake_slug: slug } as any)
+        .eq("id", client.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["client", id] });
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -146,6 +169,8 @@ function ClientDetailPage() {
           </dl>
         </Card>
       </div>
+
+      {canWrite && <PublicIntakeCard client={client} onToggle={(v) => publicIntakeMutation.mutate(v)} copied={copied} setCopied={setCopied} />}
 
       <Card className="border-border/60">
         <div className="flex items-center justify-between border-b border-border/60 p-4">

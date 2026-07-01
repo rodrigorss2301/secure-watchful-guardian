@@ -14,6 +14,7 @@ import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SubmitSlugRouteImport } from './routes/submit.$slug'
 import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -63,6 +64,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubmitSlugRoute = SubmitSlugRouteImport.update({
+  id: '/submit/$slug',
+  path: '/submit/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
@@ -221,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/submit/$slug': typeof SubmitSlugRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/submit/$slug': typeof SubmitSlugRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
@@ -287,6 +295,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/submit/$slug': typeof SubmitSlugRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/_authenticated/inventory/software': typeof AuthenticatedInventorySoftwareRoute
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tickets'
+    | '/submit/$slug'
     | '/clients/$id'
     | '/endpoints/$id'
     | '/inventory/software'
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tickets'
+    | '/submit/$slug'
     | '/clients/$id'
     | '/endpoints/$id'
     | '/inventory/software'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/tickets'
+    | '/submit/$slug'
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
     | '/_authenticated/inventory/software'
@@ -410,6 +422,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SubmitSlugRoute: typeof SubmitSlugRoute
   ApiPublicAgentCommandLogRoute: typeof ApiPublicAgentCommandLogRoute
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
@@ -454,6 +467,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/submit/$slug': {
+      id: '/submit/$slug'
+      path: '/submit/$slug'
+      fullPath: '/submit/$slug'
+      preLoaderRoute: typeof SubmitSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tickets': {
@@ -734,6 +754,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SubmitSlugRoute: SubmitSlugRoute,
   ApiPublicAgentCommandLogRoute: ApiPublicAgentCommandLogRoute,
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,
