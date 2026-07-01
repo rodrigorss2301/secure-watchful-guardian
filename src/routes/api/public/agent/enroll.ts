@@ -84,9 +84,12 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
           .update({ used_at: new Date().toISOString(), used_endpoint_id: endpoint.id })
           .eq("id", enr.id);
 
-        // Chave de assinatura do tenant (para o agente validar comandos)
-        const { data: tenant } = await supabaseAdmin
-          .from("tenants").select("command_signing_key").eq("id", enr.tenant_id).maybeSingle();
+        // Chave de assinatura do tenant (para o agente validar comandos) — armazenada em tenant_secrets
+        const { data: tenantSecret } = await supabaseAdmin
+          .from("tenant_secrets" as never)
+          .select("command_signing_key")
+          .eq("tenant_id", enr.tenant_id)
+          .maybeSingle();
 
         // Canal atual do endpoint + último release
         const { data: epRow } = await supabaseAdmin
@@ -100,7 +103,7 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
           agent_token: agentToken,
           heartbeat_interval_seconds: 60,
           tailscale_auth_key: process.env.TAILSCALE_AUTH_KEY ?? null,
-          command_signing_key: tenant?.command_signing_key ?? null,
+          command_signing_key: (tenantSecret as { command_signing_key?: string } | null)?.command_signing_key ?? null,
           update_channel: channel,
           latest_agent: latest ? {
             channel: latest.channel, version: latest.version,

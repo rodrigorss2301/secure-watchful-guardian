@@ -1794,23 +1794,49 @@ export type Database = {
           },
         ]
       }
+      tenant_secrets: {
+        Row: {
+          command_signing_key: string | null
+          created_at: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          command_signing_key?: string | null
+          created_at?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          command_signing_key?: string | null
+          created_at?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_secrets_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
-          command_signing_key: string
           created_at: string
           id: string
           name: string
           slug: string
         }
         Insert: {
-          command_signing_key?: string
           created_at?: string
           id?: string
           name: string
           slug: string
         }
         Update: {
-          command_signing_key?: string
           created_at?: string
           id?: string
           name?: string
