@@ -30,17 +30,18 @@ export const Route = createFileRoute("/api/public/tickets/submit")({
         if (!p.success) return err(400, "invalid_body", p.error.flatten());
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data, error } = await supabaseAdmin.rpc("submit_public_ticket", {
+        const { data, error } = await supabaseAdmin.rpc("submit_public_ticket" as never, {
           _slug: p.data.slug,
           _title: p.data.title,
-          _description: p.data.description ?? null,
+          _description: p.data.description ?? "",
           _name: p.data.name,
           _email: p.data.email,
-          _phone: p.data.phone ?? null,
+          _phone: p.data.phone ?? "",
           _priority: p.data.priority ?? "medium",
-        });
+        } as never);
         if (error) return err(400, "submit_failed", error.message);
-        const row = Array.isArray(data) ? data[0] : data;
+        const row: { ticket_id?: string; ticket_number?: string } | undefined =
+          Array.isArray(data) ? (data[0] as never) : (data as never);
         return Response.json(
           { ticket_id: row?.ticket_id, number: row?.ticket_number },
           { headers: { "Access-Control-Allow-Origin": "*" } },
