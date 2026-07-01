@@ -667,6 +667,8 @@ export type Database = {
           notes: string | null
           phone: string | null
           postal_code: string | null
+          public_intake_enabled: boolean
+          public_intake_slug: string | null
           sla_tier: Database["public"]["Enums"]["sla_tier"]
           state: string | null
           status: Database["public"]["Enums"]["client_status"]
@@ -689,6 +691,8 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postal_code?: string | null
+          public_intake_enabled?: boolean
+          public_intake_slug?: string | null
           sla_tier?: Database["public"]["Enums"]["sla_tier"]
           state?: string | null
           status?: Database["public"]["Enums"]["client_status"]
@@ -711,6 +715,8 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           postal_code?: string | null
+          public_intake_enabled?: boolean
+          public_intake_slug?: string | null
           sla_tier?: Database["public"]["Enums"]["sla_tier"]
           state?: string | null
           status?: Database["public"]["Enums"]["client_status"]
@@ -1950,8 +1956,12 @@ export type Database = {
           priority: Database["public"]["Enums"]["ticket_priority"]
           resolved_at: string | null
           sla_due_at: string | null
+          source: string
           started_at: string | null
           status: Database["public"]["Enums"]["ticket_status"]
+          submitter_email: string | null
+          submitter_name: string | null
+          submitter_phone: string | null
           tags: string[]
           tenant_id: string
           title: string
@@ -1972,8 +1982,12 @@ export type Database = {
           priority?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
           sla_due_at?: string | null
+          source?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          submitter_email?: string | null
+          submitter_name?: string | null
+          submitter_phone?: string | null
           tags?: string[]
           tenant_id: string
           title: string
@@ -1994,8 +2008,12 @@ export type Database = {
           priority?: Database["public"]["Enums"]["ticket_priority"]
           resolved_at?: string | null
           sla_due_at?: string | null
+          source?: string
           started_at?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
+          submitter_email?: string | null
+          submitter_name?: string | null
+          submitter_phone?: string | null
           tags?: string[]
           tenant_id?: string
           title?: string
@@ -2164,6 +2182,14 @@ export type Database = {
           version: string
         }[]
       }
+      get_public_intake: {
+        Args: { _slug: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          tenant_name: string
+        }[]
+      }
       get_user_client: { Args: { _user_id: string }; Returns: string }
       get_user_tenant: { Args: { _user_id: string }; Returns: string }
       has_role: {
@@ -2180,6 +2206,21 @@ export type Database = {
       }
       run_automation: { Args: { _automation_id: string }; Returns: number }
       run_scheduled_automations: { Args: never; Returns: number }
+      submit_public_ticket: {
+        Args: {
+          _description: string
+          _email: string
+          _name: string
+          _phone: string
+          _priority?: string
+          _slug: string
+          _title: string
+        }
+        Returns: {
+          ticket_id: string
+          ticket_number: string
+        }[]
+      }
     }
     Enums: {
       alert_comparator: "gt" | "gte" | "lt" | "lte"
