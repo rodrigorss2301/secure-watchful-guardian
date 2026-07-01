@@ -40,8 +40,11 @@ export const Route = createFileRoute("/api/public/tickets/submit")({
           _priority: p.data.priority ?? "medium",
         } as never);
         if (error) return err(400, "submit_failed", error.message);
-        const row: { ticket_id?: string; ticket_number?: string } | undefined =
-          Array.isArray(data) ? (data[0] as never) : (data as never);
+        const rows = (Array.isArray(data) ? data : data ? [data] : []) as Array<{
+          ticket_id?: string;
+          ticket_number?: string;
+        }>;
+        const row = rows[0];
         return Response.json(
           { ticket_id: row?.ticket_id, number: row?.ticket_number },
           { headers: { "Access-Control-Allow-Origin": "*" } },
