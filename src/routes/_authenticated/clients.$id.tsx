@@ -170,7 +170,14 @@ function ClientDetailPage() {
         </Card>
       </div>
 
-      {canWrite && <PublicIntakeCard client={client} onToggle={(v) => publicIntakeMutation.mutate(v)} copied={copied} setCopied={setCopied} />}
+      {canWrite && (
+        <PublicIntakeCard
+          client={client}
+          onToggle={(v: boolean) => publicIntakeMutation.mutate(v)}
+          copied={copied}
+          setCopied={setCopied}
+        />
+      )}
 
       <Card className="border-border/60">
         <div className="flex items-center justify-between border-b border-border/60 p-4">
@@ -268,4 +275,67 @@ function Info({
 function fmtDate(d: string | null) {
   if (!d) return null;
   return new Date(d).toLocaleDateString();
+}
+
+function randomSlug() {
+  const alphabet = "abcdefghijkmnopqrstuvwxyz23456789";
+  let out = "";
+  const len = 12;
+  const arr = new Uint8Array(len);
+  crypto.getRandomValues(arr);
+  for (let i = 0; i < len; i++) out += alphabet[arr[i] % alphabet.length];
+  return out;
+}
+
+function PublicIntakeCard({
+  client, onToggle, copied, setCopied,
+}: {
+  client: Client;
+  onToggle: (v: boolean) => void;
+  copied: boolean;
+  setCopied: (v: boolean) => void;
+}) {
+  const raw = client as unknown as { public_intake_enabled?: boolean | null; public_intake_slug?: string | null };
+  const enabled = !!raw.public_intake_enabled;
+  const slug = raw.public_intake_slug ?? null;
+  const url = slug ? `${typeof window !== "undefined" ? window.location.origin : ""}/submit/${slug}` : "";
+
+  return (
+    <Card className="border-border/60 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Link público de chamados
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Compartilhe este link para que qualquer pessoa (sem cadastro) abra chamados para este cliente.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground">{enabled ? "Ativo" : "Inativo"}</span>
+          <Switch checked={enabled} onCheckedChange={onToggle} />
+        </div>
+      </div>
+      {enabled && slug && (
+        <div className="mt-4 flex items-center gap-2">
+          <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Input value={url} readOnly className="font-mono text-xs" />
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(url);
+                setCopied(true);
+                toast.success("Link copiado");
+                setTimeout(() => setCopied(false), 1500);
+              } catch { toast.error("Não foi possível copiar"); }
+            }}
+          >
+            {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+          </Button>
+        </div>
+      )}
+    </Card>
+  );
 }
