@@ -33,6 +33,7 @@ import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as ApiPublicWhatsappInboundRouteImport } from './routes/api/public/whatsapp/inbound'
 import { Route as ApiPublicTicketsSubmitRouteImport } from './routes/api/public/tickets/submit'
+import { Route as ApiPublicTicketsLookupRouteImport } from './routes/api/public/tickets/lookup'
 import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicAgentEnrollRouteImport } from './routes/api/public/agent/enroll'
 import { Route as ApiPublicAgentCommandResultRouteImport } from './routes/api/public/agent/command-result'
@@ -165,6 +166,11 @@ const ApiPublicTicketsSubmitRoute = ApiPublicTicketsSubmitRouteImport.update({
   path: '/api/public/tickets/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTicketsLookupRoute = ApiPublicTicketsLookupRouteImport.update({
+  id: '/api/public/tickets/lookup',
+  path: '/api/public/tickets/lookup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
   id: '/api/public/agent/heartbeat',
   path: '/api/public/agent/heartbeat',
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/tickets/lookup': typeof ApiPublicTicketsLookupRoute
   '/api/public/tickets/submit': typeof ApiPublicTicketsSubmitRoute
   '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
 }
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/tickets/lookup': typeof ApiPublicTicketsLookupRoute
   '/api/public/tickets/submit': typeof ApiPublicTicketsSubmitRoute
   '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
 }
@@ -292,6 +300,7 @@ export interface FileRoutesById {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/tickets/lookup': typeof ApiPublicTicketsLookupRoute
   '/api/public/tickets/submit': typeof ApiPublicTicketsSubmitRoute
   '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
 }
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/tickets/lookup'
     | '/api/public/tickets/submit'
     | '/api/public/whatsapp/inbound'
   fileRoutesByTo: FileRoutesByTo
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/tickets/lookup'
     | '/api/public/tickets/submit'
     | '/api/public/whatsapp/inbound'
   id:
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/tickets/lookup'
     | '/api/public/tickets/submit'
     | '/api/public/whatsapp/inbound'
   fileRoutesById: FileRoutesById
@@ -402,6 +414,7 @@ export interface RootRouteChildren {
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
   ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
+  ApiPublicTicketsLookupRoute: typeof ApiPublicTicketsLookupRoute
   ApiPublicTicketsSubmitRoute: typeof ApiPublicTicketsSubmitRoute
   ApiPublicWhatsappInboundRoute: typeof ApiPublicWhatsappInboundRoute
 }
@@ -576,6 +589,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTicketsSubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tickets/lookup': {
+      id: '/api/public/tickets/lookup'
+      path: '/api/public/tickets/lookup'
+      fullPath: '/api/public/tickets/lookup'
+      preLoaderRoute: typeof ApiPublicTicketsLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/heartbeat': {
       id: '/api/public/agent/heartbeat'
       path: '/api/public/agent/heartbeat'
@@ -718,6 +738,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,
   ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,
+  ApiPublicTicketsLookupRoute: ApiPublicTicketsLookupRoute,
   ApiPublicTicketsSubmitRoute: ApiPublicTicketsSubmitRoute,
   ApiPublicWhatsappInboundRoute: ApiPublicWhatsappInboundRoute,
 }
