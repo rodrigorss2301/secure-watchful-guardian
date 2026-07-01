@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, Pencil, Plus, Trash2, Globe, Mail, Phone, MapPin, Calendar,
-  FileText, Star, Building2, LinkIcon, Copy, Check,
+  FileText, Star, Building2, LinkIcon, Copy, Check, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -331,8 +331,14 @@ function PublicIntakeCard({
                 setTimeout(() => setCopied(false), 1500);
               } catch { toast.error("Não foi possível copiar"); }
             }}
+            aria-label="Copiar link"
           >
             {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <a href={url} target="_blank" rel="noreferrer">
+              <ExternalLink className="mr-1.5 h-4 w-4" /> Abrir preview
+            </a>
           </Button>
         </div>
       )}
