@@ -9,48 +9,47 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SubmitSlugRouteImport } from './routes/submit.$slug'
-import { Route as PortalTicketsRouteImport } from './routes/portal.tickets'
-import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
-import { Route as AuthenticatedKbRouteImport } from './routes/_authenticated/kb'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
-import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
-import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
-import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
-import { Route as AuthenticatedEndpointsIndexRouteImport } from './routes/_authenticated/endpoints.index'
-import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
-import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
-import { Route as AuthenticatedInventorySoftwareRouteImport } from './routes/_authenticated/inventory.software'
-import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
+import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
+import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
+import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedKbRouteImport } from './routes/_authenticated/kb'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
+import { Route as PortalTicketsRouteImport } from './routes/portal.tickets'
+import { Route as SubmitSlugRouteImport } from './routes/submit.$slug'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
-import { Route as ApiPublicWhatsappInboundRouteImport } from './routes/api/public/whatsapp/inbound'
-import { Route as ApiPublicTicketsSubmitRouteImport } from './routes/api/public/tickets/submit'
-import { Route as ApiPublicTicketsLookupRouteImport } from './routes/api/public/tickets/lookup'
-import { Route as ApiPublicTicketsDefaultIntakeRouteImport } from './routes/api/public/tickets/default-intake'
-import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
-import { Route as ApiPublicAgentEnrollRouteImport } from './routes/api/public/agent/enroll'
-import { Route as ApiPublicAgentCommandResultRouteImport } from './routes/api/public/agent/command-result'
-import { Route as ApiPublicAgentCommandLogRouteImport } from './routes/api/public/agent/command-log'
-import { Route as AuthenticatedPortalTicketsNewRouteImport } from './routes/_authenticated/portal.tickets.new'
+import { Route as AuthenticatedEndpointsIndexRouteImport } from './routes/_authenticated/endpoints.index'
+import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
+import { Route as AuthenticatedInventorySoftwareRouteImport } from './routes/_authenticated/inventory.software'
+import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
+import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
 import { Route as AuthenticatedPortalTicketsIdRouteImport } from './routes/_authenticated/portal.tickets.$id'
+import { Route as AuthenticatedPortalTicketsNewRouteImport } from './routes/_authenticated/portal.tickets.new'
+import { Route as ApiPublicAgentCommandLogRouteImport } from './routes/api/public/agent/command-log'
+import { Route as ApiPublicAgentCommandResultRouteImport } from './routes/api/public/agent/command-result'
+import { Route as ApiPublicAgentEnrollRouteImport } from './routes/api/public/agent/enroll'
+import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
+import { Route as ApiPublicTicketsDefaultIntakeRouteImport } from './routes/api/public/tickets/default-intake'
+import { Route as ApiPublicTicketsLookupRouteImport } from './routes/api/public/tickets/lookup'
+import { Route as ApiPublicTicketsSubmitRouteImport } from './routes/api/public/tickets/submit'
+import { Route as ApiPublicWhatsappInboundRouteImport } from './routes/api/public/whatsapp/inbound'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PendingApprovalRoute = PendingApprovalRouteImport.update({
-  id: '/pending-approval',
-  path: '/pending-approval',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -58,58 +57,24 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const PendingApprovalRoute = PendingApprovalRouteImport.update({
+  id: '/pending-approval',
+  path: '/pending-approval',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SubmitSlugRoute = SubmitSlugRouteImport.update({
-  id: '/submit/$slug',
-  path: '/submit/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PortalTicketsRoute = PortalTicketsRouteImport.update({
-  id: '/portal/tickets',
-  path: '/portal/tickets',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
-  id: '/tickets',
-  path: '/tickets',
+const AuthenticatedAlertsRoute = AuthenticatedAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedKbRoute = AuthenticatedKbRouteImport.update({
-  id: '/kb',
-  path: '/kb',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
-  id: '/billing',
-  path: '/billing',
+const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAutomationsRoute =
@@ -118,36 +83,60 @@ const AuthenticatedAutomationsRoute =
     path: '/automations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAuditRoute = AuthenticatedAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAlertsRoute = AuthenticatedAlertsRouteImport.update({
-  id: '/alerts',
-  path: '/alerts',
+const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedKbRoute = AuthenticatedKbRouteImport.update({
+  id: '/kb',
+  path: '/kb',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const PortalTicketsRoute = PortalTicketsRouteImport.update({
+  id: '/portal/tickets',
+  path: '/portal/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubmitSlugRoute = SubmitSlugRouteImport.update({
+  id: '/submit/$slug',
+  path: '/submit/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedClientsRoute,
 } as any)
 const AuthenticatedEndpointsIndexRoute =
   AuthenticatedEndpointsIndexRouteImport.update({
     id: '/endpoints/',
     path: '/endpoints/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedTicketsRoute,
-} as any)
-const AuthenticatedKbSlugRoute = AuthenticatedKbSlugRouteImport.update({
-  id: '/$slug',
-  path: '/$slug',
-  getParentRoute: () => AuthenticatedKbRoute,
-} as any)
-const AuthenticatedInventorySoftwareRoute =
-  AuthenticatedInventorySoftwareRouteImport.update({
-    id: '/inventory/software',
-    path: '/inventory/software',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedEndpointsIdRoute =
@@ -156,25 +145,54 @@ const AuthenticatedEndpointsIdRoute =
     path: '/endpoints/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
+const AuthenticatedInventorySoftwareRoute =
+  AuthenticatedInventorySoftwareRouteImport.update({
+    id: '/inventory/software',
+    path: '/inventory/software',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedKbSlugRoute = AuthenticatedKbSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => AuthenticatedKbRoute,
+} as any)
+const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
-  getParentRoute: () => AuthenticatedClientsRoute,
+  getParentRoute: () => AuthenticatedTicketsRoute,
 } as any)
-const ApiPublicWhatsappInboundRoute =
-  ApiPublicWhatsappInboundRouteImport.update({
-    id: '/api/public/whatsapp/inbound',
-    path: '/api/public/whatsapp/inbound',
+const AuthenticatedPortalTicketsIdRoute =
+  AuthenticatedPortalTicketsIdRouteImport.update({
+    id: '/portal/tickets/$id',
+    path: '/portal/tickets/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPortalTicketsNewRoute =
+  AuthenticatedPortalTicketsNewRouteImport.update({
+    id: '/portal/tickets/new',
+    path: '/portal/tickets/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicAgentCommandLogRoute =
+  ApiPublicAgentCommandLogRouteImport.update({
+    id: '/api/public/agent/command-log',
+    path: '/api/public/agent/command-log',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicTicketsSubmitRoute = ApiPublicTicketsSubmitRouteImport.update({
-  id: '/api/public/tickets/submit',
-  path: '/api/public/tickets/submit',
+const ApiPublicAgentCommandResultRoute =
+  ApiPublicAgentCommandResultRouteImport.update({
+    id: '/api/public/agent/command-result',
+    path: '/api/public/agent/command-result',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicAgentEnrollRoute = ApiPublicAgentEnrollRouteImport.update({
+  id: '/api/public/agent/enroll',
+  path: '/api/public/agent/enroll',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicTicketsLookupRoute = ApiPublicTicketsLookupRouteImport.update({
-  id: '/api/public/tickets/lookup',
-  path: '/api/public/tickets/lookup',
+const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
+  id: '/api/public/agent/heartbeat',
+  path: '/api/public/agent/heartbeat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTicketsDefaultIntakeRoute =
@@ -183,39 +201,21 @@ const ApiPublicTicketsDefaultIntakeRoute =
     path: '/api/public/tickets/default-intake',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
-  id: '/api/public/agent/heartbeat',
-  path: '/api/public/agent/heartbeat',
+const ApiPublicTicketsLookupRoute = ApiPublicTicketsLookupRouteImport.update({
+  id: '/api/public/tickets/lookup',
+  path: '/api/public/tickets/lookup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicAgentEnrollRoute = ApiPublicAgentEnrollRouteImport.update({
-  id: '/api/public/agent/enroll',
-  path: '/api/public/agent/enroll',
+const ApiPublicTicketsSubmitRoute = ApiPublicTicketsSubmitRouteImport.update({
+  id: '/api/public/tickets/submit',
+  path: '/api/public/tickets/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicAgentCommandResultRoute =
-  ApiPublicAgentCommandResultRouteImport.update({
-    id: '/api/public/agent/command-result',
-    path: '/api/public/agent/command-result',
+const ApiPublicWhatsappInboundRoute =
+  ApiPublicWhatsappInboundRouteImport.update({
+    id: '/api/public/whatsapp/inbound',
+    path: '/api/public/whatsapp/inbound',
     getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicAgentCommandLogRoute =
-  ApiPublicAgentCommandLogRouteImport.update({
-    id: '/api/public/agent/command-log',
-    path: '/api/public/agent/command-log',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedPortalTicketsNewRoute =
-  AuthenticatedPortalTicketsNewRouteImport.update({
-    id: '/portal/tickets/new',
-    path: '/portal/tickets/new',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPortalTicketsIdRoute =
-  AuthenticatedPortalTicketsIdRouteImport.update({
-    id: '/portal/tickets/$id',
-    path: '/portal/tickets/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -448,25 +448,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/pending-approval': {
-      id: '/pending-approval'
-      path: '/pending-approval'
-      fullPath: '/pending-approval'
-      preLoaderRoute: typeof PendingApprovalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -476,81 +462,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/submit/$slug': {
-      id: '/submit/$slug'
-      path: '/submit/$slug'
-      fullPath: '/submit/$slug'
-      preLoaderRoute: typeof SubmitSlugRouteImport
+    '/pending-approval': {
+      id: '/pending-approval'
+      path: '/pending-approval'
+      fullPath: '/pending-approval'
+      preLoaderRoute: typeof PendingApprovalRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/portal/tickets': {
-      id: '/portal/tickets'
-      path: '/portal/tickets'
-      fullPath: '/portal/tickets'
-      preLoaderRoute: typeof PortalTicketsRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tickets': {
-      id: '/_authenticated/tickets'
-      path: '/tickets'
-      fullPath: '/tickets'
-      preLoaderRoute: typeof AuthenticatedTicketsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/reports': {
-      id: '/_authenticated/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof AuthenticatedReportsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/kb': {
-      id: '/_authenticated/kb'
-      path: '/kb'
-      fullPath: '/kb'
-      preLoaderRoute: typeof AuthenticatedKbRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/clients': {
-      id: '/_authenticated/clients'
-      path: '/clients'
-      fullPath: '/clients'
-      preLoaderRoute: typeof AuthenticatedClientsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/billing': {
-      id: '/_authenticated/billing'
-      path: '/billing'
-      fullPath: '/billing'
-      preLoaderRoute: typeof AuthenticatedBillingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/automations': {
-      id: '/_authenticated/automations'
-      path: '/automations'
-      fullPath: '/automations'
-      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
+    '/_authenticated/alerts': {
+      id: '/_authenticated/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AuthenticatedAlertsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/audit': {
@@ -560,39 +497,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/alerts': {
-      id: '/_authenticated/alerts'
-      path: '/alerts'
-      fullPath: '/alerts'
-      preLoaderRoute: typeof AuthenticatedAlertsRouteImport
+    '/_authenticated/automations': {
+      id: '/_authenticated/automations'
+      path: '/automations'
+      fullPath: '/automations'
+      preLoaderRoute: typeof AuthenticatedAutomationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clients': {
+      id: '/_authenticated/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof AuthenticatedClientsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kb': {
+      id: '/_authenticated/kb'
+      path: '/kb'
+      fullPath: '/kb'
+      preLoaderRoute: typeof AuthenticatedKbRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tickets': {
+      id: '/_authenticated/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof AuthenticatedTicketsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/portal/tickets': {
+      id: '/portal/tickets'
+      path: '/portal/tickets'
+      fullPath: '/portal/tickets'
+      preLoaderRoute: typeof PortalTicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/submit/$slug': {
+      id: '/submit/$slug'
+      path: '/submit/$slug'
+      fullPath: '/submit/$slug'
+      preLoaderRoute: typeof SubmitSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/clients/$id': {
+      id: '/_authenticated/clients/$id'
+      path: '/$id'
+      fullPath: '/clients/$id'
+      preLoaderRoute: typeof AuthenticatedClientsIdRouteImport
+      parentRoute: typeof AuthenticatedClientsRoute
     }
     '/_authenticated/endpoints/': {
       id: '/_authenticated/endpoints/'
       path: '/endpoints'
       fullPath: '/endpoints/'
       preLoaderRoute: typeof AuthenticatedEndpointsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/tickets/$id': {
-      id: '/_authenticated/tickets/$id'
-      path: '/$id'
-      fullPath: '/tickets/$id'
-      preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
-      parentRoute: typeof AuthenticatedTicketsRoute
-    }
-    '/_authenticated/kb/$slug': {
-      id: '/_authenticated/kb/$slug'
-      path: '/$slug'
-      fullPath: '/kb/$slug'
-      preLoaderRoute: typeof AuthenticatedKbSlugRouteImport
-      parentRoute: typeof AuthenticatedKbRoute
-    }
-    '/_authenticated/inventory/software': {
-      id: '/_authenticated/inventory/software'
-      path: '/inventory/software'
-      fullPath: '/inventory/software'
-      preLoaderRoute: typeof AuthenticatedInventorySoftwareRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/endpoints/$id': {
@@ -602,53 +588,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEndpointsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/clients/$id': {
-      id: '/_authenticated/clients/$id'
+    '/_authenticated/inventory/software': {
+      id: '/_authenticated/inventory/software'
+      path: '/inventory/software'
+      fullPath: '/inventory/software'
+      preLoaderRoute: typeof AuthenticatedInventorySoftwareRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/kb/$slug': {
+      id: '/_authenticated/kb/$slug'
+      path: '/$slug'
+      fullPath: '/kb/$slug'
+      preLoaderRoute: typeof AuthenticatedKbSlugRouteImport
+      parentRoute: typeof AuthenticatedKbRoute
+    }
+    '/_authenticated/tickets/$id': {
+      id: '/_authenticated/tickets/$id'
       path: '/$id'
-      fullPath: '/clients/$id'
-      preLoaderRoute: typeof AuthenticatedClientsIdRouteImport
-      parentRoute: typeof AuthenticatedClientsRoute
+      fullPath: '/tickets/$id'
+      preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
+      parentRoute: typeof AuthenticatedTicketsRoute
     }
-    '/api/public/whatsapp/inbound': {
-      id: '/api/public/whatsapp/inbound'
-      path: '/api/public/whatsapp/inbound'
-      fullPath: '/api/public/whatsapp/inbound'
-      preLoaderRoute: typeof ApiPublicWhatsappInboundRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/portal/tickets/$id': {
+      id: '/_authenticated/portal/tickets/$id'
+      path: '/portal/tickets/$id'
+      fullPath: '/portal/tickets/$id'
+      preLoaderRoute: typeof AuthenticatedPortalTicketsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/tickets/submit': {
-      id: '/api/public/tickets/submit'
-      path: '/api/public/tickets/submit'
-      fullPath: '/api/public/tickets/submit'
-      preLoaderRoute: typeof ApiPublicTicketsSubmitRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/portal/tickets/new': {
+      id: '/_authenticated/portal/tickets/new'
+      path: '/portal/tickets/new'
+      fullPath: '/portal/tickets/new'
+      preLoaderRoute: typeof AuthenticatedPortalTicketsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/tickets/lookup': {
-      id: '/api/public/tickets/lookup'
-      path: '/api/public/tickets/lookup'
-      fullPath: '/api/public/tickets/lookup'
-      preLoaderRoute: typeof ApiPublicTicketsLookupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/tickets/default-intake': {
-      id: '/api/public/tickets/default-intake'
-      path: '/api/public/tickets/default-intake'
-      fullPath: '/api/public/tickets/default-intake'
-      preLoaderRoute: typeof ApiPublicTicketsDefaultIntakeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/agent/heartbeat': {
-      id: '/api/public/agent/heartbeat'
-      path: '/api/public/agent/heartbeat'
-      fullPath: '/api/public/agent/heartbeat'
-      preLoaderRoute: typeof ApiPublicAgentHeartbeatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/agent/enroll': {
-      id: '/api/public/agent/enroll'
-      path: '/api/public/agent/enroll'
-      fullPath: '/api/public/agent/enroll'
-      preLoaderRoute: typeof ApiPublicAgentEnrollRouteImport
+    '/api/public/agent/command-log': {
+      id: '/api/public/agent/command-log'
+      path: '/api/public/agent/command-log'
+      fullPath: '/api/public/agent/command-log'
+      preLoaderRoute: typeof ApiPublicAgentCommandLogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/agent/command-result': {
@@ -658,26 +637,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAgentCommandResultRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/agent/command-log': {
-      id: '/api/public/agent/command-log'
-      path: '/api/public/agent/command-log'
-      fullPath: '/api/public/agent/command-log'
-      preLoaderRoute: typeof ApiPublicAgentCommandLogRouteImport
+    '/api/public/agent/enroll': {
+      id: '/api/public/agent/enroll'
+      path: '/api/public/agent/enroll'
+      fullPath: '/api/public/agent/enroll'
+      preLoaderRoute: typeof ApiPublicAgentEnrollRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/portal/tickets/new': {
-      id: '/_authenticated/portal/tickets/new'
-      path: '/portal/tickets/new'
-      fullPath: '/portal/tickets/new'
-      preLoaderRoute: typeof AuthenticatedPortalTicketsNewRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/api/public/agent/heartbeat': {
+      id: '/api/public/agent/heartbeat'
+      path: '/api/public/agent/heartbeat'
+      fullPath: '/api/public/agent/heartbeat'
+      preLoaderRoute: typeof ApiPublicAgentHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/portal/tickets/$id': {
-      id: '/_authenticated/portal/tickets/$id'
-      path: '/portal/tickets/$id'
-      fullPath: '/portal/tickets/$id'
-      preLoaderRoute: typeof AuthenticatedPortalTicketsIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/api/public/tickets/default-intake': {
+      id: '/api/public/tickets/default-intake'
+      path: '/api/public/tickets/default-intake'
+      fullPath: '/api/public/tickets/default-intake'
+      preLoaderRoute: typeof ApiPublicTicketsDefaultIntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tickets/lookup': {
+      id: '/api/public/tickets/lookup'
+      path: '/api/public/tickets/lookup'
+      fullPath: '/api/public/tickets/lookup'
+      preLoaderRoute: typeof ApiPublicTicketsLookupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tickets/submit': {
+      id: '/api/public/tickets/submit'
+      path: '/api/public/tickets/submit'
+      fullPath: '/api/public/tickets/submit'
+      preLoaderRoute: typeof ApiPublicTicketsSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/whatsapp/inbound': {
+      id: '/api/public/whatsapp/inbound'
+      path: '/api/public/whatsapp/inbound'
+      fullPath: '/api/public/whatsapp/inbound'
+      preLoaderRoute: typeof ApiPublicWhatsappInboundRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -775,3 +775,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

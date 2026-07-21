@@ -35,11 +35,11 @@ export function AppHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border/60 bg-background/80 px-3 backdrop-blur-md md:px-4">
-      <SidebarTrigger className="h-9 w-9 rounded-lg hover:bg-accent" />
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/10 bg-background/70 px-4 shadow-sm shadow-black/5 backdrop-blur-xl backdrop-saturate-150 md:px-6">
+      <SidebarTrigger className="h-10 w-10 rounded-2xl border border-border/50 bg-background/70 text-foreground transition hover:bg-accent/15" />
       <Separator orientation="vertical" className="mx-1 h-5" />
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-2">
         <LangToggle />
         <ThemeToggle />
 

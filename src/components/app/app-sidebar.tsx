@@ -96,11 +96,11 @@ export function AppSidebar() {
   const portalOnly = roles.length > 0 && roles.every((r) => r === "portal");
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="border-b border-sidebar-border p-3">
-        <Logo withWordmark={!collapsed} size={collapsed ? 28 : 32} />
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border/70 bg-sidebar/90 shadow-sm shadow-black/5">
+      <SidebarHeader className="border-b border-sidebar-border/70 p-4">
+        <Logo withWordmark={!collapsed} size={collapsed ? 28 : 34} />
       </SidebarHeader>
-      <SidebarContent className="bg-gradient-surface">
+      <SidebarContent className="bg-sidebar/90 p-2">
         {portalOnly ? (
           <NavSection labelKey="nav.operations" items={portalNav} />
         ) : (
@@ -110,9 +110,9 @@ export function AppSidebar() {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border p-3">
+      <SidebarFooter className="border-t border-sidebar-border/70 p-4">
         {!collapsed && tenant && (
-          <div className="flex flex-col gap-1.5 rounded-lg bg-sidebar-accent/50 p-3">
+          <div className="flex flex-col gap-1.5 rounded-2xl bg-sidebar-accent/15 p-3 shadow-sm shadow-primary/10 ring-1 ring-sidebar-border/20">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tenant</span>
             <span className="truncate text-sm font-semibold">{tenant.name}</span>
             {primaryRole && (
