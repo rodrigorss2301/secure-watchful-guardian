@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubmitSlugRouteImport } from './routes/submit.$slug'
+import { Route as PortalTicketsRouteImport } from './routes/portal.tickets'
 import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -27,7 +28,6 @@ import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
 import { Route as AuthenticatedEndpointsIndexRouteImport } from './routes/_authenticated/endpoints.index'
 import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
-import { Route as AuthenticatedPortalTicketsRouteImport } from './routes/_authenticated/portal.tickets'
 import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
 import { Route as AuthenticatedInventorySoftwareRouteImport } from './routes/_authenticated/inventory.software'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
@@ -35,6 +35,7 @@ import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authentica
 import { Route as ApiPublicWhatsappInboundRouteImport } from './routes/api/public/whatsapp/inbound'
 import { Route as ApiPublicTicketsSubmitRouteImport } from './routes/api/public/tickets/submit'
 import { Route as ApiPublicTicketsLookupRouteImport } from './routes/api/public/tickets/lookup'
+import { Route as ApiPublicTicketsDefaultIntakeRouteImport } from './routes/api/public/tickets/default-intake'
 import { Route as ApiPublicAgentHeartbeatRouteImport } from './routes/api/public/agent/heartbeat'
 import { Route as ApiPublicAgentEnrollRouteImport } from './routes/api/public/agent/enroll'
 import { Route as ApiPublicAgentCommandResultRouteImport } from './routes/api/public/agent/command-result'
@@ -69,6 +70,11 @@ const IndexRoute = IndexRouteImport.update({
 const SubmitSlugRoute = SubmitSlugRouteImport.update({
   id: '/submit/$slug',
   path: '/submit/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalTicketsRoute = PortalTicketsRouteImport.update({
+  id: '/portal/tickets',
+  path: '/portal/tickets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
@@ -133,12 +139,6 @@ const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedTicketsRoute,
 } as any)
-const AuthenticatedPortalTicketsRoute =
-  AuthenticatedPortalTicketsRouteImport.update({
-    id: '/portal/tickets',
-    path: '/portal/tickets',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
 const AuthenticatedKbSlugRoute = AuthenticatedKbSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -177,6 +177,12 @@ const ApiPublicTicketsLookupRoute = ApiPublicTicketsLookupRouteImport.update({
   path: '/api/public/tickets/lookup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTicketsDefaultIntakeRoute =
+  ApiPublicTicketsDefaultIntakeRouteImport.update({
+    id: '/api/public/tickets/default-intake',
+    path: '/api/public/tickets/default-intake',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicAgentHeartbeatRoute = ApiPublicAgentHeartbeatRouteImport.update({
   id: '/api/public/agent/heartbeat',
   path: '/api/public/agent/heartbeat',
@@ -201,15 +207,15 @@ const ApiPublicAgentCommandLogRoute =
   } as any)
 const AuthenticatedPortalTicketsNewRoute =
   AuthenticatedPortalTicketsNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedPortalTicketsRoute,
+    id: '/portal/tickets/new',
+    path: '/portal/tickets/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPortalTicketsIdRoute =
   AuthenticatedPortalTicketsIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedPortalTicketsRoute,
+    id: '/portal/tickets/$id',
+    path: '/portal/tickets/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -227,12 +233,12 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
-  '/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
   '/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/tickets/default-intake': typeof ApiPublicTicketsDefaultIntakeRoute
   '/api/public/tickets/lookup': typeof ApiPublicTicketsLookupRoute
   '/api/public/tickets/submit': typeof ApiPublicTicketsSubmitRoute
   '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
@@ -260,12 +267,12 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
-  '/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
   '/endpoints': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
@@ -274,6 +281,7 @@ export interface FileRoutesByTo {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/tickets/default-intake': typeof ApiPublicTicketsDefaultIntakeRoute
   '/api/public/tickets/lookup': typeof ApiPublicTicketsLookupRoute
   '/api/public/tickets/submit': typeof ApiPublicTicketsSubmitRoute
   '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
@@ -295,12 +303,12 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/_authenticated/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/_authenticated/kb/$slug': typeof AuthenticatedKbSlugRoute
-  '/_authenticated/portal/tickets': typeof AuthenticatedPortalTicketsRouteWithChildren
   '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
   '/_authenticated/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/_authenticated/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/api/public/agent/command-result': typeof ApiPublicAgentCommandResultRoute
   '/api/public/agent/enroll': typeof ApiPublicAgentEnrollRoute
   '/api/public/agent/heartbeat': typeof ApiPublicAgentHeartbeatRoute
+  '/api/public/tickets/default-intake': typeof ApiPublicTicketsDefaultIntakeRoute
   '/api/public/tickets/lookup': typeof ApiPublicTicketsLookupRoute
   '/api/public/tickets/submit': typeof ApiPublicTicketsSubmitRoute
   '/api/public/whatsapp/inbound': typeof ApiPublicWhatsappInboundRoute
@@ -330,12 +339,12 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tickets'
+    | '/portal/tickets'
     | '/submit/$slug'
     | '/clients/$id'
     | '/endpoints/$id'
     | '/inventory/software'
     | '/kb/$slug'
-    | '/portal/tickets'
     | '/tickets/$id'
     | '/endpoints/'
     | '/portal/tickets/$id'
@@ -344,6 +353,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/tickets/default-intake'
     | '/api/public/tickets/lookup'
     | '/api/public/tickets/submit'
     | '/api/public/whatsapp/inbound'
@@ -363,12 +373,12 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tickets'
+    | '/portal/tickets'
     | '/submit/$slug'
     | '/clients/$id'
     | '/endpoints/$id'
     | '/inventory/software'
     | '/kb/$slug'
-    | '/portal/tickets'
     | '/tickets/$id'
     | '/endpoints'
     | '/portal/tickets/$id'
@@ -377,6 +387,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/tickets/default-intake'
     | '/api/public/tickets/lookup'
     | '/api/public/tickets/submit'
     | '/api/public/whatsapp/inbound'
@@ -397,12 +408,12 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/tickets'
+    | '/portal/tickets'
     | '/submit/$slug'
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
     | '/_authenticated/inventory/software'
     | '/_authenticated/kb/$slug'
-    | '/_authenticated/portal/tickets'
     | '/_authenticated/tickets/$id'
     | '/_authenticated/endpoints/'
     | '/_authenticated/portal/tickets/$id'
@@ -411,6 +422,7 @@ export interface FileRouteTypes {
     | '/api/public/agent/command-result'
     | '/api/public/agent/enroll'
     | '/api/public/agent/heartbeat'
+    | '/api/public/tickets/default-intake'
     | '/api/public/tickets/lookup'
     | '/api/public/tickets/submit'
     | '/api/public/whatsapp/inbound'
@@ -422,11 +434,13 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PortalTicketsRoute: typeof PortalTicketsRoute
   SubmitSlugRoute: typeof SubmitSlugRoute
   ApiPublicAgentCommandLogRoute: typeof ApiPublicAgentCommandLogRoute
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
   ApiPublicAgentHeartbeatRoute: typeof ApiPublicAgentHeartbeatRoute
+  ApiPublicTicketsDefaultIntakeRoute: typeof ApiPublicTicketsDefaultIntakeRoute
   ApiPublicTicketsLookupRoute: typeof ApiPublicTicketsLookupRoute
   ApiPublicTicketsSubmitRoute: typeof ApiPublicTicketsSubmitRoute
   ApiPublicWhatsappInboundRoute: typeof ApiPublicWhatsappInboundRoute
@@ -474,6 +488,13 @@ declare module '@tanstack/react-router' {
       path: '/submit/$slug'
       fullPath: '/submit/$slug'
       preLoaderRoute: typeof SubmitSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/tickets': {
+      id: '/portal/tickets'
+      path: '/portal/tickets'
+      fullPath: '/portal/tickets'
+      preLoaderRoute: typeof PortalTicketsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tickets': {
@@ -560,13 +581,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
-    '/_authenticated/portal/tickets': {
-      id: '/_authenticated/portal/tickets'
-      path: '/portal/tickets'
-      fullPath: '/portal/tickets'
-      preLoaderRoute: typeof AuthenticatedPortalTicketsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/kb/$slug': {
       id: '/_authenticated/kb/$slug'
       path: '/$slug'
@@ -616,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTicketsLookupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tickets/default-intake': {
+      id: '/api/public/tickets/default-intake'
+      path: '/api/public/tickets/default-intake'
+      fullPath: '/api/public/tickets/default-intake'
+      preLoaderRoute: typeof ApiPublicTicketsDefaultIntakeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/heartbeat': {
       id: '/api/public/agent/heartbeat'
       path: '/api/public/agent/heartbeat'
@@ -646,17 +667,17 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/portal/tickets/new': {
       id: '/_authenticated/portal/tickets/new'
-      path: '/new'
+      path: '/portal/tickets/new'
       fullPath: '/portal/tickets/new'
       preLoaderRoute: typeof AuthenticatedPortalTicketsNewRouteImport
-      parentRoute: typeof AuthenticatedPortalTicketsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/portal/tickets/$id': {
       id: '/_authenticated/portal/tickets/$id'
-      path: '/$id'
+      path: '/portal/tickets/$id'
       fullPath: '/portal/tickets/$id'
       preLoaderRoute: typeof AuthenticatedPortalTicketsIdRouteImport
-      parentRoute: typeof AuthenticatedPortalTicketsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -695,22 +716,6 @@ const AuthenticatedTicketsRouteChildren: AuthenticatedTicketsRouteChildren = {
 const AuthenticatedTicketsRouteWithChildren =
   AuthenticatedTicketsRoute._addFileChildren(AuthenticatedTicketsRouteChildren)
 
-interface AuthenticatedPortalTicketsRouteChildren {
-  AuthenticatedPortalTicketsIdRoute: typeof AuthenticatedPortalTicketsIdRoute
-  AuthenticatedPortalTicketsNewRoute: typeof AuthenticatedPortalTicketsNewRoute
-}
-
-const AuthenticatedPortalTicketsRouteChildren: AuthenticatedPortalTicketsRouteChildren =
-  {
-    AuthenticatedPortalTicketsIdRoute: AuthenticatedPortalTicketsIdRoute,
-    AuthenticatedPortalTicketsNewRoute: AuthenticatedPortalTicketsNewRoute,
-  }
-
-const AuthenticatedPortalTicketsRouteWithChildren =
-  AuthenticatedPortalTicketsRoute._addFileChildren(
-    AuthenticatedPortalTicketsRouteChildren,
-  )
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAlertsRoute: typeof AuthenticatedAlertsRoute
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
@@ -724,8 +729,9 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
   AuthenticatedEndpointsIdRoute: typeof AuthenticatedEndpointsIdRoute
   AuthenticatedInventorySoftwareRoute: typeof AuthenticatedInventorySoftwareRoute
-  AuthenticatedPortalTicketsRoute: typeof AuthenticatedPortalTicketsRouteWithChildren
   AuthenticatedEndpointsIndexRoute: typeof AuthenticatedEndpointsIndexRoute
+  AuthenticatedPortalTicketsIdRoute: typeof AuthenticatedPortalTicketsIdRoute
+  AuthenticatedPortalTicketsNewRoute: typeof AuthenticatedPortalTicketsNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -741,8 +747,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
   AuthenticatedEndpointsIdRoute: AuthenticatedEndpointsIdRoute,
   AuthenticatedInventorySoftwareRoute: AuthenticatedInventorySoftwareRoute,
-  AuthenticatedPortalTicketsRoute: AuthenticatedPortalTicketsRouteWithChildren,
   AuthenticatedEndpointsIndexRoute: AuthenticatedEndpointsIndexRoute,
+  AuthenticatedPortalTicketsIdRoute: AuthenticatedPortalTicketsIdRoute,
+  AuthenticatedPortalTicketsNewRoute: AuthenticatedPortalTicketsNewRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -754,11 +761,13 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PortalTicketsRoute: PortalTicketsRoute,
   SubmitSlugRoute: SubmitSlugRoute,
   ApiPublicAgentCommandLogRoute: ApiPublicAgentCommandLogRoute,
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,
   ApiPublicAgentHeartbeatRoute: ApiPublicAgentHeartbeatRoute,
+  ApiPublicTicketsDefaultIntakeRoute: ApiPublicTicketsDefaultIntakeRoute,
   ApiPublicTicketsLookupRoute: ApiPublicTicketsLookupRoute,
   ApiPublicTicketsSubmitRoute: ApiPublicTicketsSubmitRoute,
   ApiPublicWhatsappInboundRoute: ApiPublicWhatsappInboundRoute,
@@ -766,13 +775,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
