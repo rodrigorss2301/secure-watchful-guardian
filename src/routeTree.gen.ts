@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubmitSlugRouteImport } from './routes/submit.$slug'
+import { Route as PortalTicketsRouteImport } from './routes/portal.tickets'
 import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -69,6 +70,11 @@ const IndexRoute = IndexRouteImport.update({
 const SubmitSlugRoute = SubmitSlugRouteImport.update({
   id: '/submit/$slug',
   path: '/submit/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalTicketsRoute = PortalTicketsRouteImport.update({
+  id: '/portal/tickets',
+  path: '/portal/tickets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
@@ -260,6 +267,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
@@ -295,6 +303,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
+  '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
@@ -330,6 +339,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tickets'
+    | '/portal/tickets'
     | '/submit/$slug'
     | '/clients/$id'
     | '/endpoints/$id'
@@ -363,6 +373,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/settings'
     | '/tickets'
+    | '/portal/tickets'
     | '/submit/$slug'
     | '/clients/$id'
     | '/endpoints/$id'
@@ -397,6 +408,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/settings'
     | '/_authenticated/tickets'
+    | '/portal/tickets'
     | '/submit/$slug'
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
@@ -422,6 +434,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  PortalTicketsRoute: typeof PortalTicketsRoute
   SubmitSlugRoute: typeof SubmitSlugRoute
   ApiPublicAgentCommandLogRoute: typeof ApiPublicAgentCommandLogRoute
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
@@ -475,6 +488,13 @@ declare module '@tanstack/react-router' {
       path: '/submit/$slug'
       fullPath: '/submit/$slug'
       preLoaderRoute: typeof SubmitSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/tickets': {
+      id: '/portal/tickets'
+      path: '/portal/tickets'
+      fullPath: '/portal/tickets'
+      preLoaderRoute: typeof PortalTicketsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tickets': {
@@ -741,6 +761,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  PortalTicketsRoute: PortalTicketsRoute,
   SubmitSlugRoute: SubmitSlugRoute,
   ApiPublicAgentCommandLogRoute: ApiPublicAgentCommandLogRoute,
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
