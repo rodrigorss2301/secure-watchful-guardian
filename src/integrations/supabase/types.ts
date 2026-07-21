@@ -1102,6 +1102,57 @@ export type Database = {
           },
         ]
       }
+      endpoint_maintenance_logs: {
+        Row: {
+          created_at: string
+          endpoint_id: string
+          id: string
+          kind: string
+          notes: string | null
+          performed_at: string
+          performed_by: string | null
+          performed_by_name: string | null
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint_id: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          endpoint_id?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_name?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "endpoint_maintenance_logs_endpoint_id_fkey"
+            columns: ["endpoint_id"]
+            isOneToOne: false
+            referencedRelation: "endpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "endpoint_maintenance_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       endpoint_metric_samples: {
         Row: {
           cpu_usage: number | null
@@ -1263,6 +1314,9 @@ export type Database = {
           ip_address: string | null
           last_boot_at: string | null
           last_heartbeat: string | null
+          last_maintenance_at: string | null
+          last_maintenance_kind: string | null
+          last_maintenance_notes: string | null
           last_seen_ip: string | null
           logged_user: string | null
           mac_address: string | null
@@ -1323,6 +1377,9 @@ export type Database = {
           ip_address?: string | null
           last_boot_at?: string | null
           last_heartbeat?: string | null
+          last_maintenance_at?: string | null
+          last_maintenance_kind?: string | null
+          last_maintenance_notes?: string | null
           last_seen_ip?: string | null
           logged_user?: string | null
           mac_address?: string | null
@@ -1383,6 +1440,9 @@ export type Database = {
           ip_address?: string | null
           last_boot_at?: string | null
           last_heartbeat?: string | null
+          last_maintenance_at?: string | null
+          last_maintenance_kind?: string | null
+          last_maintenance_notes?: string | null
           last_seen_ip?: string | null
           logged_user?: string | null
           mac_address?: string | null
