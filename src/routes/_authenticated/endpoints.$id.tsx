@@ -24,6 +24,7 @@ import { RemoteAccessDialog } from "@/components/endpoints/remote-access-dialog"
 import { PowerDialog } from "@/components/endpoints/power-dialog";
 import { InstallAgentDialog } from "@/components/endpoints/install-agent-dialog";
 import { HistoryTab } from "@/components/endpoints/history-tab";
+import { MaintenanceTab } from "@/components/endpoints/maintenance-tab";
 import { AgentHealthCard } from "@/components/endpoints/agent-health-card";
 import { EventsTab } from "@/components/endpoints/events-tab";
 import { CommandsTimeline } from "@/components/endpoints/commands-timeline";
@@ -240,6 +241,7 @@ function EndpointDetailPage() {
               <TabsTrigger value="events">Eventos</TabsTrigger>
               <TabsTrigger value="commands">Comandos</TabsTrigger>
               <TabsTrigger value="history">Histórico</TabsTrigger>
+              <TabsTrigger value="maintenance">Manutenção</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-5 p-5 pt-0">
@@ -283,6 +285,7 @@ function EndpointDetailPage() {
             <TabsContent value="events" className="p-5 pt-0"><EventsTab endpointId={endpoint.id} /></TabsContent>
             <TabsContent value="commands" className="p-5 pt-0"><CommandsTimeline endpointId={endpoint.id} /></TabsContent>
             <TabsContent value="history" className="p-5 pt-0"><HistoryTab endpointId={endpoint.id} /></TabsContent>
+            <TabsContent value="maintenance" className="p-5 pt-0"><MaintenanceTab endpointId={endpoint.id} tenantId={endpoint.tenant_id} /></TabsContent>
           </Tabs>
         </Card>
 
