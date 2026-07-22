@@ -20,17 +20,18 @@ export default defineTool({
     const { data: client, error: cErr } = await sb
       .from("clients").select("tenant_id").eq("id", input.client_id).maybeSingle();
     if (cErr || !client) return { content: [{ type: "text", text: "Client not found or access denied" }], isError: true };
+    const insertPayload = {
+      tenant_id: client.tenant_id,
+      client_id: input.client_id,
+      title: input.title,
+      description: input.description ?? null,
+      priority: input.priority ?? "medium",
+      category: input.category ?? "request",
+      source: "mcp",
+    } as never;
     const { data, error } = await sb
       .from("tickets")
-      .insert({
-        tenant_id: client.tenant_id,
-        client_id: input.client_id,
-        title: input.title,
-        description: input.description ?? null,
-        priority: input.priority ?? "medium",
-        category: input.category ?? "request",
-        source: "mcp",
-      })
+      .insert(insertPayload)
       .select("id, number, title, status, priority")
       .single();
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
