@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PendingApprovalRouteImport } from './routes/pending-approval'
+import { Route as McpRouteImport } from './routes/mcp'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -26,12 +27,15 @@ import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated/alerts'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AuthenticatedEndpointsIndexRouteImport } from './routes/_authenticated/endpoints.index'
 import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
 import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
 import { Route as AuthenticatedInventorySoftwareRouteImport } from './routes/_authenticated/inventory.software'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicWhatsappInboundRouteImport } from './routes/api/public/whatsapp/inbound'
 import { Route as ApiPublicTicketsSubmitRouteImport } from './routes/api/public/tickets/submit'
 import { Route as ApiPublicTicketsLookupRouteImport } from './routes/api/public/tickets/lookup'
@@ -51,6 +55,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const PendingApprovalRoute = PendingApprovalRouteImport.update({
   id: '/pending-approval',
   path: '/pending-approval',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -128,6 +137,18 @@ const AuthenticatedAlertsRoute = AuthenticatedAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedEndpointsIndexRoute =
   AuthenticatedEndpointsIndexRouteImport.update({
     id: '/endpoints/',
@@ -161,6 +182,12 @@ const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedClientsRoute,
 } as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicWhatsappInboundRoute =
   ApiPublicWhatsappInboundRouteImport.update({
     id: '/api/public/whatsapp/inbound',
@@ -221,8 +248,11 @@ const AuthenticatedPortalTicketsIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/alerts': typeof AuthenticatedAlertsRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
@@ -235,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
@@ -255,8 +286,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/alerts': typeof AuthenticatedAlertsRoute
   '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
@@ -269,6 +303,7 @@ export interface FileRoutesByTo {
   '/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/clients/$id': typeof AuthenticatedClientsIdRoute
   '/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
@@ -291,8 +326,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/mcp': typeof McpRoute
   '/pending-approval': typeof PendingApprovalRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
+  '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/_authenticated/alerts': typeof AuthenticatedAlertsRoute
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
@@ -305,6 +343,7 @@ export interface FileRoutesById {
   '/_authenticated/tickets': typeof AuthenticatedTicketsRouteWithChildren
   '/portal/tickets': typeof PortalTicketsRoute
   '/submit/$slug': typeof SubmitSlugRoute
+  '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/clients/$id': typeof AuthenticatedClientsIdRoute
   '/_authenticated/endpoints/$id': typeof AuthenticatedEndpointsIdRoute
   '/_authenticated/inventory/software': typeof AuthenticatedInventorySoftwareRoute
@@ -327,8 +366,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/pending-approval'
     | '/reset-password'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/alerts'
     | '/audit'
     | '/automations'
@@ -341,6 +383,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/portal/tickets'
     | '/submit/$slug'
+    | '/.mcp/invoke-tool/$tool'
     | '/clients/$id'
     | '/endpoints/$id'
     | '/inventory/software'
@@ -361,8 +404,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/mcp'
     | '/pending-approval'
     | '/reset-password'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/alerts'
     | '/audit'
     | '/automations'
@@ -375,6 +421,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/portal/tickets'
     | '/submit/$slug'
+    | '/.mcp/invoke-tool/$tool'
     | '/clients/$id'
     | '/endpoints/$id'
     | '/inventory/software'
@@ -396,8 +443,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/mcp'
     | '/pending-approval'
     | '/reset-password'
+    | '/.mcp/list-tools'
+    | '/.well-known/oauth-protected-resource'
     | '/_authenticated/alerts'
     | '/_authenticated/audit'
     | '/_authenticated/automations'
@@ -410,6 +460,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tickets'
     | '/portal/tickets'
     | '/submit/$slug'
+    | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/clients/$id'
     | '/_authenticated/endpoints/$id'
     | '/_authenticated/inventory/software'
@@ -432,10 +483,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  McpRoute: typeof McpRoute
   PendingApprovalRoute: typeof PendingApprovalRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
+  Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   PortalTicketsRoute: typeof PortalTicketsRoute
   SubmitSlugRoute: typeof SubmitSlugRoute
+  Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicAgentCommandLogRoute: typeof ApiPublicAgentCommandLogRoute
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
@@ -460,6 +515,13 @@ declare module '@tanstack/react-router' {
       path: '/pending-approval'
       fullPath: '/pending-approval'
       preLoaderRoute: typeof PendingApprovalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -567,6 +629,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlertsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/endpoints/': {
       id: '/_authenticated/endpoints/'
       path: '/endpoints'
@@ -608,6 +684,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/clients/$id'
       preLoaderRoute: typeof AuthenticatedClientsIdRouteImport
       parentRoute: typeof AuthenticatedClientsRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/whatsapp/inbound': {
       id: '/api/public/whatsapp/inbound'
@@ -759,10 +842,15 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  McpRoute: McpRoute,
   PendingApprovalRoute: PendingApprovalRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
+  Char91DotwellKnownChar93OauthProtectedResourceRoute:
+    Char91DotwellKnownChar93OauthProtectedResourceRoute,
   PortalTicketsRoute: PortalTicketsRoute,
   SubmitSlugRoute: SubmitSlugRoute,
+  Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicAgentCommandLogRoute: ApiPublicAgentCommandLogRoute,
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,
