@@ -11,7 +11,7 @@ export default defineTool({
     title: z.string().min(3).max(200),
     description: z.string().max(4000).optional(),
     priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
-    category: z.enum(["incident", "request", "problem", "maintenance"]).optional(),
+    category: z.enum(["incident", "request", "problem", "question", "change"]).optional(),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: false },
   handler: async (input, ctx) => {
