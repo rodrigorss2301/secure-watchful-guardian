@@ -22,15 +22,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 // O componente que estava faltando!
-export function PageHeader({ 
-  title, 
-  description, 
-  children 
-}: { 
-  title: string; 
-  description?: string; 
+export function PageHeader({
+  title,
+  description,
+  children,
+  actions,
+}: {
+  title: string;
+  description?: string;
   children?: React.ReactNode;
+  actions?: React.ReactNode;
 }) {
+  const trailing = actions ?? children;
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
@@ -39,9 +42,9 @@ export function PageHeader({
           <p className="text-muted-foreground mt-1">{description}</p>
         )}
       </div>
-      {children && (
+      {trailing && (
         <div className="flex items-center gap-2">
-          {children}
+          {trailing}
         </div>
       )}
     </div>
