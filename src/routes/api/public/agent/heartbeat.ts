@@ -172,30 +172,12 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
           await supabaseAdmin.from("endpoint_events").insert(rows);
         }
 
-        // Pega comandos pendentes para o agente executar agora
-        const { data: pending } = await supabaseAdmin
-          .from("endpoint_commands")
-          .select("id, command, params, created_at, timeout_seconds, signature, expires_at")
-          .eq("endpoint_id", ep.id)
-          .eq("status", "pending")
-          .order("created_at", { ascending: true })
-          .limit(10);
-
-        // Marca como expirado o que passou de expires_at, sem enviar pro agente
-        const now = Date.now();
-        const expired = (pending ?? []).filter((c) => c.expires_at && new Date(c.expires_at).getTime() < now);
-        const sendable = (pending ?? []).filter((c) => !(c.expires_at && new Date(c.expires_at).getTime() < now));
-        if (expired.length > 0) {
-          await supabaseAdmin
-            .from("endpoint_commands")
-            .update({ status: "expired", failed_reason: "expired_before_pickup", completed_at: new Date().toISOString() })
-            .in("id", expired.map((c) => c.id));
-        }
-        if (sendable.length > 0) {
-          await supabaseAdmin
-            .from("endpoint_commands")
-            .update({ status: "sent", sent_at: new Date().toISOString(), attempted_at: new Date().toISOString() })
-            .in("id", sendable.map((c) => c.id));
+        const { claimPendingCommands } = await import("@/lib/agent-commands.server");
+        let commands;
+        try {
+          commands = await claimPendingCommands(supabaseAdmin, ep.id);
+        } catch {
+          return jsonErr(500, "command_dispatch_failed");
         }
 
         // Último release do canal do endpoint
@@ -208,7 +190,7 @@ export const Route = createFileRoute("/api/public/agent/heartbeat")({
         return Response.json({
           ok: true,
           interval_seconds: 60,
-          commands: sendable,
+          commands,
           latest_agent: latest ? {
             channel: latest.channel, version: latest.version,
             script_url: latest.script_url, sha256: latest.sha256,

@@ -88,23 +88,70 @@ function AuthPage() {
 
 const emailSchema = z.string().trim().email();
 
+/**
+ * Distingue "servidor fora do ar" de "credencial errada".
+ * Sem isso, uma queda do backend aparece como um `Failed to fetch` cru na tela
+ * e é lida como erro de senha — foi exatamente o que mascarou a queda de agosto.
+ */
+function isNetworkFailure(err: unknown): boolean {
+  if (!err) return false;
+  const msg = (typeof err === "string" ? err : (err as { message?: string })?.message ?? "").toLowerCase();
+  return (
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("network request failed") ||
+    msg.includes("load failed") ||
+    msg.includes("fetch failed")
+  );
+}
+
+async function probeBackend(): Promise<boolean> {
+  try {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    if (!url) return false;
+    await fetch(`${url}/auth/v1/health`, { method: "GET", mode: "no-cors", cache: "no-store" });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function LoginForm({ onForgot }: { onForgot: () => void }) {
   const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [offline, setOffline] = useState(false);
+  const [probing, setProbing] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const recheck = async () => {
+    setProbing(true);
+    const ok = await probeBackend();
+    setProbing(false);
+    setOffline(!ok);
+    if (ok) setError(null);
+  };
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setOffline(false);
     if (!emailSchema.safeParse(email).success) return setError(t("auth.invalidEmail"));
     if (!password) return setError(t("auth.required"));
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (isNetworkFailure(error)) setOffline(true);
+        else setError(error.message);
+      }
+    } catch (err) {
+      // supabase-js relança o TypeError do fetch quando o host não resolve
+      if (isNetworkFailure(err)) setOffline(true);
+      else setError((err as { message?: string })?.message ?? String(err));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -128,7 +175,24 @@ function LoginForm({ onForgot }: { onForgot: () => void }) {
           </div>
           <Input id="login-password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        {error && (
+        {offline && (
+          <Alert variant="destructive" className="py-3">
+            <AlertDescription className="space-y-2 text-xs">
+              <p className="font-semibold">{t("auth.offline.title")}</p>
+              <p className="opacity-90">{t("auth.offline.body")}</p>
+              <button
+                type="button"
+                onClick={recheck}
+                disabled={probing}
+                className="inline-flex items-center font-medium underline underline-offset-2 disabled:opacity-60"
+              >
+                {probing && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                {probing ? t("auth.checking") : t("auth.offline.retry")}
+              </button>
+            </AlertDescription>
+          </Alert>
+        )}
+        {error && !offline && (
           <Alert variant="destructive" className="py-2.5">
             <AlertDescription className="text-xs">{error}</AlertDescription>
           </Alert>
