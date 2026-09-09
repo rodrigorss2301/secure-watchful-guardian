@@ -23,7 +23,7 @@ import { useI18n, type TKey } from "@/lib/i18n";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { SLA_TONE, STATUS_TONE, CLIENT_STATUSES, type Client, type ClientStatus } from "@/lib/clients";
 
-export const Route = createFileRoute("/_authenticated/clients")({
+export const Route = createFileRoute("/_authenticated/clients/")({
   head: () => ({ meta: [{ title: "Clientes — Autotechs RMM" }] }),
   component: ClientsPage,
 });

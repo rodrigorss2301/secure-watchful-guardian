@@ -21,7 +21,6 @@ import { Route as AuthenticatedAlertsRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAuditRouteImport } from './routes/_authenticated/audit'
 import { Route as AuthenticatedAutomationsRouteImport } from './routes/_authenticated/automations'
 import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
-import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedKbRouteImport } from './routes/_authenticated/kb'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
@@ -31,6 +30,7 @@ import { Route as PortalTicketsRouteImport } from './routes/portal.tickets'
 import { Route as SubmitSlugRouteImport } from './routes/submit.$slug'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedClientsIndexRouteImport } from './routes/_authenticated/clients.index'
 import { Route as AuthenticatedClientsIdRouteImport } from './routes/_authenticated/clients.$id'
 import { Route as AuthenticatedEndpointsIndexRouteImport } from './routes/_authenticated/endpoints.index'
 import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenticated/endpoints.$id'
@@ -110,11 +110,6 @@ const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
   path: '/billing',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
-  id: '/clients',
-  path: '/clients',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -161,10 +156,16 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedClientsIndexRoute =
+  AuthenticatedClientsIndexRouteImport.update({
+    id: '/clients/',
+    path: '/clients/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedClientsIdRoute = AuthenticatedClientsIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => AuthenticatedClientsRoute,
+  id: '/clients/$id',
+  path: '/clients/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEndpointsIndexRoute =
   AuthenticatedEndpointsIndexRouteImport.update({
@@ -263,7 +264,6 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
   '/billing': typeof AuthenticatedBillingRoute
-  '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/kb': typeof AuthenticatedKbRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
@@ -278,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/clients/': typeof AuthenticatedClientsIndexRoute
   '/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
@@ -302,7 +303,6 @@ export interface FileRoutesByTo {
   '/audit': typeof AuthenticatedAuditRoute
   '/automations': typeof AuthenticatedAutomationsRoute
   '/billing': typeof AuthenticatedBillingRoute
-  '/clients': typeof AuthenticatedClientsRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/kb': typeof AuthenticatedKbRouteWithChildren
   '/reports': typeof AuthenticatedReportsRoute
@@ -317,6 +317,7 @@ export interface FileRoutesByTo {
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/clients': typeof AuthenticatedClientsIndexRoute
   '/endpoints': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
@@ -343,7 +344,6 @@ export interface FileRoutesById {
   '/_authenticated/audit': typeof AuthenticatedAuditRoute
   '/_authenticated/automations': typeof AuthenticatedAutomationsRoute
   '/_authenticated/billing': typeof AuthenticatedBillingRoute
-  '/_authenticated/clients': typeof AuthenticatedClientsRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/kb': typeof AuthenticatedKbRouteWithChildren
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
@@ -358,6 +358,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/_authenticated/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/_authenticated/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
   '/_authenticated/portal/tickets/new': typeof AuthenticatedPortalTicketsNewRoute
@@ -384,7 +385,6 @@ export interface FileRouteTypes {
     | '/audit'
     | '/automations'
     | '/billing'
-    | '/clients'
     | '/dashboard'
     | '/kb'
     | '/reports'
@@ -399,6 +399,7 @@ export interface FileRouteTypes {
     | '/inventory/software'
     | '/kb/$slug'
     | '/tickets/$id'
+    | '/clients/'
     | '/endpoints/'
     | '/portal/tickets/$id'
     | '/portal/tickets/new'
@@ -423,7 +424,6 @@ export interface FileRouteTypes {
     | '/audit'
     | '/automations'
     | '/billing'
-    | '/clients'
     | '/dashboard'
     | '/kb'
     | '/reports'
@@ -438,6 +438,7 @@ export interface FileRouteTypes {
     | '/inventory/software'
     | '/kb/$slug'
     | '/tickets/$id'
+    | '/clients'
     | '/endpoints'
     | '/portal/tickets/$id'
     | '/portal/tickets/new'
@@ -463,7 +464,6 @@ export interface FileRouteTypes {
     | '/_authenticated/audit'
     | '/_authenticated/automations'
     | '/_authenticated/billing'
-    | '/_authenticated/clients'
     | '/_authenticated/dashboard'
     | '/_authenticated/kb'
     | '/_authenticated/reports'
@@ -478,6 +478,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory/software'
     | '/_authenticated/kb/$slug'
     | '/_authenticated/tickets/$id'
+    | '/_authenticated/clients/'
     | '/_authenticated/endpoints/'
     | '/_authenticated/portal/tickets/$id'
     | '/_authenticated/portal/tickets/new'
@@ -600,13 +601,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBillingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/clients': {
-      id: '/_authenticated/clients'
-      path: '/clients'
-      fullPath: '/clients'
-      preLoaderRoute: typeof AuthenticatedClientsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -670,12 +664,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/clients/': {
+      id: '/_authenticated/clients/'
+      path: '/clients'
+      fullPath: '/clients/'
+      preLoaderRoute: typeof AuthenticatedClientsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/clients/$id': {
       id: '/_authenticated/clients/$id'
-      path: '/$id'
+      path: '/clients/$id'
       fullPath: '/clients/$id'
       preLoaderRoute: typeof AuthenticatedClientsIdRouteImport
-      parentRoute: typeof AuthenticatedClientsRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/endpoints/': {
       id: '/_authenticated/endpoints/'
@@ -785,17 +786,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedClientsRouteChildren {
-  AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
-}
-
-const AuthenticatedClientsRouteChildren: AuthenticatedClientsRouteChildren = {
-  AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
-}
-
-const AuthenticatedClientsRouteWithChildren =
-  AuthenticatedClientsRoute._addFileChildren(AuthenticatedClientsRouteChildren)
-
 interface AuthenticatedKbRouteChildren {
   AuthenticatedKbSlugRoute: typeof AuthenticatedKbSlugRoute
 }
@@ -824,14 +814,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAuditRoute: typeof AuthenticatedAuditRoute
   AuthenticatedAutomationsRoute: typeof AuthenticatedAutomationsRoute
   AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
-  AuthenticatedClientsRoute: typeof AuthenticatedClientsRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedKbRoute: typeof AuthenticatedKbRouteWithChildren
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRouteWithChildren
+  AuthenticatedClientsIdRoute: typeof AuthenticatedClientsIdRoute
   AuthenticatedEndpointsIdRoute: typeof AuthenticatedEndpointsIdRoute
   AuthenticatedInventorySoftwareRoute: typeof AuthenticatedInventorySoftwareRoute
+  AuthenticatedClientsIndexRoute: typeof AuthenticatedClientsIndexRoute
   AuthenticatedEndpointsIndexRoute: typeof AuthenticatedEndpointsIndexRoute
   AuthenticatedPortalTicketsIdRoute: typeof AuthenticatedPortalTicketsIdRoute
   AuthenticatedPortalTicketsNewRoute: typeof AuthenticatedPortalTicketsNewRoute
@@ -842,14 +833,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAuditRoute: AuthenticatedAuditRoute,
   AuthenticatedAutomationsRoute: AuthenticatedAutomationsRoute,
   AuthenticatedBillingRoute: AuthenticatedBillingRoute,
-  AuthenticatedClientsRoute: AuthenticatedClientsRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedKbRoute: AuthenticatedKbRouteWithChildren,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRouteWithChildren,
+  AuthenticatedClientsIdRoute: AuthenticatedClientsIdRoute,
   AuthenticatedEndpointsIdRoute: AuthenticatedEndpointsIdRoute,
   AuthenticatedInventorySoftwareRoute: AuthenticatedInventorySoftwareRoute,
+  AuthenticatedClientsIndexRoute: AuthenticatedClientsIndexRoute,
   AuthenticatedEndpointsIndexRoute: AuthenticatedEndpointsIndexRoute,
   AuthenticatedPortalTicketsIdRoute: AuthenticatedPortalTicketsIdRoute,
   AuthenticatedPortalTicketsNewRoute: AuthenticatedPortalTicketsNewRoute,
