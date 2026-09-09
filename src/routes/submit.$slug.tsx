@@ -7,7 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/submit/$slug")({
@@ -21,10 +25,17 @@ export const Route = createFileRoute("/submit/$slug")({
   component: PublicIntakePage,
 });
 
-type Intake = { client_name: string; tenant_name: string };
+import { ClientBrandHeader } from "@/components/clients/client-brand-header";
+import { normalizeBranding, brandForeground, type ClientBranding } from "@/lib/client-branding";
+
+type Intake = ClientBranding & { client_name: string; tenant_name: string };
 
 function PublicIntakePage() {
   const { slug } = Route.useParams();
+  return <ClientIntakePage key={slug} slug={slug} />;
+}
+
+function ClientIntakePage({ slug }: { slug: string }) {
   const [intake, setIntake] = useState<Intake | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -32,23 +43,42 @@ function PublicIntakePage() {
   const [success, setSuccess] = useState<{ number: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
-    name: "", email: "", phone: "", title: "", description: "", priority: "medium",
+    name: "",
+    email: "",
+    phone: "",
+    title: "",
+    description: "",
+    priority: "medium",
   });
 
   useEffect(() => {
-    fetch(`/api/public/tickets/lookup?slug=${encodeURIComponent(slug)}`)
+    const controller = new AbortController();
+    fetch(`/api/public/tickets/lookup?slug=${encodeURIComponent(slug)}`, {
+      signal: controller.signal,
+    })
       .then(async (r) => {
-        if (r.status === 404) { setNotFound(true); return; }
+        if (r.status === 404) {
+          setNotFound(true);
+          return;
+        }
         if (!r.ok) throw new Error("lookup");
         setIntake(await r.json());
       })
-      .catch(() => setNotFound(true))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setError("Não foi possível carregar o portal. Tente atualizar a página.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, [slug]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true); setError(null);
+    if (!intake || submitting) return;
+    setSubmitting(true);
+    setError(null);
     try {
       const res = await fetch("/api/public/tickets/submit", {
         method: "POST",
@@ -65,13 +95,24 @@ function PublicIntakePage() {
     }
   }
 
+  const brand = normalizeBranding(intake);
+
   return (
-    <div className="min-h-screen bg-background px-4 py-10">
-      <div className="mx-auto max-w-xl">
-        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-          <LifeBuoy className="h-4 w-4 text-primary" />
-          <span>{intake?.tenant_name ?? "Suporte"}</span>
-        </div>
+    <div className="min-h-screen bg-background px-4 py-8 sm:py-12">
+      <div className="mx-auto max-w-2xl">
+        {intake && !loading && (
+          <div className="mb-6">
+            <ClientBrandHeader name={intake.client_name} branding={intake} />
+          </div>
+        )}
+        {!loading && !intake && error && (
+          <Card role="alert" className="p-8 text-center">
+            <p>{error}</p>
+            <Button className="mt-4" onClick={() => window.location.reload()}>
+              Tentar novamente
+            </Button>
+          </Card>
+        )}
 
         {loading && (
           <Card className="p-8 text-center text-sm text-muted-foreground">Carregando…</Card>
@@ -89,17 +130,25 @@ function PublicIntakePage() {
         {!loading && intake && success && (
           <Card className="p-8 text-center">
             <CheckCircle2 className="mx-auto mb-3 h-10 w-10 text-emerald-500" />
-            <h1 className="font-display text-2xl font-semibold">Chamado enviado!</h1>
+            <h2 className="font-display text-2xl font-semibold">Chamado enviado!</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Registramos sua solicitação. Nº <strong className="font-mono">{success.number}</strong>.
-              Nossa equipe entrará em contato pelo e-mail informado.
+              Registramos sua solicitação. Nº{" "}
+              <strong className="font-mono">{success.number}</strong>. Nossa equipe entrará em
+              contato pelo e-mail informado.
             </p>
             <Button
               className="mt-6"
               variant="outline"
               onClick={() => {
                 setSuccess(null);
-                setForm({ name: "", email: "", phone: "", title: "", description: "", priority: "medium" });
+                setForm({
+                  name: "",
+                  email: "",
+                  phone: "",
+                  title: "",
+                  description: "",
+                  priority: "medium",
+                });
               }}
             >
               Abrir outro chamado
@@ -109,28 +158,46 @@ function PublicIntakePage() {
 
         {!loading && intake && !success && (
           <Card className="p-6">
-            <h1 className="font-display text-2xl font-semibold">Abrir chamado</h1>
+            <h2 className="font-display text-2xl font-semibold">Abrir chamado</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Envie sua solicitação para <strong>{intake.client_name}</strong>. Sem cadastro necessário.
+              Envie sua solicitação para <strong>{intake.client_name}</strong>. Sem cadastro
+              necessário.
             </p>
 
             <form onSubmit={onSubmit} className="mt-6 space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Seu nome" required>
-                  <Input value={form.name} maxLength={120} required
-                    onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                  <Input
+                    value={form.name}
+                    maxLength={120}
+                    required
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  />
                 </Field>
                 <Field label="E-mail" required>
-                  <Input type="email" value={form.email} maxLength={160} required
-                    onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                  <Input
+                    type="email"
+                    value={form.email}
+                    maxLength={160}
+                    required
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  />
                 </Field>
                 <Field label="Telefone">
-                  <Input value={form.phone} maxLength={40}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                  <Input
+                    value={form.phone}
+                    maxLength={40}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  />
                 </Field>
                 <Field label="Prioridade">
-                  <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={form.priority}
+                    onValueChange={(v) => setForm({ ...form, priority: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="low">Baixa</SelectItem>
                       <SelectItem value="medium">Média</SelectItem>
@@ -141,12 +208,20 @@ function PublicIntakePage() {
                 </Field>
               </div>
               <Field label="Assunto" required>
-                <Input value={form.title} maxLength={200} required
-                  onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <Input
+                  value={form.title}
+                  maxLength={200}
+                  required
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                />
               </Field>
               <Field label="Descreva o problema">
-                <Textarea rows={5} value={form.description} maxLength={5000}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <Textarea
+                  rows={5}
+                  value={form.description}
+                  maxLength={5000}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
               </Field>
 
               {error && (
@@ -155,12 +230,25 @@ function PublicIntakePage() {
                 </p>
               )}
 
-              <Button type="submit" disabled={submitting} className="w-full shadow-glow">
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full"
+                style={{
+                  backgroundColor: brand.portal_primary_color,
+                  color: brandForeground(brand.portal_primary_color),
+                }}
+              >
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Enviar chamado
               </Button>
             </form>
           </Card>
+        )}
+        {intake && (
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Atendimento de TI · {intake.tenant_name}
+          </p>
         )}
       </div>
     </div>
@@ -168,12 +256,19 @@ function PublicIntakePage() {
 }
 
 function Field({
-  label, required, children,
-}: { label: string; required?: boolean; children: React.ReactNode }) {
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
       <Label className="text-xs font-medium text-muted-foreground">
-        {label}{required && <span className="ml-0.5 text-destructive">*</span>}
+        {label}
+        {required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
       {children}
     </div>

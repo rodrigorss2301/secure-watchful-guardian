@@ -14,11 +14,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
-import { CLIENT_STATUSES, SLA_TIERS, type Client, type ClientStatus, type SlaTier } from "@/lib/clients";
+import {
+  CLIENT_STATUSES,
+  SLA_TIERS,
+  type Client,
+  type ClientStatus,
+  type SlaTier,
+} from "@/lib/clients";
+
+import { brandingSchema, normalizeBranding, type ClientBranding } from "@/lib/client-branding";
+import { ClientBrandHeader } from "./client-brand-header";
 
 type Props = {
   open: boolean;
@@ -26,7 +41,7 @@ type Props = {
   client?: Client | null;
 };
 
-type FormState = {
+type FormState = ClientBranding & {
   name: string;
   industry: string;
   website: string;
@@ -45,6 +60,7 @@ type FormState = {
 };
 
 const empty: FormState = {
+  ...normalizeBranding(null),
   name: "",
   industry: "",
   website: "",
@@ -64,6 +80,7 @@ const empty: FormState = {
 
 function fromClient(c: Client): FormState {
   return {
+    ...normalizeBranding(c),
     name: c.name,
     industry: c.industry ?? "",
     website: c.website ?? "",
@@ -97,6 +114,7 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
       if (!tenant) throw new Error("Tenant missing");
       const payload = {
         ...form,
+        ...brandingSchema.parse(form),
         name: form.name.trim(),
         industry: form.industry.trim() || null,
         website: form.website.trim() || null,
@@ -146,67 +164,211 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <Field label={t("clients.field.name")} required>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={120} required />
+              <Input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                maxLength={120}
+                required
+              />
             </Field>
             <Field label={t("clients.field.industry")}>
-              <Input value={form.industry} onChange={(e) => setForm({ ...form, industry: e.target.value })} maxLength={80} />
+              <Input
+                value={form.industry}
+                onChange={(e) => setForm({ ...form, industry: e.target.value })}
+                maxLength={80}
+              />
             </Field>
             <Field label={t("clients.field.status")}>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as ClientStatus })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.status}
+                onValueChange={(v) => setForm({ ...form, status: v as ClientStatus })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {CLIENT_STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>{t(`clients.status.${s}` as TKey)}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {t(`clients.status.${s}` as TKey)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </Field>
             <Field label={t("clients.field.sla")}>
-              <Select value={form.sla_tier} onValueChange={(v) => setForm({ ...form, sla_tier: v as SlaTier })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.sla_tier}
+                onValueChange={(v) => setForm({ ...form, sla_tier: v as SlaTier })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {SLA_TIERS.map((s) => (
-                    <SelectItem key={s} value={s}>{t(`clients.sla.${s}` as TKey)}</SelectItem>
+                    <SelectItem key={s} value={s}>
+                      {t(`clients.sla.${s}` as TKey)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </Field>
             <Field label={t("clients.field.email")}>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} maxLength={120} />
+              <Input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                maxLength={120}
+              />
             </Field>
             <Field label={t("clients.field.phone")}>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} maxLength={40} />
+              <Input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                maxLength={40}
+              />
             </Field>
             <Field label={t("clients.field.website")} className="md:col-span-2">
-              <Input type="url" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} placeholder="https://" maxLength={200} />
+              <Input
+                type="url"
+                value={form.website}
+                onChange={(e) => setForm({ ...form, website: e.target.value })}
+                placeholder="https://"
+                maxLength={200}
+              />
             </Field>
             <Field label={t("clients.field.address")} className="md:col-span-2">
-              <Input value={form.address_line} onChange={(e) => setForm({ ...form, address_line: e.target.value })} maxLength={200} />
+              <Input
+                value={form.address_line}
+                onChange={(e) => setForm({ ...form, address_line: e.target.value })}
+                maxLength={200}
+              />
             </Field>
             <Field label={t("clients.field.city")}>
-              <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={80} />
+              <Input
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                maxLength={80}
+              />
             </Field>
             <Field label={t("clients.field.state")}>
-              <Input value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} maxLength={80} />
+              <Input
+                value={form.state}
+                onChange={(e) => setForm({ ...form, state: e.target.value })}
+                maxLength={80}
+              />
             </Field>
             <Field label={t("clients.field.country")}>
-              <Input value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })} maxLength={80} />
+              <Input
+                value={form.country}
+                onChange={(e) => setForm({ ...form, country: e.target.value })}
+                maxLength={80}
+              />
             </Field>
             <Field label={t("clients.field.postal")}>
-              <Input value={form.postal_code} onChange={(e) => setForm({ ...form, postal_code: e.target.value })} maxLength={20} />
+              <Input
+                value={form.postal_code}
+                onChange={(e) => setForm({ ...form, postal_code: e.target.value })}
+                maxLength={20}
+              />
             </Field>
             <Field label={t("clients.field.contractStart")}>
-              <Input type="date" value={form.contract_start} onChange={(e) => setForm({ ...form, contract_start: e.target.value })} />
+              <Input
+                type="date"
+                value={form.contract_start}
+                onChange={(e) => setForm({ ...form, contract_start: e.target.value })}
+              />
             </Field>
             <Field label={t("clients.field.contractEnd")}>
-              <Input type="date" value={form.contract_end} onChange={(e) => setForm({ ...form, contract_end: e.target.value })} />
+              <Input
+                type="date"
+                value={form.contract_end}
+                onChange={(e) => setForm({ ...form, contract_end: e.target.value })}
+              />
             </Field>
             <Field label={t("clients.field.notes")} className="md:col-span-2">
-              <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} maxLength={2000} />
+              <Textarea
+                rows={3}
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                maxLength={2000}
+              />
             </Field>
           </div>
+          <section
+            className="space-y-4 rounded-xl border p-4"
+            aria-label="Marca do portal do cliente"
+          >
+            <div>
+              <h3 className="font-semibold">Marca do portal do cliente</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Personalize a página de atendimento desta empresa. Ative e copie o link público nos
+                detalhes do cliente.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-logo">Endereço do logotipo</Label>
+              <Input
+                id="portal-logo"
+                type="url"
+                placeholder="https://suaempresa.com/logo.png"
+                maxLength={1000}
+                value={form.portal_logo_url}
+                onChange={(e) => setForm({ ...form, portal_logo_url: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Use uma imagem pública por HTTPS. Sem logo, exibimos as iniciais da empresa.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-color">Cor da marca</Label>
+              <div className="flex gap-3">
+                <Input
+                  type="color"
+                  aria-label="Escolher cor da marca"
+                  className="w-16 p-1"
+                  value={normalizeBranding(form).portal_primary_color}
+                  onChange={(e) => setForm({ ...form, portal_primary_color: e.target.value })}
+                />
+                <Input
+                  id="portal-color"
+                  maxLength={7}
+                  pattern="#[0-9a-fA-F]{6}"
+                  value={form.portal_primary_color}
+                  onChange={(e) => setForm({ ...form, portal_primary_color: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-title">Título de boas-vindas</Label>
+              <Input
+                id="portal-title"
+                maxLength={100}
+                placeholder="Como podemos ajudar?"
+                value={form.portal_title}
+                onChange={(e) => setForm({ ...form, portal_title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="portal-message">Mensagem para o cliente</Label>
+              <Textarea
+                id="portal-message"
+                maxLength={400}
+                rows={3}
+                value={form.portal_message}
+                onChange={(e) => setForm({ ...form, portal_message: e.target.value })}
+                placeholder="Apresente a equipe de suporte e oriente como solicitar atendimento."
+              />
+            </div>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Prévia da página
+            </p>
+            <ClientBrandHeader name={form.name} branding={form} />
+          </section>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              {t("common.cancel")}
+            </Button>
             <Button type="submit" disabled={mutation.isPending} className="shadow-glow">
               {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("common.save")}
@@ -218,11 +380,22 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
   );
 }
 
-function Field({ label, required, className, children }: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
+function Field({
+  label,
+  required,
+  className,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
       <Label className="text-xs font-medium text-muted-foreground">
-        {label}{required && <span className="ml-0.5 text-destructive">*</span>}
+        {label}
+        {required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
       {children}
     </div>

@@ -653,6 +653,10 @@ export type Database = {
       }
       clients: {
         Row: {
+          portal_logo_url: string
+          portal_primary_color: string
+          portal_title: string
+          portal_message: string
           address_line: string | null
           city: string | null
           contract_end: string | null
@@ -677,6 +681,10 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          portal_logo_url?: string
+          portal_primary_color?: string
+          portal_title?: string
+          portal_message?: string
           address_line?: string | null
           city?: string | null
           contract_end?: string | null
@@ -701,6 +709,10 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          portal_logo_url?: string
+          portal_primary_color?: string
+          portal_title?: string
+          portal_message?: string
           address_line?: string | null
           city?: string | null
           contract_end?: string | null
