@@ -25,15 +25,30 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data: enr, error: enrErr } = await supabaseAdmin
+        // Consumo atomico do token: a versao anterior lia, validava e so gravava
+        // used_at no final, entao dois enrolls simultaneos com o mesmo token
+        // passavam os dois. O UPDATE condicional so acerta uma vez.
+        // Uma unica resposta para inexistente/expirado/usado, sem servir de oraculo.
+        const claimedAt = new Date().toISOString();
+        const { data: enr, error: claimErr } = await supabaseAdmin
           .from("agent_enrollments")
-          .select("id, tenant_id, client_id, default_type, expires_at, used_at")
+          .update({ used_at: claimedAt })
           .eq("token", b.token)
+          .is("used_at", null)
+          .gt("expires_at", claimedAt)
+          .select("id, tenant_id, client_id, default_type")
           .maybeSingle();
-        if (enrErr) return jsonErr(500, "db_error");
-        if (!enr) return jsonErr(404, "token_not_found");
-        if (enr.used_at) return jsonErr(410, "token_used");
-        if (new Date(enr.expires_at).getTime() < Date.now()) return jsonErr(410, "token_expired");
+        if (claimErr) return jsonErr(500, "db_error");
+        if (!enr) return jsonErr(410, "token_invalid_or_used");
+
+        // A partir daqui o token ja foi queimado: qualquer falha o devolve para
+        // o tecnico nao precisar gerar outro.
+        const releaseToken = async () => {
+          await supabaseAdmin
+            .from("agent_enrollments")
+            .update({ used_at: null })
+            .eq("id", enr.id);
+        };
 
         const agentToken = randomBytes(32).toString("hex");
         const ip = b.ip_address ?? request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
@@ -72,16 +87,22 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
           : supabaseAdmin.from("endpoints").insert(endpointPayload).select("id").single();
 
         const { data: endpoint, error: epErr } = await endpointQuery;
-        if (epErr || !endpoint) return jsonErr(500, "endpoint_create_failed", epErr?.message);
+        if (epErr || !endpoint) {
+          await releaseToken();
+          return jsonErr(500, "endpoint_create_failed", epErr?.message);
+        }
 
         const { error: secErr } = await supabaseAdmin
           .from("endpoint_secrets")
           .upsert({ endpoint_id: endpoint.id, tenant_id: enr.tenant_id, agent_token: agentToken });
-        if (secErr) return jsonErr(500, "secret_store_failed", secErr.message);
+        if (secErr) {
+          await releaseToken();
+          return jsonErr(500, "secret_store_failed", secErr.message);
+        }
 
         await supabaseAdmin
           .from("agent_enrollments")
-          .update({ used_at: new Date().toISOString(), used_endpoint_id: endpoint.id })
+          .update({ used_endpoint_id: endpoint.id })
           .eq("id", enr.id);
 
         // Chave de assinatura do tenant (para o agente validar comandos) — armazenada em tenant_secrets
@@ -90,6 +111,12 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
           .select("command_signing_key")
           .eq("tenant_id", enr.tenant_id)
           .maybeSingle();
+        const signingKey =
+          (tenantSecret as { command_signing_key?: string } | null)?.command_signing_key ?? null;
+        if (!signingKey) {
+          await releaseToken();
+          return jsonErr(500, "tenant_signing_key_missing");
+        }
 
         // Canal atual do endpoint + último release
         const { data: epRow } = await supabaseAdmin
@@ -102,8 +129,10 @@ export const Route = createFileRoute("/api/public/agent/enroll")({
           endpoint_id: endpoint.id,
           agent_token: agentToken,
           heartbeat_interval_seconds: 60,
-          tailscale_auth_key: process.env.TAILSCALE_AUTH_KEY ?? null,
-          command_signing_key: (tenantSecret as { command_signing_key?: string } | null)?.command_signing_key ?? null,
+          // Chave compartilhada da tailnet: so vai para maquina nova, para um
+          // reenroll nao redistribuir a chave a cada reinstalacao.
+          tailscale_auth_key: existingEndpoint ? null : (process.env.TAILSCALE_AUTH_KEY ?? null),
+          command_signing_key: signingKey,
           update_channel: channel,
           latest_agent: latest ? {
             channel: latest.channel, version: latest.version,

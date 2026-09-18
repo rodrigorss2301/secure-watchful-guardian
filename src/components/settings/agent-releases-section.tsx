@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, Package, Rocket } from "lucide-react";
+import { Loader2, Package, Rocket, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LATEST_AGENT_VERSION } from "@/lib/agent-version";
 
@@ -18,6 +18,33 @@ function Stat({ label, value }: { label: string; value: string }) {
       <p className="mt-0.5 text-lg font-semibold tabular-nums">{value}</p>
     </div>
   );
+}
+
+// A publicação passa por /api/admin/agent-release: só o tenant dono da
+// plataforma pode publicar, e o servidor calcula o SHA-256 do script servido.
+// A versão vem do próprio install.ps1, por isso não há campo para digitá-la.
+async function publishRelease(channel: "stable" | "beta", notes: string) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error("Sessão expirada — entre novamente");
+
+  const res = await fetch("/api/admin/agent-release", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ channel, notes: notes.trim() || null }),
+  });
+  const payload = (await res.json().catch(() => null)) as
+    | { version?: string; sha256?: string; error?: string }
+    | null;
+  if (!res.ok) {
+    const code = payload?.error ?? `http_${res.status}`;
+    throw new Error(
+      code === "forbidden"
+        ? "Apenas o tenant responsável pela plataforma pode publicar releases"
+        : `Falha ao publicar: ${code}`,
+    );
+  }
+  return payload as { version: string; sha256: string };
 }
 
 export function AgentReleasesSection() {
@@ -60,49 +87,22 @@ export function AgentReleasesSection() {
   });
 
   const [channel, setChannel] = useState<"stable" | "beta">("beta");
-  const [version, setVersion] = useState("");
-  const [scriptUrl, setScriptUrl] = useState("/agent/install.ps1");
-  const [sha, setSha] = useState("");
   const [notes, setNotes] = useState("");
 
-  const publish = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from("agent_releases").insert({
-        channel, version: version.trim(), script_url: scriptUrl.trim(),
-        sha256: sha.trim() || null, notes: notes.trim() || null,
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success(`Release ${version} publicada em ${channel}`);
-      setVersion(""); setSha(""); setNotes("");
-      qc.invalidateQueries({ queryKey: ["agent-releases"] });
-      qc.invalidateQueries({ queryKey: ["fleet-agent-versions"] });
-    },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Falha ao publicar"),
-  });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["agent-releases"] });
+    qc.invalidateQueries({ queryKey: ["fleet-agent-versions"] });
+  };
 
-  const quickPush = useMutation({
-    mutationFn: async (targetChannel: "stable" | "beta") => {
-      const { error } = await supabase
-        .from("agent_releases")
-        .upsert(
-          {
-            channel: targetChannel,
-            version: LATEST_AGENT_VERSION,
-            script_url: "/agent/install.ps1",
-            sha256: null,
-            notes: `Push do servidor — ${new Date().toLocaleString()}`,
-            released_at: new Date().toISOString(),
-          },
-          { onConflict: "channel,version" },
-        );
-      if (error) throw error;
-    },
-    onSuccess: (_d, ch) => {
-      toast.success(`v${LATEST_AGENT_VERSION} publicada em ${ch} — agentes vão atualizar no próximo heartbeat (~60s)`);
-      qc.invalidateQueries({ queryKey: ["agent-releases"] });
-      qc.invalidateQueries({ queryKey: ["fleet-agent-versions"] });
+  const publish = useMutation({
+    mutationFn: ({ target, text }: { target: "stable" | "beta"; text: string }) =>
+      publishRelease(target, text),
+    onSuccess: (result, vars) => {
+      toast.success(
+        `v${result.version} publicada em ${vars.target} — agentes atualizam no próximo heartbeat (~60s)`,
+      );
+      setNotes("");
+      refresh();
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Falha ao publicar"),
   });
@@ -114,7 +114,7 @@ export function AgentReleasesSection() {
           <CardTitle className="flex items-center gap-2"><Rocket className="h-4 w-4" /> Atualizar frota agora</CardTitle>
           <CardDescription>
             Publica a versão atual do servidor (<code className="font-mono">v{LATEST_AGENT_VERSION}</code>) como release.
-            Cada agente baixa e aplica sozinho no próximo heartbeat — sem acesso à máquina.
+            Cada agente baixa, confere o SHA-256 e aplica sozinho no próximo heartbeat — sem acesso à máquina.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -136,11 +136,20 @@ export function AgentReleasesSection() {
           )}
 
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={quickPush.isPending} onClick={() => quickPush.mutate("stable")}>
-              {quickPush.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Publicar v{LATEST_AGENT_VERSION} em stable
+            <Button
+              size="sm"
+              disabled={publish.isPending}
+              onClick={() => publish.mutate({ target: "stable", text: notes })}
+            >
+              {publish.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Publicar em stable
             </Button>
-            <Button size="sm" variant="outline" disabled={quickPush.isPending} onClick={() => quickPush.mutate("beta")}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={publish.isPending}
+              onClick={() => publish.mutate({ target: "beta", text: notes })}
+            >
               Publicar em beta
             </Button>
           </div>
@@ -153,7 +162,10 @@ export function AgentReleasesSection() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Package className="h-4 w-4" /> Releases do agente</CardTitle>
-          <CardDescription>Endpoints aplicam auto-update conforme o canal configurado (stable/beta).</CardDescription>
+          <CardDescription>
+            Endpoints aplicam auto-update conforme o canal configurado (stable/beta).
+            Releases sem SHA-256 não são entregues aos agentes.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -164,12 +176,22 @@ export function AgentReleasesSection() {
             <div className="space-y-2">
               {data!.map((r) => (
                 <div key={r.id} className="flex items-center justify-between gap-3 rounded-md border p-3 text-sm">
-                  <div className="flex items-center gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
                     <Badge variant={r.channel === "beta" ? "secondary" : "outline"}>{r.channel}</Badge>
                     <span className="font-mono font-semibold">{r.version}</span>
-                    <span className="font-mono text-xs text-muted-foreground">{r.script_url}</span>
+                    {r.sha256 ? (
+                      <span
+                        className="flex items-center gap-1 truncate font-mono text-xs text-emerald-600 dark:text-emerald-400"
+                        title={r.sha256}
+                      >
+                        <ShieldCheck className="h-3 w-3 shrink-0" />
+                        {r.sha256.slice(0, 12)}…
+                      </span>
+                    ) : (
+                      <Badge variant="destructive" className="text-[10px]">sem hash — não entregue</Badge>
+                    )}
                   </div>
-                  <time className="text-xs text-muted-foreground">{new Date(r.released_at).toLocaleString()}</time>
+                  <time className="shrink-0 text-xs text-muted-foreground">{new Date(r.released_at).toLocaleString()}</time>
                 </div>
               ))}
             </div>
@@ -179,12 +201,15 @@ export function AgentReleasesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Publicar nova versão</CardTitle>
-          <CardDescription>Aponte para o script vigente em <code>/agent/install.ps1</code> ou um URL externo.</CardDescription>
+          <CardTitle>Nota da publicação</CardTitle>
+          <CardDescription>
+            A versão e o hash saem do <code>install.ps1</code> servido pelo próprio servidor. Só o
+            tenant responsável pela plataforma pode publicar.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-2">
           <div>
-            <Label>Canal</Label>
+            <Label>Canal padrão dos botões acima</Label>
             <Select value={channel} onValueChange={(v) => setChannel(v as "stable" | "beta")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -194,24 +219,17 @@ export function AgentReleasesSection() {
             </Select>
           </div>
           <div>
-            <Label>Versão (ex: 1.6.1)</Label>
-            <Input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="1.6.1" />
+            <Label>Notas (opcional)</Label>
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="O que mudou nesta versão" />
           </div>
           <div className="sm:col-span-2">
-            <Label>URL do script</Label>
-            <Input value={scriptUrl} onChange={(e) => setScriptUrl(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>SHA-256 (opcional, recomendado)</Label>
-            <Input value={sha} onChange={(e) => setSha(e.target.value)} placeholder="hex sha256" />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Notas</Label>
-            <Input value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
-          <div className="sm:col-span-2">
-            <Button disabled={!version.trim() || publish.isPending} onClick={() => publish.mutate()}>
-              {publish.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Publicar release
+            <Button
+              variant="secondary"
+              disabled={publish.isPending}
+              onClick={() => publish.mutate({ target: channel, text: notes })}
+            >
+              {publish.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Publicar v{LATEST_AGENT_VERSION} em {channel}
             </Button>
           </div>
         </CardContent>

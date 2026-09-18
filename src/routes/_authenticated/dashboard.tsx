@@ -60,13 +60,15 @@ function DashboardPage() {
   const { t, lang } = useI18n();
   const { tenant, roles } = useAuth();
 
-  if (roles.length > 0 && roles.every((r) => r === "portal")) {
-    return <Navigate to="/portal/tickets" replace />;
-  }
+  // O redirect fica no fim do componente: um `return` antes dos hooks fazia
+  // useQuery/useMemo rodarem condicionalmente e quebrava a ordem dos hooks
+  // (React Hook "useQuery" is called conditionally) quando um usuário portal
+  // caía nesta rota.
+  const isPortalOnly = roles.length > 0 && roles.every((r) => r === "portal");
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard", tenant?.id],
-    enabled: !!tenant?.id,
+    enabled: !!tenant?.id && !isPortalOnly,
     refetchInterval: 30_000,
     queryFn: async () => {
       const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
@@ -137,6 +139,11 @@ function DashboardPage() {
       criticalEndpoints: data.endpoints.filter((e) => e.status === "critical" || e.status === "warning").slice(0, 6),
     };
   }, [data]);
+
+  // Depois de todos os hooks e antes do skeleton: com a query desabilitada,
+  // `stats` nunca preenche para um usuário portal e ele ficaria preso no
+  // carregamento.
+  if (isPortalOnly) return <Navigate to="/portal/tickets" replace />;
 
   if (isLoading || !stats) {
     return (

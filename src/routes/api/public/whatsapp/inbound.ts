@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { isValidTwilioSignature, twilioWebhookUrl } from "@/lib/twilio-signature";
 
 // Helper to format Twilio TwiML response (works without sending via API)
 function twiml(body: string) {
@@ -24,6 +25,27 @@ export const Route = createFileRoute("/api/public/whatsapp/inbound")({
     handlers: {
       POST: async ({ request }) => {
         const form = await request.formData();
+
+        // Fail-closed: sem token configurado o webhook fica desligado em vez de
+        // aceitar qualquer POST anonimo.
+        const authToken = process.env.TWILIO_AUTH_TOKEN;
+        if (!authToken) {
+          console.error("[whatsapp] TWILIO_AUTH_TOKEN ausente — webhook recusado");
+          return new Response("twilio auth token not configured", { status: 503 });
+        }
+
+        const params: Record<string, string> = {};
+        for (const [key, value] of form.entries()) {
+          if (typeof value === "string") params[key] = value;
+        }
+        const valid = await isValidTwilioSignature({
+          authToken,
+          url: twilioWebhookUrl(request, process.env.TWILIO_WEBHOOK_URL),
+          params,
+          signature: request.headers.get("x-twilio-signature"),
+        });
+        if (!valid) return new Response("invalid signature", { status: 403 });
+
         const from = (form.get("From") as string | null)?.replace(/^whatsapp:/, "").trim() ?? "";
         const bodyRaw = (form.get("Body") as string | null)?.trim() ?? "";
         if (!from) return emptyTwiml();
@@ -74,7 +96,11 @@ export const Route = createFileRoute("/api/public/whatsapp/inbound")({
   },
 });
 
-async function handleCommand(db: any, contact: { tenant_id: string; client_id: string; name: string | null }, raw: string): Promise<string> {
+type AdminClient = Awaited<
+  typeof import("@/integrations/supabase/client.server")
+>["supabaseAdmin"];
+
+async function handleCommand(db: AdminClient, contact: { tenant_id: string; client_id: string; name: string | null }, raw: string): Promise<string> {
   const text = raw.trim();
   const lower = text.toLowerCase();
 
@@ -90,17 +116,19 @@ async function handleCommand(db: any, contact: { tenant_id: string; client_id: s
       .order("created_at", { ascending: false })
       .limit(5);
     if (!data?.length) return "Você não tem tickets abertos. 🎉";
-    return "📋 Tickets abertos:\n" + data.map((t: any) => `• ${t.number} [${t.status}] ${t.title}`).join("\n");
+    return "📋 Tickets abertos:\n" + data.map((t) => `• ${t.number} [${t.status}] ${t.title}`).join("\n");
   }
 
   if (lower.startsWith("novo ")) {
     const title = text.slice(5).trim();
     if (!title) return "Use: *novo <título do problema>*";
+    // `number` é atribuído pelo trigger assign_ticket_number; o valor enviado
+    // aqui é descartado (mesmo padrão de ticket-form-dialog).
     const { data, error } = await db.from("tickets").insert({
       tenant_id: contact.tenant_id,
       client_id: contact.client_id,
       title, description: "Aberto via WhatsApp",
-      priority: "medium", status: "open",
+      priority: "medium", status: "open", number: "",
     }).select("number").single();
     if (error) return "❌ Não foi possível abrir o ticket: " + error.message;
     return `✅ Ticket ${data.number} criado.`;

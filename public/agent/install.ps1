@@ -18,7 +18,7 @@ $ErrorActionPreference = "Stop"
 if (-not $BaseUrl     -and $env:RMM_URL)   { $BaseUrl     = $env:RMM_URL }
 if (-not $EnrollToken -and $env:RMM_TOKEN) { $EnrollToken = $env:RMM_TOKEN }
 
-$AgentVersion = "1.6.1"
+$AgentVersion = "1.7.0"
 $InstallDir   = "C:\ProgramData\AutotechsRMM"
 $QueueDir     = Join-Path $InstallDir "queue"
 $ConfigPath   = Join-Path $InstallDir "config.json"
@@ -56,6 +56,19 @@ function Get-TailscaleExePath {
   return $TailscaleExeCandidates[0]
 }
 
+# C:\ProgramData herda "Usuarios: leitura + criar arquivos". Sem isto qualquer
+# usuario local lia o config.json (agent_token e chave HMAC do tenant) e podia
+# pre-criar agent.ps1.new para o auto-update executar codigo dele como SYSTEM.
+# SIDs em vez de nomes para funcionar em Windows de qualquer idioma.
+function Protect-InstallDir {
+  try {
+    & icacls.exe "$InstallDir" /inheritance:r /grant:r "*S-1-5-18:(OI)(CI)F" "*S-1-5-32-544:(OI)(CI)F" /T /C 2>&1 | Out-Null
+    Write-Log "Permissoes do diretorio restritas a SYSTEM/Administradores."
+  } catch {
+    Write-Log ("Nao foi possivel restringir permissoes de {0}: {1}" -f $InstallDir, $_.Exception.Message)
+  }
+}
+
 # ==================== HMAC helper para assinar comandos ====================
 function Compute-Hmac($message, $keyHex) {
   try {
@@ -71,16 +84,42 @@ function Compute-Hmac($message, $keyHex) {
   } catch { return $null }
 }
 
+# O servidor manda em signed_payload o texto exato que assinou. Antes o agente
+# tentava remontar esse texto com ConvertTo-Json -Compress, mas o banco assina
+# jsonb::text ('{"port": 3389}', com espacos), entao a assinatura nunca batia
+# quando o comando tinha parametros.
 function Verify-Command($cmd, $keyHex) {
-  if (-not $cmd.signature -or -not $keyHex) { return $false }
-  $params = if ($cmd.params) { ($cmd.params | ConvertTo-Json -Compress -Depth 6) } else { "{}" }
-  $timeout = if ($cmd.timeout_seconds) { [int]$cmd.timeout_seconds } else { 300 }
-  $msg = "$($cmd.id)|$($cmd.command)|$params|$timeout"
-  $expected = Compute-Hmac $msg $keyHex
-  return ($expected -and ($expected -eq $cmd.signature))
+  if (-not $keyHex) { return $false }
+  if (-not $cmd.signature -or -not $cmd.signed_payload) { return $false }
+  $expected = Compute-Hmac "$($cmd.signed_payload)" $keyHex
+  if (-not $expected) { return $false }
+  $sig = "$($cmd.signature)"
+  if ($expected.Length -ne $sig.Length) { return $false }
+  $diff = 0
+  for ($i = 0; $i -lt $expected.Length; $i++) {
+    $diff = $diff -bor ([int][char]$expected[$i] -bxor [int][char]$sig[$i])
+  }
+  if ($diff -ne 0) { return $false }
+  # O payload tem que descrever ESTE comando, senao a assinatura valida de um
+  # comando antigo poderia ser reaproveitada para outro.
+  return "$($cmd.signed_payload)".StartsWith("$($cmd.id)|$($cmd.command)|")
 }
 
-# ==================== Métricas / Sistema / Inventário ====================
+# Parametros e timeout saem do payload assinado, nunca dos campos soltos do
+# JSON (que nao sao cobertos pela assinatura).
+function Get-SignedParts($cmd) {
+  $payload = "$($cmd.signed_payload)"
+  $prefix  = "$($cmd.id)|$($cmd.command)|"
+  if (-not $payload.StartsWith($prefix)) { return $null }
+  $rest = $payload.Substring($prefix.Length)
+  $cut  = $rest.LastIndexOf('|')
+  if ($cut -lt 1) { return $null }
+  $timeout = 0
+  if (-not [int]::TryParse($rest.Substring($cut + 1), [ref]$timeout)) { return $null }
+  return @{ ParamsJson = $rest.Substring(0, $cut); TimeoutSeconds = $timeout }
+}
+
+# ==================== Metricas / Sistema / Inventario ====================
 function Get-Metrics {
   $cpu = $null; $ram = $null; $disk = $null; $rtt = $null
   try { $c = Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average; if ($c.Average -ne $null) { $cpu = [double]$c.Average } } catch {}
@@ -224,43 +263,74 @@ function Send-CommandLog($cfg, $commandId, $lines) {
   try { Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/command-log" -f $cfg.base_url) -ContentType "application/json" -Body $body -TimeoutSec 20 | Out-Null } catch {}
 }
 
+function Report-CommandResult($cfg, $commandId, $status, $output, $failedReason) {
+  $body = @{ agent_token=$cfg.agent_token; command_id=$commandId; status=$status; output=$output; failed_reason=$failedReason } | ConvertTo-Json -Compress
+  try {
+    Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/command-result" -f $cfg.base_url) -ContentType "application/json" -Body $body -TimeoutSec 30 | Out-Null
+  } catch {
+    Write-Log ("Falha ao reportar resultado {0}: {1}" -f $commandId, $_.Exception.Message)
+  }
+}
+
 function Process-Commands($cfg, $commands) {
   if (-not $commands -or $commands.Count -eq 0) { return }
   foreach ($c in $commands) {
-    # Verifica assinatura (se chave disponível)
-    if ($cfg.command_signing_key) {
-      if (-not (Verify-Command $c $cfg.command_signing_key)) {
-        Write-Log ("Comando {0} rejeitado: assinatura inválida" -f $c.id)
-        $body = @{ agent_token=$cfg.agent_token; command_id=$c.id; status="failed"; failed_reason="invalid_signature"; output="Assinatura HMAC inválida" } | ConvertTo-Json -Compress
-        try { Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/command-result" -f $cfg.base_url) -ContentType "application/json" -Body $body -TimeoutSec 30 | Out-Null } catch {}
-        continue
-      }
+    # Fail-closed: antes, agente sem chave de assinatura executava qualquer
+    # comando sem verificar nada.
+    if (-not (Verify-Command $c $cfg.command_signing_key)) {
+      Write-Log ("Comando {0} rejeitado: assinatura invalida" -f $c.id)
+      Report-CommandResult $cfg $c.id "failed" "Assinatura HMAC invalida" "invalid_signature"
+      continue
     }
-    # Verifica expiração
+    $signed = Get-SignedParts $c
+    if (-not $signed) {
+      Write-Log ("Comando {0} rejeitado: payload assinado malformado" -f $c.id)
+      Report-CommandResult $cfg $c.id "failed" "Payload assinado malformado" "invalid_signature"
+      continue
+    }
     if ($c.expires_at -and ([DateTime]::Parse($c.expires_at).ToUniversalTime() -lt (Get-Date).ToUniversalTime())) {
       Write-Log ("Comando {0} expirado, ignorando" -f $c.id)
       continue
     }
 
-    $timeout = if ($c.timeout_seconds) { [int]$c.timeout_seconds } else { 300 }
-    Send-CommandLog $cfg $c.id @(@{ level="info"; message="Iniciando execução (timeout ${timeout}s)" })
+    $timeout = $signed.TimeoutSeconds
+    if ($timeout -le 0) { $timeout = 300 }
+    Send-CommandLog $cfg $c.id @(@{ level="info"; message="Iniciando execucao (timeout ${timeout}s)" })
 
     $status = "succeeded"; $output = ""; $failedReason = $null
     try {
+      # O job recebe as funcoes reais, entao executa o mesmo conjunto de
+      # comandos do modo sincrono. Antes o switch dentro do job so conhecia
+      # shutdown/restart/logoff e lancava para o resto.
+      $fnRdp = (Get-Command Enable-RdpAccess).Definition
+      $fnInv = (Get-Command Invoke-AgentCommand).Definition
       $job = Start-Job -ScriptBlock {
-        param($command, $params)
-        # Reimporta lógica mínima no job
-        switch ($command) {
-          "shutdown" { Start-Process -FilePath "shutdown.exe" -ArgumentList "/s /t 30" -WindowStyle Hidden -Wait; return "shutdown scheduled" }
-          "restart"  { Start-Process -FilePath "shutdown.exe" -ArgumentList "/r /t 30" -WindowStyle Hidden -Wait; return "restart scheduled" }
-          "logoff"   { Start-Process -FilePath "shutdown.exe" -ArgumentList "/l" -WindowStyle Hidden -Wait; return "logoff issued" }
-          default    { throw "command not allowed in sandbox: $command" }
-        }
-      } -ArgumentList $c.command, $c.params
+        param($fnRdp, $fnInv, $command, $paramsJson)
+        Set-Item -Path function:Enable-RdpAccess    -Value ([ScriptBlock]::Create($fnRdp))
+        Set-Item -Path function:Invoke-AgentCommand -Value ([ScriptBlock]::Create($fnInv))
+        $p = $null
+        if ($paramsJson) { try { $p = $paramsJson | ConvertFrom-Json } catch { $p = $null } }
+        Invoke-AgentCommand $command $p
+      } -ArgumentList $fnRdp, $fnInv, "$($c.command)", $signed.ParamsJson
 
       if (Wait-Job -Job $job -Timeout $timeout) {
-        $output = (Receive-Job -Job $job -ErrorAction SilentlyContinue | Out-String).Trim()
-        Send-CommandLog $cfg $c.id @(@{ level="info"; message=("Concluído em " + [int]((Get-Date) - $job.PSBeginTime).TotalSeconds + "s") })
+        $jobError = $null
+        $output = (Receive-Job -Job $job -ErrorVariable jobError -ErrorAction SilentlyContinue | Out-String).Trim()
+        # O erro do job era engolido e o agente reportava "succeeded" sem ter
+        # executado nada (enable_rdp, hibernate e sleep caiam nisso).
+        if ($job.State -ne "Completed" -or ($jobError -and $jobError.Count -gt 0)) {
+          $reason = if ($jobError -and $jobError.Count -gt 0) {
+            "$($jobError[0])"
+          } elseif ($job.ChildJobs -and $job.ChildJobs[0].JobStateInfo.Reason) {
+            "$($job.ChildJobs[0].JobStateInfo.Reason.Message)"
+          } else {
+            "job terminou em estado $($job.State)"
+          }
+          $status = "failed"; $failedReason = "exec_error"; $output = $reason
+          Send-CommandLog $cfg $c.id @(@{ level="error"; message=$reason })
+        } else {
+          Send-CommandLog $cfg $c.id @(@{ level="info"; message=("Concluido em " + [int]((Get-Date) - $job.PSBeginTime).TotalSeconds + "s") })
+        }
       } else {
         Stop-Job -Job $job -ErrorAction SilentlyContinue
         $status = "timeout"; $failedReason = "timeout_after_${timeout}s"; $output = "Comando excedeu o tempo limite"
@@ -268,17 +338,10 @@ function Process-Commands($cfg, $commands) {
       }
       Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
     } catch {
-      # Fallback síncrono para comandos não suportados em job
-      try {
-        $output = Invoke-AgentCommand $c.command $c.params
-        Send-CommandLog $cfg $c.id @(@{ level="info"; message="Executado (síncrono)" })
-      } catch {
-        $status = "failed"; $failedReason = "exec_error"; $output = "$($_.Exception.Message)"
-        Send-CommandLog $cfg $c.id @(@{ level="error"; message=$output })
-      }
+      $status = "failed"; $failedReason = "exec_error"; $output = "$($_.Exception.Message)"
+      Send-CommandLog $cfg $c.id @(@{ level="error"; message=$output })
     }
-    $body = @{ agent_token=$cfg.agent_token; command_id=$c.id; status=$status; output=$output; failed_reason=$failedReason } | ConvertTo-Json -Compress
-    try { Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/command-result" -f $cfg.base_url) -ContentType "application/json" -Body $body -TimeoutSec 30 | Out-Null } catch { Write-Log ("Falha ao reportar resultado {0}: {1}" -f $c.id, $_.Exception.Message) }
+    Report-CommandResult $cfg $c.id $status $output $failedReason
   }
 }
 
@@ -286,7 +349,7 @@ function Process-Commands($cfg, $commands) {
 function Apply-AutoUpdate($cfg, $latest) {
   if (-not $latest -or -not $latest.version) { return }
   if ($latest.version -eq $AgentVersion) { return }
-  # Comparação simples de versão (semver-ish)
+  # Comparacao simples de versao (semver-ish)
   $cur = $AgentVersion -split '\.'; $new = "$($latest.version)" -split '\.'
   $shouldUpdate = $false
   for ($i = 0; $i -lt [Math]::Max($cur.Length, $new.Length); $i++) {
@@ -296,22 +359,41 @@ function Apply-AutoUpdate($cfg, $latest) {
     if ($b -lt $a) { break }
   }
   if (-not $shouldUpdate) { return }
+
+  # Sem hash nao ha atualizacao: o script baixado roda como SYSTEM.
+  if (-not $latest.sha256) {
+    Set-Error "Auto-update ignorado: release sem SHA-256"
+    Write-Log "Auto-update: release sem SHA-256 - ignorando"
+    return
+  }
+  # Apenas HTTPS absoluto ou caminho no proprio servidor (http:// era aceito).
+  $url = if ("$($latest.script_url)" -match "^https://") {
+    "$($latest.script_url)"
+  } elseif ("$($latest.script_url)" -match "^/[^/]") {
+    "$($cfg.base_url)$($latest.script_url)"
+  } else {
+    $null
+  }
+  if (-not $url) {
+    Set-Error ("Auto-update ignorado: script_url invalido ({0})" -f $latest.script_url)
+    Write-Log ("Auto-update: script_url invalido ({0}) - ignorando" -f $latest.script_url)
+    return
+  }
+
   try {
-    $url = if ($latest.script_url -match "^https?://") { $latest.script_url } else { "$($cfg.base_url)$($latest.script_url)" }
     Write-Log ("Auto-update: baixando {0} ({1})" -f $latest.version, $url)
     $tmp = "$AgentPath.new"
+    Remove-Item $tmp -Force -ErrorAction SilentlyContinue
     Invoke-WebRequest -Uri $url -OutFile $tmp -UseBasicParsing -TimeoutSec 120
-    if ($latest.sha256) {
-      $h = (Get-FileHash -Path $tmp -Algorithm SHA256).Hash.ToLower()
-      if ($h -ne "$($latest.sha256)".ToLower()) {
-        Remove-Item $tmp -ErrorAction SilentlyContinue
-        Set-Error "Auto-update abortado: SHA-256 não confere"
-        Write-Log "Auto-update: SHA-256 nao confere — descartando"
-        return
-      }
+    $h = (Get-FileHash -Path $tmp -Algorithm SHA256).Hash.ToLower()
+    if ($h -ne "$($latest.sha256)".ToLower()) {
+      Remove-Item $tmp -ErrorAction SilentlyContinue
+      Set-Error "Auto-update abortado: SHA-256 nao confere"
+      Write-Log "Auto-update: SHA-256 nao confere - descartando"
+      return
     }
     Move-Item -Path $tmp -Destination $AgentPath -Force
-    Write-Log ("Auto-update aplicado para {0} — proxima execucao usa nova versao" -f $latest.version)
+    Write-Log ("Auto-update aplicado para {0} - proxima execucao usa nova versao" -f $latest.version)
     # Marca timestamp
     $cfg | Add-Member -NotePropertyName agent_last_update_at -NotePropertyValue (Get-Date).ToUniversalTime().ToString("o") -Force
     ($cfg | ConvertTo-Json -Depth 6) | Set-Content -Path $ConfigPath -Encoding UTF8
@@ -362,12 +444,14 @@ function Enable-RdpAccess { param([int]$Port = 3389)
   try {
     Enable-NetFirewallRule -DisplayGroup "Remote Desktop" -ErrorAction SilentlyContinue | Out-Null
     Remove-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -ErrorAction SilentlyContinue
-    New-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $Port -Profile Any -ErrorAction SilentlyContinue | Out-Null
+    # Domain,Private apenas: com -Profile Any a porta ficava aberta tambem em
+    # redes publicas (cafe, hotel, 4G).
+    New-NetFirewallRule -DisplayName "Autotechs RMM - RDP TCP" -Direction Inbound -Action Allow -Protocol TCP -LocalPort $Port -Profile Domain,Private -ErrorAction SilentlyContinue | Out-Null
   } catch {}
   return ($messages -join "; ")
 }
 function Install-Tailscale($authKey, $hostname) {
-  if (-not $authKey) { Write-Log "Tailscale: sem auth key — pulando."; return }
+  if (-not $authKey) { Write-Log "Tailscale: sem auth key - pulando."; return }
   try {
     $tsExe = Get-TailscaleExePath
     if (-not (Test-Path $tsExe)) {
@@ -393,6 +477,9 @@ function Install-Tailscale($authKey, $hostname) {
 # ==================== Heartbeat principal ====================
 function Invoke-Heartbeat {
   if (-not (Test-Path $ConfigPath)) { Write-Log "Config nao encontrado: $ConfigPath"; return }
+  # Auto-correcao: instalacoes feitas por versoes anteriores ficaram com o
+  # diretorio legivel/gravavel por qualquer usuario local.
+  Protect-InstallDir
   $cfg = Get-Content $ConfigPath -Raw | ConvertFrom-Json
   $state = Get-State
 
@@ -429,7 +516,7 @@ function Invoke-Heartbeat {
   try {
     $resp = Invoke-RestMethod -Method Post -Uri ("{0}/api/public/agent/heartbeat" -f $cfg.base_url) -ContentType "application/json" -Body $json -TimeoutSec 60
     $sw.Stop()
-    # Reporta latência no próximo ciclo
+    # Reporta latencia no proximo ciclo
     $state.last_heartbeat_ms = [int]$sw.ElapsedMilliseconds
     Write-Log ("Heartbeat OK cpu={0} ram={1} disk={2} rtt={3}ms evts={4} q={5} dur={6}ms" -f $m.cpu,$m.ram,$m.disk,$m.rtt,$events.Count,$queueSize,$sw.ElapsedMilliseconds)
     if ($Script:LastError) { $Script:LastError = $null; Remove-Item $ErrorPath -ErrorAction SilentlyContinue }
@@ -438,17 +525,10 @@ function Invoke-Heartbeat {
   } catch {
     $sw.Stop()
     Set-Error ("Heartbeat falhou: {0}" -f $_.Exception.Message)
-    Write-Log ("Heartbeat falhou: {0} — enfileirando" -f $_.Exception.Message)
+    Write-Log ("Heartbeat falhou: {0} - enfileirando" -f $_.Exception.Message)
     Enqueue-Payload $json
   }
 
-  # Envia heartbeat enxuto com a duração medida (se conseguiu enviar)
-  if ($resp) {
-    try {
-      $hb2 = @{ agent_token=$cfg.agent_token; agent_heartbeat_duration_ms=[int]$sw.ElapsedMilliseconds } | ConvertTo-Json -Compress
-      # piggyback: o próximo ciclo já leva isso — não precisamos chamar de novo
-    } catch {}
-  }
   Save-State $state
 }
 
@@ -468,6 +548,8 @@ if ($Mode -eq "Heartbeat") {
   }
   New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
   New-Item -ItemType Directory -Path $QueueDir -Force | Out-Null
+  # Antes de gravar config.json com o agent_token e a chave de assinatura.
+  Protect-InstallDir
   Write-Log "Iniciando instalacao do agente Autotechs RMM $AgentVersion..."
   try { Invoke-WebRequest -Uri ("{0}/agent/install.ps1" -f $BaseUrl.TrimEnd("/")) -OutFile $AgentPath -UseBasicParsing }
   catch { Copy-Item -Path $PSCommandPath -Destination $AgentPath -Force -ErrorAction SilentlyContinue }
@@ -486,7 +568,11 @@ if ($Mode -eq "Heartbeat") {
     command_signing_key=$resp.command_signing_key
     update_channel=$resp.update_channel
   }
+  if (-not $resp.command_signing_key) {
+    throw "Servidor nao devolveu chave de assinatura de comandos - instalacao abortada."
+  }
   $cfg | ConvertTo-Json | Set-Content -Path $ConfigPath -Encoding UTF8
+  Protect-InstallDir
   Write-Log "Endpoint registrado: $($resp.endpoint_id) (canal: $($resp.update_channel))"
   Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
   $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ("-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"{0}`" -Mode Heartbeat" -f $AgentPath)
@@ -495,7 +581,8 @@ if ($Mode -eq "Heartbeat") {
   $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable
   Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Description "Autotechs RMM Agent $AgentVersion" | Out-Null
   Write-Log "Scheduled Task criada (1 min)."
-  Enable-RdpAccess | Out-Null
+  # RDP nao e mais habilitado sozinho em toda instalacao: quem precisa dispara
+  # o comando enable_rdp pelo painel, no endpoint especifico.
   if ($resp.tailscale_auth_key) { Install-Tailscale -authKey $resp.tailscale_auth_key -hostname $sys.hostname }
   Invoke-Heartbeat
   Write-Log "Instalacao concluida."

@@ -58,8 +58,11 @@ export async function recordCommandResult(db: Admin, endpointId: string, result:
 }
 
 export async function claimPendingCommands(db: Admin, endpointId: string) {
+  // signed_payload é o texto exato que o banco assinou; o agente calcula o HMAC
+  // sobre ele em vez de tentar reconstruir o JSON (serializações diferentes
+  // faziam a assinatura nunca bater — ver migração 20260918120100).
   const columns =
-    "id, command, params, created_at, timeout_seconds, signature, expires_at" as const;
+    "id, command, params, created_at, timeout_seconds, signature, signed_payload, expires_at" as const;
   const { data: pending, error } = await db
     .from("endpoint_commands")
     .select(columns)

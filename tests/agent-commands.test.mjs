@@ -5,9 +5,13 @@ import { claimPendingCommands, recordCommandResult } from "../src/lib/agent-comm
 // In-memory query double: filters are evaluated at write time, like conditional UPDATE.
 function database(rows, options = {}) {
   let writes = 0;
+  const selectedColumns = [];
   return {
     get writes() {
       return writes;
+    },
+    get selectedColumns() {
+      return selectedColumns;
     },
     from() {
       let changes;
@@ -15,7 +19,8 @@ function database(rows, options = {}) {
       let single = false;
       let limit = Infinity;
       const query = {
-        select() {
+        select(columns) {
+          if (typeof columns === "string") selectedColumns.push(columns);
           return query;
         },
         eq(key, value) {
@@ -160,4 +165,24 @@ test("database failures never acknowledge results or deliver commands", async ()
       claimPendingCommands(database([command({ status: "pending" })], options), "endpoint-1"),
     );
   }
+});
+
+// O agente calcula o HMAC sobre signed_payload, o texto exato que o banco
+// assinou. Se a coluna parar de ser selecionada o agente rejeita TODO comando
+// (fail-closed), entao a frota fica muda sem erro visivel.
+test("dispatched commands carry the signed payload the agent verifies", async () => {
+  const row = command({
+    status: "pending",
+    signature: "a".repeat(64),
+    signed_payload: 'command-1|shutdown|{"delay_seconds": 30, "message": ""}|300',
+  });
+  const db = database([row]);
+  const [dispatched] = await claimPendingCommands(db, "endpoint-1");
+
+  assert.ok(
+    db.selectedColumns.every((columns) => columns.includes("signed_payload")),
+    "claimPendingCommands precisa selecionar signed_payload",
+  );
+  assert.equal(dispatched.signed_payload, row.signed_payload);
+  assert.equal(dispatched.signature, row.signature);
 });

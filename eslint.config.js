@@ -6,7 +6,28 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  // _restore é um worktree de outro branch e _to_delete é código arquivado:
+  // lintá-los enchia o relatório com ~22 mil erros de arquivos que ninguém
+  // mantém, escondendo os problemas reais de src/.
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      "_restore",
+      "_to_delete",
+      "node_modules",
+      // Arquivos gerados pelo Lovable/TanStack ("This file is automatically
+      // generated. Do not edit it directly."): corrigir lint neles é perdido na
+      // próxima regeração.
+      "src/routeTree.gen.ts",
+      "src/routes/mcp.ts",
+      "src/integrations/supabase/types.ts",
+      "src/integrations/supabase/client.server.ts",
+      "src/integrations/supabase/auth-middleware.ts",
+      "src/integrations/supabase/previewAuthStorage.ts",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

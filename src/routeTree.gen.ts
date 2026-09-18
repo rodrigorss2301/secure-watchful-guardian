@@ -37,6 +37,7 @@ import { Route as AuthenticatedEndpointsIdRouteImport } from './routes/_authenti
 import { Route as AuthenticatedInventorySoftwareRouteImport } from './routes/_authenticated/inventory.software'
 import { Route as AuthenticatedKbSlugRouteImport } from './routes/_authenticated/kb.$slug'
 import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated/tickets.$id'
+import { Route as ApiAdminAgentReleaseRouteImport } from './routes/api/admin/agent-release'
 import { Route as AuthenticatedPortalTicketsIdRouteImport } from './routes/_authenticated/portal.tickets.$id'
 import { Route as AuthenticatedPortalTicketsNewRouteImport } from './routes/_authenticated/portal.tickets.new'
 import { Route as ApiPublicAgentCommandLogRouteImport } from './routes/api/public/agent/command-log'
@@ -195,6 +196,11 @@ const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedTicketsRoute,
 } as any)
+const ApiAdminAgentReleaseRoute = ApiAdminAgentReleaseRouteImport.update({
+  id: '/api/admin/agent-release',
+  path: '/api/admin/agent-release',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedPortalTicketsIdRoute =
   AuthenticatedPortalTicketsIdRouteImport.update({
     id: '/portal/tickets/$id',
@@ -278,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/api/admin/agent-release': typeof ApiAdminAgentReleaseRoute
   '/clients/': typeof AuthenticatedClientsIndexRoute
   '/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/api/admin/agent-release': typeof ApiAdminAgentReleaseRoute
   '/clients': typeof AuthenticatedClientsIndexRoute
   '/endpoints': typeof AuthenticatedEndpointsIndexRoute
   '/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
@@ -358,6 +366,7 @@ export interface FileRoutesById {
   '/_authenticated/inventory/software': typeof AuthenticatedInventorySoftwareRoute
   '/_authenticated/kb/$slug': typeof AuthenticatedKbSlugRoute
   '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
+  '/api/admin/agent-release': typeof ApiAdminAgentReleaseRoute
   '/_authenticated/clients/': typeof AuthenticatedClientsIndexRoute
   '/_authenticated/endpoints/': typeof AuthenticatedEndpointsIndexRoute
   '/_authenticated/portal/tickets/$id': typeof AuthenticatedPortalTicketsIdRoute
@@ -399,6 +408,7 @@ export interface FileRouteTypes {
     | '/inventory/software'
     | '/kb/$slug'
     | '/tickets/$id'
+    | '/api/admin/agent-release'
     | '/clients/'
     | '/endpoints/'
     | '/portal/tickets/$id'
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/inventory/software'
     | '/kb/$slug'
     | '/tickets/$id'
+    | '/api/admin/agent-release'
     | '/clients'
     | '/endpoints'
     | '/portal/tickets/$id'
@@ -478,6 +489,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inventory/software'
     | '/_authenticated/kb/$slug'
     | '/_authenticated/tickets/$id'
+    | '/api/admin/agent-release'
     | '/_authenticated/clients/'
     | '/_authenticated/endpoints/'
     | '/_authenticated/portal/tickets/$id'
@@ -505,6 +517,7 @@ export interface RootRouteChildren {
   SubmitSlugRoute: typeof SubmitSlugRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
+  ApiAdminAgentReleaseRoute: typeof ApiAdminAgentReleaseRoute
   ApiPublicAgentCommandLogRoute: typeof ApiPublicAgentCommandLogRoute
   ApiPublicAgentCommandResultRoute: typeof ApiPublicAgentCommandResultRoute
   ApiPublicAgentEnrollRoute: typeof ApiPublicAgentEnrollRoute
@@ -713,6 +726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
       parentRoute: typeof AuthenticatedTicketsRoute
     }
+    '/api/admin/agent-release': {
+      id: '/api/admin/agent-release'
+      path: '/api/admin/agent-release'
+      fullPath: '/api/admin/agent-release'
+      preLoaderRoute: typeof ApiAdminAgentReleaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/portal/tickets/$id': {
       id: '/_authenticated/portal/tickets/$id'
       path: '/portal/tickets/$id'
@@ -864,6 +884,7 @@ const rootRouteChildren: RootRouteChildren = {
   SubmitSlugRoute: SubmitSlugRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
+  ApiAdminAgentReleaseRoute: ApiAdminAgentReleaseRoute,
   ApiPublicAgentCommandLogRoute: ApiPublicAgentCommandLogRoute,
   ApiPublicAgentCommandResultRoute: ApiPublicAgentCommandResultRoute,
   ApiPublicAgentEnrollRoute: ApiPublicAgentEnrollRoute,

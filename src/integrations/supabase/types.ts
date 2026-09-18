@@ -80,6 +80,7 @@ export type Database = {
           channel: string
           id: string
           notes: string | null
+          published_by: string | null
           released_at: string
           script_url: string
           sha256: string | null
@@ -89,6 +90,7 @@ export type Database = {
           channel: string
           id?: string
           notes?: string | null
+          published_by?: string | null
           released_at?: string
           script_url: string
           sha256?: string | null
@@ -98,6 +100,7 @@ export type Database = {
           channel?: string
           id?: string
           notes?: string | null
+          published_by?: string | null
           released_at?: string
           script_url?: string
           sha256?: string | null
@@ -944,6 +947,7 @@ export type Database = {
           sent_at: string | null
           signature: string | null
           signed_at: string | null
+          signed_payload: string | null
           status: Database["public"]["Enums"]["endpoint_command_status"]
           tenant_id: string
           timeout_seconds: number
@@ -964,6 +968,7 @@ export type Database = {
           sent_at?: string | null
           signature?: string | null
           signed_at?: string | null
+          signed_payload?: string | null
           status?: Database["public"]["Enums"]["endpoint_command_status"]
           tenant_id: string
           timeout_seconds?: number
@@ -984,6 +989,7 @@ export type Database = {
           sent_at?: string | null
           signature?: string | null
           signed_at?: string | null
+          signed_payload?: string | null
           status?: Database["public"]["Enums"]["endpoint_command_status"]
           tenant_id?: string
           timeout_seconds?: number
@@ -1899,18 +1905,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_platform_owner: boolean
           name: string
           slug: string
         }
         Insert: {
           created_at?: string
           id?: string
+          is_platform_owner?: boolean
           name: string
           slug: string
         }
         Update: {
           created_at?: string
           id?: string
+          is_platform_owner?: boolean
           name?: string
           slug?: string
         }
