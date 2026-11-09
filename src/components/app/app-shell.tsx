@@ -10,7 +10,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <AppHeader />
         <div className="flex flex-1 overflow-hidden w-full">
           <AppSidebar />
-          <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+          <main id="main-content" className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
             <div className="mx-auto max-w-7xl animate-in fade-in slide-in-from-bottom-4 duration-500">
               {children}
             </div>
@@ -35,15 +35,15 @@ export function PageHeader({
 }) {
   const trailing = actions ?? children;
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{title}</h1>
+    <div className="mb-6 flex flex-col justify-between gap-4 sm:mb-8 sm:flex-row sm:items-center">
+      <div className="min-w-0">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">{title}</h1>
         {description && (
           <p className="text-muted-foreground mt-1">{description}</p>
         )}
       </div>
       {trailing && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {trailing}
         </div>
       )}

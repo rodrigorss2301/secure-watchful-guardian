@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/reset-password")({
-  head: () => ({ meta: [{ title: "Reset password — Autotechs RMM" }] }),
+  head: () => ({ meta: [{ title: "Redefinir senha — Autotechs RMM" }] }),
   component: ResetPasswordPage,
 });
 
@@ -33,37 +33,37 @@ function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
     if (error) return setError(error.message);
-    toast.success("OK");
+    toast.success(t("auth.reset.done"));
     navigate({ to: "/dashboard", replace: true });
   };
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center bg-background p-4">
+    <main className="relative flex min-h-screen w-full items-center justify-center bg-background p-4">
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-40" />
       <div className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex justify-center">
           <Logo size={44} />
         </div>
-        <Card className="border-border/60 bg-card/80 p-8 shadow-elegant backdrop-blur-xl">
+        <Card className="border-border/60 bg-card/80 p-6 shadow-elegant md:p-8 backdrop-blur-xl">
           <h1 className="font-display text-2xl font-bold">{t("auth.reset.title")}</h1>
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="np">{t("auth.password.new")}</Label>
-              <Input id="np" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input id="np" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="cp">{t("auth.password.confirm")}</Label>
-              <Input id="cp" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              <Input id="cp" type="password" autoComplete="new-password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
             </div>
-            {error && <Alert variant="destructive" className="py-2.5"><AlertDescription className="text-xs">{error}</AlertDescription></Alert>}
+            {error && <Alert variant="destructive" role="alert" className="py-2.5"><AlertDescription className="text-xs">{error}</AlertDescription></Alert>}
             <Button type="submit" className="w-full font-semibold shadow-glow" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
               {t("auth.reset.cta")}
             </Button>
           </form>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

@@ -62,7 +62,7 @@ export function ContactFormDialog({ open, onOpenChange, clientId, contact }: Pro
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["contacts", clientId] });
-      toast.success("OK");
+      toast.success(t(contact ? "clients.updated" : "clients.created"));
       onOpenChange(false);
     },
     onError: (err: Error) => toast.error(err.message),
@@ -70,7 +70,7 @@ export function ContactFormDialog({ open, onOpenChange, clientId, contact }: Pro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t(contact ? "clients.contact.edit" : "clients.contact.new")}</DialogTitle>
         </DialogHeader>
@@ -79,21 +79,21 @@ export function ContactFormDialog({ open, onOpenChange, clientId, contact }: Pro
           className="space-y-4"
         >
           <div className="space-y-1.5">
-            <Label>{t("clients.contact.name")} *</Label>
-            <Input required value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
+            <Label htmlFor="contact-name">{t("clients.contact.name")} *</Label>
+            <Input id="contact-name" required value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />
           </div>
           <div className="space-y-1.5">
-            <Label>{t("clients.contact.role")}</Label>
-            <Input value={role} onChange={(e) => setRole(e.target.value)} maxLength={80} />
+            <Label htmlFor="contact-role">{t("clients.contact.role")}</Label>
+            <Input id="contact-role" value={role} onChange={(e) => setRole(e.target.value)} maxLength={80} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>{t("clients.contact.email")}</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120} />
+              <Label htmlFor="contact-email">{t("clients.contact.email")}</Label>
+              <Input id="contact-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={120} />
             </div>
             <div className="space-y-1.5">
-              <Label>{t("clients.contact.phone")}</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} />
+              <Label htmlFor="contact-phone">{t("clients.contact.phone")}</Label>
+              <Input id="contact-phone" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={40} />
             </div>
           </div>
           <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5">

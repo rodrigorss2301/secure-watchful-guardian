@@ -11,6 +11,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/format";
 
 type Props = {
   open: boolean;
@@ -28,6 +30,7 @@ function generateToken(): string {
 }
 
 export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mode = "install" }: Props) {
+  const { t, lang } = useI18n();
   const { tenant, user } = useAuth();
   const qc = useQueryClient();
   const [clientId, setClientId] = useState<string>("");
@@ -63,7 +66,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
       qc.invalidateQueries({ queryKey: ["clients-lite"] });
       qc.invalidateQueries({ queryKey: ["clients"] });
       setClientId(c.id);
-      toast.success(`Cliente "${c.name}" pronto`);
+      toast.success(t("install.clientReady").replace("{name}", c.name));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -75,7 +78,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
 
   const generate = useMutation({
     mutationFn: async () => {
-      if (!tenant || !clientId) throw new Error("Selecione um cliente");
+      if (!tenant || !clientId) throw new Error(t("endpoints.form.selectClient"));
       const newToken = generateToken();
       const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase.from("agent_enrollments").insert({
@@ -93,7 +96,7 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
       setToken(newToken);
       setExpiresAt(expires);
       qc.invalidateQueries({ queryKey: ["agent_enrollments"] });
-      toast.success("Token gerado");
+      toast.success(t("install.tokenGenerated"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -118,8 +121,8 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
     : "";
 
   const copy = async (text: string, label: string) => {
-    try { await navigator.clipboard.writeText(text); toast.success(`${label} copiado`); }
-    catch { toast.error("Não foi possível copiar"); }
+    try { await navigator.clipboard.writeText(text); toast.success(`${label} ${t("install.copiedSuffix")}`); }
+    catch { toast.error(t("install.copyFailed")); }
   };
 
   return (
@@ -127,42 +130,40 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
       <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Terminal className="h-5 w-5" />
-            {mode === "update" ? "Reinstalar / atualizar agente" : "Instalar agente Windows"}
+            <Terminal aria-hidden className="h-5 w-5" />
+            {t(mode === "update" ? "install.titleUpdate" : "install.titleInstall")}
           </DialogTitle>
           <DialogDescription>
-            {mode === "update"
-              ? "Gere um novo token e execute o comando no endpoint como Administrador para reinstalar e atualizar o agente para a versão mais recente. O dispositivo continuará vinculado ao mesmo cliente."
-              : "Gere um token de inscrição, copie o comando e execute no endpoint como Administrador. O agente envia heartbeat (CPU, RAM, disco) a cada 1 minuto."}
+            {t(mode === "update" ? "install.descUpdate" : "install.descInstall")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium text-muted-foreground">Cliente</Label>
+            <div className="flex flex-wrap items-center justify-between gap-1">
+              <Label htmlFor="agent-client" className="text-xs font-medium text-muted-foreground">{t("endpoints.field.client")}</Label>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1.5 text-xs"
+                className="h-8 gap-1.5 text-xs"
                 onClick={() => createInternal.mutate()}
                 disabled={createInternal.isPending}
               >
                 {createInternal.isPending
-                  ? <Loader2 className="h-3 w-3 animate-spin" />
-                  : <Building2 className="h-3 w-3" />}
-                Usar cliente "Interno"
+                  ? <Loader2 aria-hidden className="h-3 w-3 animate-spin" />
+                  : <Building2 aria-hidden className="h-3 w-3" />}
+                {t("install.useInternal")}
               </Button>
             </div>
             <Select value={clientId} onValueChange={(v) => { setClientId(v); setToken(null); }}>
-              <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+              <SelectTrigger id="agent-client"><SelectValue placeholder={t("install.selectClient")} /></SelectTrigger>
               <SelectContent>
                 {clients?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
             <p className="text-[11px] text-muted-foreground">
-              Para instalar nos seus próprios servidores/estações, use o cliente "Interno".
+              {t("install.internalHelp")}
             </p>
           </div>
 
@@ -172,58 +173,58 @@ export function InstallAgentDialog({ open, onOpenChange, preselectedClientId, mo
               disabled={!clientId || generate.isPending}
               className="w-full shadow-glow"
             >
-              {generate.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-              Gerar token de inscrição
+              {generate.isPending ? <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw aria-hidden className="mr-2 h-4 w-4" />}
+              {t("install.generate")}
             </Button>
           ) : (
             <>
-              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-600">
-                <div className="flex items-center gap-2 font-medium"><CheckCircle2 className="h-4 w-4" /> Token gerado</div>
+              <div role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-500">
+                <div className="flex items-center gap-2 font-medium"><CheckCircle2 aria-hidden className="h-4 w-4" /> {t("install.tokenGenerated")}</div>
                 <p className="mt-1 opacity-80">
-                  Válido até {expiresAt && new Date(expiresAt).toLocaleString()} — uso único.
+                  {t("install.validUntil")} {expiresAt && formatDateTime(expiresAt, lang)} — {t("install.singleUse")}.
                 </p>
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs font-medium text-muted-foreground">Token</Label>
-                  <Badge variant="outline" className="text-[10px]">único</Badge>
+                  <Label htmlFor="agent-token" className="text-xs font-medium text-muted-foreground">{t("install.token")}</Label>
+                  <Badge variant="outline" className="text-[10px]">{t("install.single")}</Badge>
                 </div>
                 <div className="flex gap-2">
-                  <code className="flex-1 truncate rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs">{token}</code>
-                  <Button variant="outline" size="icon" onClick={() => copy(token, "Token")}><Copy className="h-4 w-4" /></Button>
+                  <code id="agent-token" className="min-w-0 flex-1 truncate rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs">{token}</code>
+                  <Button variant="outline" size="icon" aria-label={t("install.copyToken")} title={t("install.copyToken")} onClick={() => copy(token, t("install.token"))}><Copy aria-hidden className="h-4 w-4" /></Button>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
-                  Comando de instalação (PowerShell como Administrador)
+                <Label id="agent-cmd-label" className="text-xs font-medium text-muted-foreground">
+                  {t("install.commandLabel")}
                 </Label>
                 <div className="relative">
-                  <pre className="max-h-60 overflow-auto whitespace-pre-wrap break-all rounded-md border border-border bg-zinc-950 p-3 pr-20 text-xs leading-relaxed text-zinc-100">
+                  <pre aria-labelledby="agent-cmd-label" tabIndex={0} className="max-h-60 overflow-auto whitespace-pre-wrap break-all rounded-md border border-border bg-zinc-950 p-3 pr-20 text-xs leading-relaxed text-zinc-100">
 {installCmd}
                   </pre>
                   <Button
                     variant="secondary" size="sm"
                     className="absolute right-2 top-2"
-                    onClick={() => copy(installCmd, "Comando")}
+                    onClick={() => copy(installCmd, t("install.command"))}
                   >
-                    <Copy className="mr-1.5 h-3 w-3" /> Copiar
+                    <Copy aria-hidden className="mr-1.5 h-3 w-3" /> {t("common.copy")}
                   </Button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Cole no PowerShell elevado do endpoint. O script registra o dispositivo, cria uma Tarefa Agendada (SYSTEM, 1 min) e começa a enviar telemetria.
+                  {t("install.commandHelp")}
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row">
                 <Button variant="outline" asChild className="flex-1">
                   <a href={`${AGENT_BASE_URL}/agent/install.ps1`} download>
-                    <Download className="mr-2 h-4 w-4" /> Baixar install.ps1
+                    <Download aria-hidden className="mr-2 h-4 w-4" /> {t("install.download")}
                   </a>
                 </Button>
                 <Button variant="ghost" onClick={() => { setToken(null); setExpiresAt(null); }}>
-                  Gerar outro
+                  {t("install.generateAnother")}
                 </Button>
               </div>
             </>

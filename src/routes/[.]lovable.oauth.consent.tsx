@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Logo } from "@/components/brand/logo";
 import { Loader2 } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 type OAuthClient = { name?: string; client_name?: string; redirect_uri?: string } | null;
 type AuthorizationDetails = {
@@ -53,22 +54,31 @@ export const Route = createFileRoute("/.lovable/oauth/consent")({
     return data;
   },
   component: Consent,
-  errorComponent: ({ error }) => (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="max-w-md p-6">
-        <h1 className="mb-2 text-lg font-semibold">Não foi possível carregar a autorização</h1>
-        <p className="text-sm text-muted-foreground">{String((error as Error)?.message ?? error)}</p>
-      </Card>
-    </div>
-  ),
+  errorComponent: ConsentError,
 });
 
+function ConsentError({ error }: { error: unknown }) {
+  const { t } = useI18n();
+  return (
+    <main className="flex min-h-screen items-center justify-center p-4">
+      <Card role="alert" className="w-full max-w-md p-6">
+        <h1 className="mb-2 text-lg font-semibold">{t("oauth.loadError")}</h1>
+        <p className="text-sm text-muted-foreground">{String((error as Error)?.message ?? error)}</p>
+        <Button className="mt-4" variant="outline" onClick={() => window.location.reload()}>
+          {t("common.retry")}
+        </Button>
+      </Card>
+    </main>
+  );
+}
+
 function Consent() {
+  const { t } = useI18n();
   const details = Route.useLoaderData();
   const { authorization_id } = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const clientName = details?.client?.client_name ?? details?.client?.name ?? "este aplicativo";
+  const clientName = details?.client?.client_name ?? details?.client?.name ?? t("oauth.thisApp");
 
   async function decide(approve: boolean) {
     setBusy(true);
@@ -78,41 +88,41 @@ function Consent() {
       : await oauth().denyAuthorization(authorization_id);
     if (error) { setBusy(false); setError(error.message); return; }
     const target = data?.redirect_url ?? data?.redirect_to;
-    if (!target) { setBusy(false); setError("Servidor de autorização não retornou redirecionamento."); return; }
+    if (!target) { setBusy(false); setError(t("oauth.noRedirect")); return; }
     window.location.href = target;
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+    <main className="relative flex min-h-screen items-center justify-center bg-background p-4">
       <div className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-6 flex justify-center"><Logo size={40} /></div>
         <Card className="p-6">
-          <h1 className="mb-1 font-display text-xl font-bold">Conectar {clientName}</h1>
+          <h1 className="mb-1 font-display text-xl font-bold">{t("oauth.connect")} {clientName}</h1>
           <p className="mb-4 text-sm text-muted-foreground">
-            {clientName} poderá usar as ferramentas MCP deste app como você, respeitando suas permissões e RLS.
+            {clientName} {t("oauth.body")}
           </p>
           {details?.client?.redirect_uri && (
             <p className="mb-4 break-all rounded-md bg-muted p-2 text-xs text-muted-foreground">
-              Redirecionamento: {details.client.redirect_uri}
+              {t("oauth.redirectTo")} {details.client.redirect_uri}
             </p>
           )}
           {error && (
-            <Alert variant="destructive" className="mb-4">
+            <Alert variant="destructive" role="alert" className="mb-4">
               <AlertDescription className="text-xs">{error}</AlertDescription>
             </Alert>
           )}
-          <div className="flex gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Button variant="outline" className="flex-1" disabled={busy} onClick={() => decide(false)}>
-              Negar
+              {t("oauth.deny")}
             </Button>
             <Button className="flex-1" disabled={busy} onClick={() => decide(true)}>
-              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Aprovar
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+              {t("oauth.approve")}
             </Button>
           </div>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

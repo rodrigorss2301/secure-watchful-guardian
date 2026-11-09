@@ -33,7 +33,7 @@ import {
 } from "@/lib/automations";
 
 export const Route = createFileRoute("/_authenticated/automations")({
-  head: () => ({ meta: [{ title: "Automations — Autotechs RMM" }] }),
+  head: () => ({ meta: [{ title: "Automações — Autotechs RMM" }] }),
   component: AutomationsPage,
 });
 
@@ -50,7 +50,7 @@ function AutomationsPage() {
   const [pendingDelete, setPendingDelete] = useState<Automation | null>(null);
   const [runDetail, setRunDetail] = useState<AutomationRun | null>(null);
 
-  const { data: automations, isLoading } = useQuery({
+  const { data: automations, isLoading, isError } = useQuery({
     queryKey: ["automations", tenant?.id],
     queryFn: async (): Promise<Automation[]> => {
       const { data, error } = await supabase.from("automations").select("*").order("created_at", { ascending: false });
@@ -131,18 +131,18 @@ function AutomationsPage() {
         title={t("automations.title")}
         description={t("automations.subtitle")}
         actions={canEdit && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setOpenLibrary(true)}>
-              <Library className="mr-2 h-4 w-4" /> Biblioteca
+              <Library className="mr-2 h-4 w-4" aria-hidden="true" /> {t("automations.library")}
             </Button>
             <Button onClick={() => { setEditing(null); setOpenForm(true); }} className="shadow-glow">
-              <Plus className="mr-2 h-4 w-4" /> {t("automations.new")}
+              <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> {t("automations.new")}
             </Button>
           </div>
         )}
       />
 
-      <div className="mb-6 grid gap-3 md:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi icon={Workflow} label={t("automations.kpi.total")} value={kpis.total} />
         <Kpi icon={Power} label={t("automations.kpi.enabled")} value={kpis.enabled} tone="text-emerald-500" />
         <Kpi icon={History} label={t("automations.kpi.runs")} value={kpis.runs} tone="text-sky-500" />
@@ -150,19 +150,19 @@ function AutomationsPage() {
       </div>
 
       <Tabs defaultValue="list" className="space-y-4">
-        <TabsList>
+        <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="list">{t("automations.tab.list")}</TabsTrigger>
           <TabsTrigger value="runs">{t("automations.tab.runs")}</TabsTrigger>
-          <TabsTrigger value="approvals">Aprovações</TabsTrigger>
+          <TabsTrigger value="approvals">{t("automations.tab.approvals")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="list" className="space-y-4">
           <div className="relative max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("automations.search")} className="pl-9" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input type="search" aria-label={t("automations.search")} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("automations.search")} className="pl-9" />
           </div>
 
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -176,9 +176,22 @@ function AutomationsPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">{t("common.loading")}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} role="status" className="py-10 text-center text-muted-foreground">{t("common.loading")}</TableCell></TableRow>
+                ) : isError ? (
+                  <TableRow><TableCell colSpan={6} role="alert" className="py-10 text-center text-muted-foreground">{t("common.error")}</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="py-10 text-center text-muted-foreground">{t("automations.empty")}</TableCell></TableRow>
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                      {t("automations.empty")}
+                      {canEdit && !search.trim() && (
+                        <div className="mt-3">
+                          <Button size="sm" onClick={() => { setEditing(null); setOpenForm(true); }}>
+                            <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> {t("automations.emptyCta")}
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
                 ) : filtered.map((a) => {
                   const Kind = KIND_ICON[a.kind];
                   const Lang = LANGUAGE_ICON[a.language];
@@ -187,7 +200,7 @@ function AutomationsPage() {
                     <TableRow key={a.id}>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Kind className="h-4 w-4 text-muted-foreground" />
+                          <Kind className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                           <div className="flex flex-col">
                             <span className="font-medium">{a.name}</span>
                             {a.description && <span className="text-xs text-muted-foreground line-clamp-1">{a.description}</span>}
@@ -196,44 +209,44 @@ function AutomationsPage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={TRIGGER_TONE[a.trigger]}>
-                          <Trig className="mr-1 h-3 w-3" /> {t(`automations.trigger.${a.trigger}` as TKey)}
+                          <Trig className="mr-1 h-3 w-3" aria-hidden="true" /> {t(`automations.trigger.${a.trigger}` as TKey)}
                           {a.trigger === "schedule" && a.cron_expr && <span className="ml-1 font-mono text-[10px]">{a.cron_expr}</span>}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm">{t(`automations.scope.${a.scope}` as TKey)}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-sm">
-                          <Lang className="h-3.5 w-3.5 text-muted-foreground" />
+                          <Lang className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
                           {t(`automations.language.${a.language}` as TKey)}
                         </span>
                       </TableCell>
                       <TableCell>
                         {a.enabled
-                          ? <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-500">●</Badge>
-                          : <Badge variant="outline" className="border-border bg-muted text-muted-foreground">○</Badge>}
+                          ? <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{t("automations.col.enabled")}</Badge>
+                          : <Badge variant="outline" className="border-border bg-muted text-muted-foreground">—</Badge>}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           {canEdit && (
                             <Button size="sm" variant="ghost" disabled={runMutation.isPending}
-                              onClick={() => runMutation.mutate(a.id)} title={t("automations.run.now")}>
-                              {runMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                              onClick={() => runMutation.mutate(a.id)} title={t("automations.run.now")} aria-label={t("automations.run.now")}>
+                              {runMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Play className="h-4 w-4" aria-hidden="true" />}
                             </Button>
                           )}
                           {canEdit && (
-                            <Button size="sm" variant="ghost" onClick={() => toggleEnabled.mutate(a)} title={a.enabled ? "Disable" : "Enable"}>
-                              {a.enabled ? <PowerOff className="h-4 w-4" /> : <Power className="h-4 w-4" />}
+                            <Button size="sm" variant="ghost" onClick={() => toggleEnabled.mutate(a)} title={a.enabled ? t("automations.disable") : t("automations.enable")} aria-label={`${a.enabled ? t("automations.disable") : t("automations.enable")}: ${a.name}`} disabled={toggleEnabled.isPending}>
+                              {a.enabled ? <PowerOff className="h-4 w-4" aria-hidden="true" /> : <Power className="h-4 w-4" aria-hidden="true" />}
                             </Button>
                           )}
                           {canEdit && (
-                            <Button size="sm" variant="ghost" onClick={() => { setEditing(a); setOpenForm(true); }}>
-                              <Pencil className="h-4 w-4" />
+                            <Button size="sm" variant="ghost" onClick={() => { setEditing(a); setOpenForm(true); }} title={t("automations.edit")} aria-label={`${t("automations.edit")}: ${a.name}`}>
+                              <Pencil className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           )}
                           {hasAnyRole(["admin"]) && (
                             <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"
-                              onClick={() => setPendingDelete(a)}>
-                              <Trash2 className="h-4 w-4" />
+                              onClick={() => setPendingDelete(a)} title={t("common.delete")} aria-label={`${t("common.delete")}: ${a.name}`}>
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           )}
                         </div>
@@ -247,7 +260,7 @@ function AutomationsPage() {
         </TabsContent>
 
         <TabsContent value="runs" className="space-y-4">
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -257,7 +270,7 @@ function AutomationsPage() {
                   <TableHead>{t("automations.col.duration")}</TableHead>
                   <TableHead>{t("automations.col.exit")}</TableHead>
                   <TableHead>{t("automations.col.started")}</TableHead>
-                  <TableHead></TableHead>
+                  <TableHead><span className="sr-only">{t("automations.col.actions")}</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -272,7 +285,7 @@ function AutomationsPage() {
                     <TableCell className="text-sm font-mono">{r.exit_code ?? "—"}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{relTime(r.started_at)}</TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" onClick={() => setRunDetail(r)}>{t("automations.runs.viewOutput")}</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setRunDetail(r)} aria-label={`${t("automations.runs.viewOutput")}: ${r.automation?.name ?? ""}`}>{t("automations.runs.viewOutput")}</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -298,7 +311,7 @@ function AutomationsPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => pendingDelete && remove.mutate(pendingDelete.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {t("common.delete" as TKey)}
+              {t("common.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -309,8 +322,8 @@ function AutomationsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {runDetail?.status === "success"
-                ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                : <AlertTriangle className="h-5 w-5 text-destructive" />}
+                ? <CheckCircle2 className="h-5 w-5 text-emerald-500" aria-hidden="true" />
+                : <AlertTriangle className="h-5 w-5 text-destructive" aria-hidden="true" />}
               {t("automations.runs.viewOutput")}
             </DialogTitle>
             <DialogDescription>
@@ -331,7 +344,7 @@ function Kpi({ icon: Icon, label, value, tone }: { icon: typeof Workflow; label:
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</CardTitle>
-        <Icon className={`h-4 w-4 ${tone ?? "text-muted-foreground"}`} />
+        <Icon className={`h-4 w-4 ${tone ?? "text-muted-foreground"}`} aria-hidden="true" />
       </CardHeader>
       <CardContent>
         <div className={`text-2xl font-bold ${tone ?? ""}`}>{value}</div>

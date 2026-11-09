@@ -17,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { Endpoint } from "@/lib/endpoints";
+import { useI18n, type TKey } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/format";
 
 type CommandRow = Database["public"]["Tables"]["endpoint_commands"]["Row"];
 
@@ -53,6 +55,7 @@ function buildRdpFile(host: string, username: string, port: number) {
 }
 
 export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
+  const { t, lang } = useI18n();
   const qc = useQueryClient();
   const publicIp = (endpoint.public_ip as string | null) ?? null;
   const privateIp = endpoint.ip_address ?? null;
@@ -85,7 +88,7 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
 
   const download = () => {
     if (!ready) {
-      toast.error("Preencha o host e o usuário");
+      toast.error(t("remote.fillHostUser"));
       return;
     }
     const content = buildRdpFile(host, username, port);
@@ -98,16 +101,16 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast.success("Arquivo .rdp gerado — abra-o no Windows");
+    toast.success(t("remote.rdpGenerated"));
   };
 
   const mstsc = `mstsc /v:${host}${port !== 3389 ? `:${port}` : ""}`;
   const copyMstsc = async () => {
     try {
       await navigator.clipboard.writeText(mstsc);
-      toast.success("Comando copiado");
+      toast.success(t("remote.commandCopied"));
     } catch {
-      toast.error("Não foi possível copiar");
+      toast.error(t("install.copyFailed"));
     }
   };
 
@@ -139,7 +142,7 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Preparação de RDP enviada para o agente");
+      toast.success(t("remote.prepareSent"));
       qc.invalidateQueries({ queryKey: ["endpoint-commands", endpoint.id] });
       qc.invalidateQueries({
         queryKey: ["endpoint-commands", endpoint.id, "remote-access"],
@@ -153,78 +156,81 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
       <DialogContent className="max-w-xl max-h-[95vh] overflow-y-auto p-4 sm:p-5 gap-3">
         <DialogHeader className="space-y-1">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <MonitorPlay className="h-4 w-4" /> Área de Trabalho Remota
+            <MonitorPlay aria-hidden className="h-4 w-4" /> {t("remote.title")}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Gere um arquivo <code className="font-mono">.rdp</code> pronto para conectar a{" "}
-            <span className="font-medium text-foreground">{endpoint.hostname}</span> via RDP nativo
-            do Windows.
+            {t("remote.descPrefix")} <code className="font-mono">.rdp</code> {t("remote.descMiddle")}{" "}
+            <span className="font-medium text-foreground">{endpoint.hostname}</span> {t("remote.descSuffix")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-2">
-            <Label className="text-xs font-medium text-muted-foreground">Endereço de destino</Label>
+            <Label id="rdp-target-label" className="text-xs font-medium text-muted-foreground">{t("remote.target")}</Label>
             <RadioGroup
+              aria-labelledby="rdp-target-label"
               value={target}
               onValueChange={(v) => setTarget(v as typeof target)}
               className="space-y-1"
             >
               <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-1.5 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
-                  <RadioGroupItem value="tailscale" disabled={!tailscaleIp} />
-                  <span className="truncate font-medium">Tailscale (recomendado)</span>
+                  <RadioGroupItem value="tailscale" disabled={!tailscaleIp} aria-label="Tailscale" />
+                  <span className="truncate font-medium">{t("remote.tailscaleRecommended")}</span>
                 </span>
                 <span className="truncate font-mono text-xs text-muted-foreground">
-                  {tailscaleIp ?? "indisponível"}
+                  {tailscaleIp ?? t("remote.unavailable")}
                 </span>
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
-                  <RadioGroupItem value="private" disabled={!privateIp} />
-                  <span className="truncate">IP privado</span>
+                  <RadioGroupItem value="private" disabled={!privateIp} aria-label={t("remote.privateIp")} />
+                  <span className="truncate">{t("remote.privateIp")}</span>
                 </span>
                 <span className="truncate font-mono text-xs text-muted-foreground">
-                  {privateIp ?? "indisponível"}
+                  {privateIp ?? t("remote.unavailable")}
                 </span>
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
-                  <RadioGroupItem value="public" disabled={!publicIp} />
-                  <span className="truncate">IP público</span>
+                  <RadioGroupItem value="public" disabled={!publicIp} aria-label={t("remote.publicIp")} />
+                  <span className="truncate">{t("remote.publicIp")}</span>
                 </span>
                 <span className="truncate font-mono text-xs text-muted-foreground">
-                  {publicIp ?? "indisponível"}
+                  {publicIp ?? t("remote.unavailable")}
                 </span>
               </label>
               <label className="flex cursor-pointer items-center justify-between gap-2 rounded-md border border-border bg-muted/30 px-3 py-1.5 text-sm">
                 <span className="flex min-w-0 items-center gap-2">
-                  <RadioGroupItem value="custom" />
-                  <span className="truncate">Host / IP personalizado</span>
+                  <RadioGroupItem value="custom" aria-label={t("remote.customHost")} />
+                  <span className="truncate">{t("remote.customHostLabel")}</span>
                 </span>
                 <Input
+                  aria-label={t("remote.customHost")}
                   value={customHost}
                   onChange={(e) => setCustomHost(e.target.value)}
                   onFocus={() => setTarget("custom")}
-                  placeholder="ex: vpn.empresa.local"
-                  className="h-7 w-40 min-w-0 shrink text-xs"
+                  placeholder={t("remote.customPlaceholder")}
+                  className="h-8 w-40 min-w-0 shrink text-xs"
                 />
               </label>
             </RadioGroup>
           </div>
 
-          <div className="grid grid-cols-[1fr_120px] gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_120px]">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Usuário</Label>
+              <Label htmlFor="rdp-user" className="text-xs font-medium text-muted-foreground">{t("remote.user")}</Label>
               <Input
+                id="rdp-user"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="DOMÍNIO\usuário"
+                placeholder={t("remote.userPlaceholder")}
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">Porta</Label>
+              <Label htmlFor="rdp-port" className="text-xs font-medium text-muted-foreground">{t("remote.port")}</Label>
               <Input
+                id="rdp-port"
                 type="number"
                 min={1}
                 max={65535}
@@ -236,25 +242,25 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
 
           <details className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-700 dark:text-amber-400">
             <summary className="flex cursor-pointer items-center gap-2 font-medium">
-              <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
-              Pré-requisitos no endpoint
+              <ShieldAlert aria-hidden className="h-3.5 w-3.5 shrink-0" />
+              {t("remote.prereq")}
             </summary>
             <ul className="mt-1.5 list-disc space-y-0.5 pl-6 opacity-90">
               <li>
-                <strong>Tailscale:</strong> instale o cliente no seu PC e logue na mesma tailnet.
+                <strong>Tailscale:</strong> {t("remote.prereq.tailscale")}
               </li>
-              <li>RDP habilitado (Sistema → Área de Trabalho Remota).</li>
-              <li>Porta {port} liberada no firewall do Windows e na rede.</li>
-              <li>Para IP público, configure port-forwarding ou VPN.</li>
+              <li>{t("remote.prereq.rdp")}</li>
+              <li>{t("remote.prereq.port").replace("{port}", String(port))}</li>
+              <li>{t("remote.prereq.public")}</li>
             </ul>
           </details>
 
           <div className="rounded-md border border-border bg-muted/20 p-2.5">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium">Preparar endpoint para RDP</p>
+                <p className="text-sm font-medium">{t("remote.prepareTitle")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Ativa RDP, TermService e regras do firewall do Windows.
+                  {t("remote.prepareDesc")}
                 </p>
               </div>
               <Button
@@ -262,35 +268,35 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
                 onClick={() => enableRdp.mutate()}
                 disabled={enableRdp.isPending || endpoint.status === "offline"}
               >
-                Preparar RDP
+                {enableRdp.isPending ? t("remote.sending") : t("remote.prepareButton")}
               </Button>
             </div>
             {history?.[0] && (
               <div className="mt-2 flex items-center justify-between gap-2 text-xs">
-                <span className="truncate text-muted-foreground">
-                  Último: {history[0].output ?? new Date(history[0].created_at).toLocaleString()}
+                <span className="min-w-0 truncate text-muted-foreground" title={history[0].output ?? undefined}>
+                  {t("remote.last")}: {history[0].output ?? formatDateTime(history[0].created_at, lang)}
                 </span>
                 <Badge variant="outline" className={statusTone(history[0].status)}>
-                  {history[0].status}
+                  {cmdStatusLabel(history[0].status, t)}
                 </Badge>
               </div>
             )}
           </div>
 
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">Comando mstsc</Label>
+            <Label htmlFor="rdp-mstsc" className="text-xs font-medium text-muted-foreground">{t("remote.mstscCommand")}</Label>
             <div className="flex gap-2">
-              <code className="flex-1 truncate rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs">
+              <code id="rdp-mstsc" className="min-w-0 flex-1 truncate rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-xs">
                 {mstsc}
               </code>
-              <Button variant="outline" size="icon" onClick={copyMstsc} disabled={!ready}>
-                <Copy className="h-4 w-4" />
+              <Button variant="outline" size="icon" onClick={copyMstsc} disabled={!ready} aria-label={t("remote.copyMstsc")} title={t("remote.copyMstsc")}>
+                <Copy aria-hidden className="h-4 w-4" />
               </Button>
             </div>
           </div>
 
           <Button onClick={download} disabled={!ready} className="w-full shadow-glow">
-            <Download className="mr-2 h-4 w-4" /> Baixar arquivo .rdp
+            <Download aria-hidden className="mr-2 h-4 w-4" /> {t("remote.download")}
           </Button>
         </div>
       </DialogContent>
@@ -301,14 +307,19 @@ export function RemoteAccessDialog({ open, onOpenChange, endpoint }: Props) {
 function statusTone(s: CommandRow["status"]) {
   switch (s) {
     case "succeeded":
-      return "border-emerald-500/30 text-emerald-500";
+      return "border-emerald-500/30 text-emerald-600 dark:text-emerald-500";
     case "failed":
       return "border-destructive/30 text-destructive";
     case "sent":
-      return "border-sky-500/30 text-sky-500";
+      return "border-sky-500/30 text-sky-600 dark:text-sky-500";
     case "cancelled":
       return "border-border text-muted-foreground";
     default:
-      return "border-amber-500/30 text-amber-500";
+      return "border-amber-500/30 text-amber-600 dark:text-amber-500";
   }
+}
+
+function cmdStatusLabel(status: string, t: (k: TKey) => string) {
+  const known = ["pending", "sent", "succeeded", "failed", "cancelled", "timeout", "expired"];
+  return known.includes(status) ? t(`commands.status.${status}` as TKey) : status;
 }

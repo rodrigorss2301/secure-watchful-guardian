@@ -3,7 +3,16 @@ import { Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
 import { Grid3x3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { useI18n, type TKey } from "@/lib/i18n";
+
+const LABEL_KEY: Record<string, TKey> = {
+  online: "endpoints.status.online",
+  warning: "endpoints.status.warning",
+  critical: "endpoints.status.critical",
+  offline: "endpoints.status.offline",
+};
 
 const COLOR: Record<string, string> = {
   online: "bg-emerald-500",
@@ -13,6 +22,8 @@ const COLOR: Record<string, string> = {
 };
 
 export function FleetHeatmap() {
+  const { t } = useI18n();
+  const label = (s: string) => (LABEL_KEY[s] ? t(LABEL_KEY[s]) : s);
   const { tenant } = useAuth();
   const q = useQuery({
     queryKey: ["fleet-heatmap", tenant?.id],
@@ -39,13 +50,17 @@ export function FleetHeatmap() {
   return (
     <Card className="p-5">
       <div className="mb-4 flex items-center gap-2">
-        <Grid3x3 className="h-4 w-4 text-primary" />
-        <h2 className="font-semibold">Mapa de saúde da frota</h2>
+        <Grid3x3 className="h-4 w-4 text-primary" aria-hidden="true" />
+        <h2 className="font-semibold">{t("dashboard.heatmap.title")}</h2>
       </div>
-      {!q.data || q.data.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">Sem endpoints.</p>
+      {q.isLoading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : q.isError ? (
+        <p role="alert" className="py-6 text-center text-sm text-muted-foreground">{t("dashboard.heatmap.loadError")}</p>
+      ) : !q.data || q.data.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("dashboard.heatmap.empty")}</p>
       ) : (
-        <div className="space-y-3 max-h-72 overflow-auto pr-1">
+        <div className="max-h-72 space-y-3 overflow-auto pr-1">
           {q.data.map(([client, list]) => (
             <div key={client}>
               <p className="mb-1 text-xs uppercase tracking-wider text-muted-foreground">{client} <span className="text-foreground/60">· {list.length}</span></p>
@@ -55,8 +70,9 @@ export function FleetHeatmap() {
                     key={e.id}
                     to="/endpoints/$id"
                     params={{ id: e.id }}
-                    title={`${e.hostname} — ${e.status}`}
-                    className={`h-4 w-4 rounded-sm ${COLOR[e.status] ?? COLOR.offline} transition-transform hover:scale-125`}
+                    title={`${e.hostname} — ${label(e.status)}`}
+                    aria-label={`${e.hostname}: ${label(e.status)}`}
+                    className={`h-5 w-5 rounded-sm ${COLOR[e.status] ?? COLOR.offline} transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1`}
                   />
                 ))}
               </div>
@@ -64,9 +80,9 @@ export function FleetHeatmap() {
           ))}
         </div>
       )}
-      <div className="mt-3 flex gap-3 text-[10px] text-muted-foreground">
+      <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {(["online","warning","critical","offline"] as const).map((s) => (
-          <span key={s} className="flex items-center gap-1"><span className={`h-2 w-2 rounded-sm ${COLOR[s]}`} />{s}</span>
+          <span key={s} className="flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-sm ${COLOR[s]}`} />{label(s)}</span>
         ))}
       </div>
     </Card>

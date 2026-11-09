@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { LifeBuoy } from "lucide-react";
+import { LifeBuoy, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n } from "@/lib/i18n";
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/portal/tickets/new")({
-  head: () => ({ meta: [{ title: "New Ticket — Autotechs Portal" }] }),
+  head: () => ({ meta: [{ title: "Novo chamado — Autotechs Portal" }] }),
   component: NewPortalTicket,
 });
 
@@ -58,33 +58,33 @@ function NewPortalTicket() {
   });
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
+    <div className="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
       <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-        <LifeBuoy className="h-6 w-6 text-primary" /> {t("portal.new")}
+        <LifeBuoy className="h-6 w-6 text-primary" aria-hidden="true" /> {t("portal.new")}
       </h1>
-      {!clientId && <Card><CardContent className="p-4 text-sm text-amber-500">{t("portal.notLinked")}</CardContent></Card>}
+      {!clientId && <Card role="alert"><CardContent className="p-4 text-sm text-amber-600 dark:text-amber-400">{t("portal.notLinked")}</CardContent></Card>}
       <Card>
         <CardContent className="space-y-4 p-6">
-          <div><Label>{t("portal.field.title")}</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
-          <div><Label>{t("portal.field.description")}</Label><Textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+          <div className="space-y-1.5"><Label htmlFor="pt-title">{t("portal.field.title")}</Label><Input id="pt-title" required maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+          <div className="space-y-1.5"><Label htmlFor="pt-desc">{t("portal.field.description")}</Label><Textarea id="pt-desc" maxLength={5000} rows={6} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <Label>{t("portal.field.priority")}</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="pt-priority">{t("portal.field.priority")}</Label>
               <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="pt-priority"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
+                  <SelectItem value="low">{t("tickets.priority.low")}</SelectItem>
+                  <SelectItem value="medium">{t("tickets.priority.medium")}</SelectItem>
+                  <SelectItem value="high">{t("tickets.priority.high")}</SelectItem>
+                  <SelectItem value="urgent">{t("tickets.priority.urgent")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div><Label>{t("portal.field.category")}</Label><Input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="hardware, network, software…" /></div>
+            <div className="space-y-1.5"><Label htmlFor="pt-category">{t("portal.field.category")}</Label><Input id="pt-category" maxLength={60} value={category} onChange={(e) => setCategory(e.target.value)} placeholder={t("portal.category.placeholder")} /></div>
           </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => navigate({ to: "/portal/tickets" })}>{t("portal.cancel")}</Button>
-            <Button onClick={() => create.mutate()} disabled={create.isPending || !title.trim() || !clientId}>{t("portal.create")}</Button>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" onClick={() => navigate({ to: "/portal/tickets" })}>{t("portal.cancel")}</Button>
+            <Button onClick={() => create.mutate()} disabled={create.isPending || !title.trim() || !clientId}>{create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : null}{t("portal.create")}</Button>
           </div>
         </CardContent>
       </Card>

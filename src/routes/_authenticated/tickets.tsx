@@ -18,6 +18,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/format";
 import { TicketFormDialog } from "@/components/tickets/ticket-form-dialog";
 import {
   CATEGORY_ICON, PRIORITY_TONE, STATUS_TONE, TICKET_PRIORITIES, TICKET_STATUSES,
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/_authenticated/tickets")({
 });
 
 function TicketsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { tenant, user, hasAnyRole } = useAuth();
   const qc = useQueryClient();
   const canWrite = hasAnyRole(["admin", "technician"]);
@@ -124,25 +125,25 @@ function TicketsPage() {
         )}
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
         {TICKET_STATUSES.map((s) => (
           <Card key={s} className="border-border/60 bg-card/60 p-4">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{t(`tickets.status.${s}` as TKey)}</div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">{t(`tickets.status.${s}` as TKey)}</div>
             <p className="mt-2 font-display text-2xl font-bold">{counts[s]}</p>
           </Card>
         ))}
       </div>
 
       <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border/60 p-4">
-          <div className="relative min-w-[220px] flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("tickets.search")} />
+        <div className="grid grid-cols-1 gap-3 border-b border-border/60 p-4 sm:flex sm:flex-wrap sm:items-center">
+          <div className="relative min-w-0 flex-1 sm:min-w-[220px]">
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input type="search" aria-label={t("tickets.search")} className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("tickets.search")} />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as TicketStatus | "all" | "open_only")}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label={t("tickets.col.status")} className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="open_only">{t("tickets.status.open")} + {t("tickets.status.in_progress")}</SelectItem>
+              <SelectItem value="open_only">{t("tickets.filter.openOnly")}</SelectItem>
               <SelectItem value="all">{t("tickets.filter.all")}</SelectItem>
               {TICKET_STATUSES.map((s) => (
                 <SelectItem key={s} value={s}>{t(`tickets.status.${s}` as TKey)}</SelectItem>
@@ -150,7 +151,7 @@ function TicketsPage() {
             </SelectContent>
           </Select>
           <Select value={priorityFilter} onValueChange={(v) => setPriorityFilter(v as TicketPriority | "all")}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label={t("tickets.col.priority")} className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("tickets.filter.all")}</SelectItem>
               {TICKET_PRIORITIES.map((p) => (
@@ -159,7 +160,7 @@ function TicketsPage() {
             </SelectContent>
           </Select>
           <Select value={assigneeFilter} onValueChange={(v) => setAssigneeFilter(v as typeof assigneeFilter)}>
-            <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label={t("tickets.filter.assignee")} className="w-full sm:w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("tickets.filter.all")}</SelectItem>
               <SelectItem value="me">{t("tickets.filter.assigneeMe")}</SelectItem>
@@ -169,13 +170,14 @@ function TicketsPage() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-3 p-6">{[0,1,2,3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+          <div className="space-y-3 p-6" role="status" aria-busy="true" aria-label={t("common.loading")}>{[0,1,2,3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
             <div className="rounded-full bg-primary/10 p-4"><TicketCheck className="h-7 w-7 text-primary" /></div>
             <p className="text-sm text-muted-foreground">{t("tickets.empty")}</p>
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -187,7 +189,7 @@ function TicketsPage() {
                 <TableHead>{t("tickets.col.status")}</TableHead>
                 <TableHead>{t("tickets.col.sla")}</TableHead>
                 <TableHead>{t("tickets.col.updated")}</TableHead>
-                <TableHead className="text-right">—</TableHead>
+                <TableHead className="text-right"><span className="sr-only">{t("common.actions")}</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -201,7 +203,7 @@ function TicketsPage() {
                       <Link to="/tickets/$id" params={{ id: tk.id }} className="flex items-center gap-2 font-medium hover:text-primary">
                         <Cat className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                         <span className="line-clamp-1">{tk.title}</span>
-                        <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-60" />
+                        <ExternalLink aria-hidden="true" className="h-3 w-3 opacity-0 group-hover:opacity-60 group-focus-within:opacity-60" />
                       </Link>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{tk.clients?.name ?? "—"}</TableCell>
@@ -225,17 +227,17 @@ function TicketsPage() {
                       {sla === "breached" ? (
                         <Badge variant="outline" className="gap-1 border-destructive/40 bg-destructive/15 text-destructive text-[10px]"><AlertTriangle className="h-3 w-3" />{t("tickets.sla.breached")}</Badge>
                       ) : sla === "imminent" ? (
-                        <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-500 text-[10px]"><Clock className="h-3 w-3" />{t("tickets.sla.imminent")}</Badge>
+                        <Badge variant="outline" className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px]"><Clock className="h-3 w-3" />{t("tickets.sla.imminent")}</Badge>
                       ) : sla === "ok" ? (
-                        <span className="text-xs text-muted-foreground">{new Date(tk.sla_due_at!).toLocaleString()}</span>
+                        <span className="text-xs text-muted-foreground">{formatDateTime(tk.sla_due_at, lang)}</span>
                       ) : <span className="text-xs text-muted-foreground/50">—</span>}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{relTime(tk.updated_at)}</TableCell>
                     <TableCell className="text-right">
                       {canWrite && (
                         <>
-                          <Button variant="ghost" size="icon" onClick={() => { setEditing(tk); setDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleting(tk)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={`${t("tickets.edit")} ${tk.number}`} onClick={() => { setEditing(tk); setDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" aria-label={`${t("tickets.delete")} ${tk.number}`} onClick={() => setDeleting(tk)} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                         </>
                       )}
                     </TableCell>
@@ -244,6 +246,7 @@ function TicketsPage() {
               })}
             </TableBody>
           </Table>
+          </div>
         )}
       </Card>
 

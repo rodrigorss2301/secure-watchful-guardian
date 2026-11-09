@@ -140,7 +140,7 @@ export function ContractFormDialog({
   const save = useMutation({
     mutationFn: async () => {
       if (!tenant) throw new Error("no tenant");
-      if (!clientId) throw new Error("Selecione um cliente");
+      if (!clientId) throw new Error(t("billing.contract.clientRequired"));
       const payload = {
         tenant_id: tenant.id,
         client_id: clientId,
@@ -202,13 +202,13 @@ export function ContractFormDialog({
         <div className="space-y-3">
           <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <Label>{t("billing.contract.field.name")}</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="ctr-1">{t("billing.contract.field.name")}</Label>
+              <Input id="ctr-1" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div>
-              <Label>{t("billing.contract.field.client")}</Label>
+              <Label htmlFor="ctr-2">{t("billing.contract.field.client")}</Label>
               <Select value={clientId} onValueChange={setClientId}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger id="ctr-2"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {(clients ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -217,33 +217,33 @@ export function ContractFormDialog({
           </div>
 
           <div>
-            <Label>{t("billing.contract.field.description")}</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <Label htmlFor="ctr-3">{t("billing.contract.field.description")}</Label>
+            <Textarea id="ctr-3" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
             <div>
-              <Label>{t("billing.contract.field.status")}</Label>
+              <Label htmlFor="ctr-4">{t("billing.contract.field.status")}</Label>
               <Select value={status} onValueChange={(v) => setStatus(v as ContractStatus)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ctr-4"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STATUSES.map((s) => <SelectItem key={s} value={s}>{t(`billing.status.${s}` as TKey)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>{t("billing.contract.field.cycle")}</Label>
+              <Label htmlFor="ctr-5">{t("billing.contract.field.cycle")}</Label>
               <Select value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ctr-5"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {CYCLES.map((c) => <SelectItem key={c} value={c}>{t(`billing.cycle.${c}` as TKey)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>{t("billing.contract.field.currency")}</Label>
+              <Label htmlFor="ctr-6">{t("billing.contract.field.currency")}</Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ctr-6"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="BRL">BRL</SelectItem>
                   <SelectItem value="USD">USD</SelectItem>
@@ -252,19 +252,19 @@ export function ContractFormDialog({
               </Select>
             </div>
             <div>
-              <Label>{t("billing.contract.field.monthlyValue")}</Label>
-              <Input type="number" step="0.01" value={monthlyValue} onChange={(e) => setMonthlyValue(e.target.value)} />
+              <Label htmlFor="ctr-7">{t("billing.contract.field.monthlyValue")}</Label>
+              <Input id="ctr-7" type="number" step="0.01" value={monthlyValue} onChange={(e) => setMonthlyValue(e.target.value)} />
             </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-3">
             <div>
-              <Label>{t("billing.contract.field.start")}</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              <Label htmlFor="ctr-8">{t("billing.contract.field.start")}</Label>
+              <Input id="ctr-8" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div>
-              <Label>{t("billing.contract.field.end")}</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              <Label htmlFor="ctr-9">{t("billing.contract.field.end")}</Label>
+              <Input id="ctr-9" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
             <div className="flex items-end gap-2">
               <Switch id="auto-renew" checked={autoRenew} onCheckedChange={setAutoRenew} />
@@ -276,11 +276,11 @@ export function ContractFormDialog({
             <div className="mb-2 flex items-center justify-between">
               <Label>{t("billing.contract.items")}</Label>
               <Button size="sm" variant="outline" onClick={() => setItems((p) => [...p, emptyItem()])}>
-                <Plus className="mr-1 h-3.5 w-3.5" /> {t("billing.contract.items.add")}
+                <Plus className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> {t("billing.contract.items.add")}
               </Button>
             </div>
-            <div className="rounded-lg border border-border overflow-hidden">
-              <Table>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[180px]">{t("billing.contract.items.service")}</TableHead>
@@ -289,7 +289,7 @@ export function ContractFormDialog({
                     <TableHead className="w-[110px]">{t("billing.contract.items.price")}</TableHead>
                     <TableHead className="w-[90px]">{t("billing.contract.items.discount")}</TableHead>
                     <TableHead className="w-[110px] text-right">{t("billing.contract.items.total")}</TableHead>
-                    <TableHead className="w-[40px]" />
+                    <TableHead className="w-[40px]"><span className="sr-only">{t("billing.contract.col.actions")}</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -299,7 +299,7 @@ export function ContractFormDialog({
                     <TableRow key={idx}>
                       <TableCell>
                         <Select value={it.service_id ?? "__custom__"} onValueChange={(v) => applyService(idx, v)}>
-                          <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                          <SelectTrigger className="h-8" aria-label={t("billing.contract.items.service")}><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="__custom__">{t("billing.contract.items.custom")}</SelectItem>
                             {(services ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -307,21 +307,21 @@ export function ContractFormDialog({
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <Input className="h-8" value={it.description} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} />
+                        <Input className="h-8" aria-label={t("billing.contract.items.description")} value={it.description} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, description: e.target.value } : x))} />
                       </TableCell>
                       <TableCell>
-                        <Input className="h-8" type="number" step="0.01" value={it.quantity} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, quantity: e.target.value } : x))} />
+                        <Input className="h-8" type="number" inputMode="decimal" aria-label={t("billing.contract.items.qty")} step="0.01" value={it.quantity} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, quantity: e.target.value } : x))} />
                       </TableCell>
                       <TableCell>
-                        <Input className="h-8" type="number" step="0.01" value={it.unit_price} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, unit_price: e.target.value } : x))} />
+                        <Input className="h-8" type="number" inputMode="decimal" aria-label={t("billing.contract.items.price")} step="0.01" value={it.unit_price} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, unit_price: e.target.value } : x))} />
                       </TableCell>
                       <TableCell>
-                        <Input className="h-8" type="number" step="0.01" value={it.discount_pct} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, discount_pct: e.target.value } : x))} />
+                        <Input className="h-8" type="number" inputMode="decimal" aria-label={t("billing.contract.items.discount")} step="0.01" value={it.discount_pct} onChange={(e) => setItems((p) => p.map((x, i) => i === idx ? { ...x, discount_pct: e.target.value } : x))} />
                       </TableCell>
                       <TableCell className="text-right text-sm font-mono">{formatCurrency(lineTotal(it), currency)}</TableCell>
                       <TableCell>
-                        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))}>
-                          <Trash2 className="h-3.5 w-3.5" />
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" title={t("common.delete")} aria-label={t("common.delete")} onClick={() => setItems((p) => p.filter((_, i) => i !== idx))}>
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -338,8 +338,8 @@ export function ContractFormDialog({
           </div>
 
           <div>
-            <Label>{t("billing.contract.field.notes")}</Label>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
+            <Label htmlFor="ctr-10">{t("billing.contract.field.notes")}</Label>
+            <Textarea id="ctr-10" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
           </div>
         </div>
 

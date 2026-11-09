@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
+import { localeOf } from "@/lib/format";
 import {
   STATUS_TONE as EP_TONE, STATUS_DOT, ENDPOINT_STATUSES,
   TYPE_ICON, timeAgo, type EndpointStatus,
@@ -66,7 +67,7 @@ function DashboardPage() {
   // caía nesta rota.
   const isPortalOnly = roles.length > 0 && roles.every((r) => r === "portal");
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["dashboard", tenant?.id],
     enabled: !!tenant?.id && !isPortalOnly,
     refetchInterval: 30_000,
@@ -145,11 +146,23 @@ function DashboardPage() {
   // carregamento.
   if (isPortalOnly) return <Navigate to="/portal/tickets" replace />;
 
+  if (isError && !data) {
+    return (
+      <>
+        <PageHeader title={t("dashboard.title")} description={t("dashboard.subtitle")} />
+        <Card role="alert" className="p-8 text-center text-sm text-muted-foreground">
+          <AlertTriangle className="mx-auto mb-2 h-6 w-6 text-amber-500" aria-hidden="true" />
+          {t("common.error")}
+        </Card>
+      </>
+    );
+  }
+
   if (isLoading || !stats) {
     return (
       <>
         <PageHeader title={t("dashboard.title")} description={t("dashboard.subtitle")} />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4" aria-busy="true" aria-label={t("common.loading")}>
           {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -177,8 +190,10 @@ function DashboardPage() {
     fill: PRIORITY_COLOR[p],
   }));
 
-  const fmtDay = (iso: string) =>
-    new Date(iso).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-US", { day: "2-digit", month: "short" });
+  const fmtDay = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString(localeOf(lang), { day: "2-digit", month: "short" });
+  };
 
   return (
     <>
@@ -200,10 +215,10 @@ function DashboardPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <Card className="p-5 lg:col-span-2">
           <div className="mb-4 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
+            <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
             <h2 className="font-semibold">{t("dashboard.section.ticketsTrend")}</h2>
           </div>
-          <div className="h-64">
+          <div className="h-64" role="img" aria-label={t("dashboard.section.ticketsTrend")}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats ? (data?.trend ?? []) : []}>
                 <defs>
@@ -213,7 +228,7 @@ function DashboardPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                <XAxis dataKey="date" tickFormatter={fmtDay} fontSize={11} minTickGap={24} stroke="hsl(var(--muted-foreground))" />
                 <YAxis allowDecimals={false} fontSize={11} stroke="hsl(var(--muted-foreground))" width={24} />
                 <Tooltip
                   contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
@@ -227,10 +242,10 @@ function DashboardPage() {
 
         <Card className="p-5">
           <div className="mb-4 flex items-center gap-2">
-            <MonitorSmartphone className="h-4 w-4 text-primary" />
+            <MonitorSmartphone className="h-4 w-4 text-primary" aria-hidden="true" />
             <h2 className="font-semibold">{t("dashboard.section.endpointsByStatus")}</h2>
           </div>
-          <div className="h-64">
+          <div className="h-64" role="img" aria-label={`${t("dashboard.section.endpointsByStatus")}: ${epPie.map((d) => `${d.name} ${d.value}`).join(", ")}`}>
             {epPie.length === 0 ? (
               <div className="grid h-full place-items-center text-sm text-muted-foreground">—</div>
             ) : (
@@ -247,7 +262,7 @@ function DashboardPage() {
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
             {ENDPOINT_STATUSES.map((s) => (
               <div key={s} className="flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${STATUS_DOT[s]}`} />
+                <span aria-hidden="true" className={`h-2 w-2 rounded-full ${STATUS_DOT[s]}`} />
                 <span className="text-muted-foreground">{t(`endpoints.status.${s}` as TKey)}</span>
                 <span className="ml-auto font-medium tabular-nums">{stats.epByStatus[s]}</span>
               </div>
@@ -259,14 +274,14 @@ function DashboardPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card className="p-5">
           <div className="mb-4 flex items-center gap-2">
-            <TicketCheck className="h-4 w-4 text-primary" />
+            <TicketCheck className="h-4 w-4 text-primary" aria-hidden="true" />
             <h2 className="font-semibold">{t("dashboard.section.ticketsByStatus")}</h2>
           </div>
-          <div className="h-56">
+          <div className="h-56" role="img" aria-label={`${t("dashboard.section.ticketsByStatus")}: ${tkBars.map((d) => `${d.name} ${d.value}`).join(", ")}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={tkBars}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
-                <XAxis dataKey="name" fontSize={11} stroke="hsl(var(--muted-foreground))" />
+                <XAxis dataKey="name" fontSize={10} interval={0} stroke="hsl(var(--muted-foreground))" />
                 <YAxis allowDecimals={false} fontSize={11} stroke="hsl(var(--muted-foreground))" width={24} />
                 <Tooltip cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
                 <Bar dataKey="value" radius={[6, 6, 0, 0]}>
@@ -279,10 +294,10 @@ function DashboardPage() {
 
         <Card className="p-5">
           <div className="mb-4 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-primary" />
+            <Zap className="h-4 w-4 text-primary" aria-hidden="true" />
             <h2 className="font-semibold">{t("dashboard.section.ticketsByPriority")}</h2>
           </div>
-          <div className="h-56">
+          <div className="h-56" role="img" aria-label={`${t("dashboard.section.ticketsByPriority")}: ${prBars.map((d) => `${d.name} ${d.value}`).join(", ")}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={prBars} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
@@ -302,11 +317,11 @@ function DashboardPage() {
         <Card className="p-5">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TicketCheck className="h-4 w-4 text-primary" />
+              <TicketCheck className="h-4 w-4 text-primary" aria-hidden="true" />
               <h2 className="font-semibold">{t("dashboard.section.recentTickets")}</h2>
             </div>
             <Button asChild variant="ghost" size="sm">
-              <Link to="/tickets">{t("dashboard.viewAll")} <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+              <Link to="/tickets">{t("dashboard.viewAll")} <ArrowRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" /></Link>
             </Button>
           </div>
           {data!.recent.length === 0 ? (
@@ -320,17 +335,17 @@ function DashboardPage() {
                     <Link
                       to="/tickets/$id"
                       params={{ id: tk.id }}
-                      className="flex items-center gap-3 py-3 transition-colors hover:bg-muted/40 -mx-2 px-2 rounded"
+                      className="-mx-2 flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded px-2 py-3 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <span className="font-mono text-xs text-muted-foreground tabular-nums">{tk.number}</span>
-                      <span className="flex-1 truncate text-sm">{tk.title}</span>
+                      <span className="min-w-0 flex-1 basis-40 truncate text-sm">{tk.title}</span>
                       <Badge variant="outline" className={PRIORITY_TONE[tk.priority as TicketPriority]}>
                         {t(`tickets.priority.${tk.priority}` as TKey)}
                       </Badge>
                       <Badge variant="outline" className={TK_TONE[tk.status as TicketStatus]}>
                         {t(`tickets.status.${tk.status}` as TKey)}
                       </Badge>
-                      {sla === "breached" && <AlertTriangle className="h-4 w-4 text-destructive" />}
+                      {sla === "breached" && <AlertTriangle className="h-4 w-4 text-destructive" role="img" aria-label={t("tickets.sla.breached")} />}
                     </Link>
                   </li>
                 );
@@ -342,11 +357,11 @@ function DashboardPage() {
         <Card className="p-5">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              <AlertTriangle className="h-4 w-4 text-amber-500" aria-hidden="true" />
               <h2 className="font-semibold">{t("dashboard.section.criticalEndpoints")}</h2>
             </div>
             <Button asChild variant="ghost" size="sm">
-              <Link to="/endpoints">{t("dashboard.viewAll")} <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+              <Link to="/endpoints">{t("dashboard.viewAll")} <ArrowRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" /></Link>
             </Button>
           </div>
           {stats.criticalEndpoints.length === 0 ? (
@@ -360,18 +375,18 @@ function DashboardPage() {
                     <Link
                       to="/endpoints/$id"
                       params={{ id: ep.id }}
-                      className="flex items-center gap-3 py-3 transition-colors hover:bg-muted/40 -mx-2 px-2 rounded"
+                      className="-mx-2 flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 rounded px-2 py-3 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <span className={`h-2 w-2 rounded-full ${STATUS_DOT[ep.status as EndpointStatus]}`} />
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                      <span className="flex-1 truncate text-sm">{ep.hostname}</span>
+                      <span aria-hidden="true" className={`h-2 w-2 rounded-full ${STATUS_DOT[ep.status as EndpointStatus]}`} />
+                      {Icon && <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
+                      <span className="min-w-0 flex-1 basis-32 truncate text-sm">{ep.hostname}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">
                         CPU {ep.cpu_usage ?? "—"}% · RAM {ep.ram_usage ?? "—"}%
                       </span>
                       <Badge variant="outline" className={EP_TONE[ep.status as EndpointStatus]}>
                         {t(`endpoints.status.${ep.status}` as TKey)}
                       </Badge>
-                      <span className="text-xs text-muted-foreground tabular-nums w-10 text-right">
+                      <span className="text-xs text-muted-foreground tabular-nums min-w-10 text-right">
                         {timeAgo(ep.last_heartbeat, "—")}
                       </span>
                     </Link>
@@ -414,12 +429,12 @@ function KpiCard({
     <Card className="p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
           <p className="mt-2 font-display text-3xl font-bold tabular-nums">{value}</p>
           {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
         </div>
         <div className={`grid h-10 w-10 place-items-center rounded-xl ${toneClass}`}>
-          <Icon className="h-5 w-5" />
+          <Icon className="h-5 w-5" aria-hidden="true" />
         </div>
       </div>
     </Card>

@@ -8,12 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
+import { formatDate } from "@/lib/format";
 import { formatCurrency, INVOICE_STATUS_TONE, type Invoice, type InvoiceItem } from "@/lib/billing";
 
 export function InvoiceDetailDialog({
   invoice, onOpenChange,
 }: { invoice: (Invoice & { client?: { name: string } | null }) | null; onOpenChange: (v: boolean) => void }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { hasAnyRole } = useAuth();
   const qc = useQueryClient();
   const canEdit = hasAnyRole(["admin", "technician"]);
@@ -60,27 +61,27 @@ export function InvoiceDetailDialog({
 
   return (
     <Dialog open={!!invoice} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
+          <DialogTitle className="flex flex-wrap items-center gap-3">
             <span className="font-mono">{invoice.number}</span>
             <Badge variant="outline" className={INVOICE_STATUS_TONE[invoice.status]}>
               {t(`billing.invoice.status.${invoice.status}` as TKey)}
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            {invoice.client?.name ?? ""} · {t("billing.invoice.col.due")}: {invoice.due_date}
+            {invoice.client?.name ?? ""} · {t("billing.invoice.col.due")}: {formatDate(invoice.due_date, lang)}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-2 text-sm">
-            <div><span className="text-muted-foreground">{t("billing.invoice.field.issueDate")}: </span>{invoice.issue_date}</div>
-            <div><span className="text-muted-foreground">{t("billing.invoice.field.periodStart")}: </span>{invoice.period_start ?? "—"}</div>
-            <div><span className="text-muted-foreground">{t("billing.invoice.field.periodEnd")}: </span>{invoice.period_end ?? "—"}</div>
+          <div className="grid gap-2 text-sm sm:grid-cols-3">
+            <div><span className="text-muted-foreground">{t("billing.invoice.field.issueDate")}: </span>{formatDate(invoice.issue_date, lang)}</div>
+            <div><span className="text-muted-foreground">{t("billing.invoice.field.periodStart")}: </span>{formatDate(invoice.period_start, lang)}</div>
+            <div><span className="text-muted-foreground">{t("billing.invoice.field.periodEnd")}: </span>{formatDate(invoice.period_end, lang)}</div>
           </div>
 
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -117,20 +118,20 @@ export function InvoiceDetailDialog({
         </div>
 
         {canEdit && (
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-2">
             {invoice.status === "draft" && (
               <Button variant="outline" onClick={() => setStatus.mutate("sent")} disabled={setStatus.isPending}>
-                <Send className="mr-2 h-4 w-4" /> {t("billing.invoice.send")}
+                <Send className="mr-2 h-4 w-4" aria-hidden="true" /> {t("billing.invoice.send")}
               </Button>
             )}
             {invoice.status !== "paid" && invoice.status !== "void" && (
               <Button variant="outline" className="text-destructive" onClick={() => setStatus.mutate("void")} disabled={setStatus.isPending}>
-                <XCircle className="mr-2 h-4 w-4" /> {t("billing.invoice.void")}
+                <XCircle className="mr-2 h-4 w-4" aria-hidden="true" /> {t("billing.invoice.void")}
               </Button>
             )}
             {invoice.status !== "paid" && invoice.status !== "void" && (
               <Button onClick={() => markPaid.mutate()} disabled={markPaid.isPending} className="shadow-glow">
-                <CheckCircle2 className="mr-2 h-4 w-4" /> {t("billing.invoice.markPaid")}
+                <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" /> {t("billing.invoice.markPaid")}
               </Button>
             )}
           </DialogFooter>

@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/inventory/software")({
   head: () => ({ meta: [{ title: "Histórico de software — Autotechs RMM" }] }),
@@ -17,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/inventory/software")({
 });
 
 function SoftwareInventoryPage() {
+  const { t, lang } = useI18n();
   const { tenant } = useAuth();
   const [search, setSearch] = useState("");
   const [action, setAction] = useState<"all" | "added" | "removed">("all");
@@ -51,28 +54,28 @@ function SoftwareInventoryPage() {
 
   return (
     <>
-      <PageHeader title="Histórico de software" description="Instalações e remoções detectadas em toda a frota." />
+      <PageHeader title={t("inventory.title")} description={t("inventory.subtitle")} />
       <Card>
         <CardContent className="space-y-4 p-4">
           <div className="flex flex-wrap gap-3">
             <div className="relative flex-1 min-w-[220px]">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Filtrar por software ou hostname…" className="pl-9" />
+              <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input type="search" aria-label={t("inventory.filter")} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("inventory.filter")} className="pl-9" />
             </div>
             <Select value={action} onValueChange={(v) => setAction(v as never)}>
-              <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label={t("inventory.action")} className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as ações</SelectItem>
-                <SelectItem value="added">Instalados</SelectItem>
-                <SelectItem value="removed">Removidos</SelectItem>
+                <SelectItem value="all">{t("inventory.allActions")}</SelectItem>
+                <SelectItem value="added">{t("inventory.installed")}</SelectItem>
+                <SelectItem value="removed">{t("inventory.removed")}</SelectItem>
               </SelectContent>
             </Select>
             <Select value={days} onValueChange={setDays}>
-              <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger aria-label={t("history.period")} className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="7">7 dias</SelectItem>
-                <SelectItem value="14">14 dias</SelectItem>
-                <SelectItem value="30">30 dias</SelectItem>
+                <SelectItem value="7">{t("inventory.days7")}</SelectItem>
+                <SelectItem value="14">{t("inventory.days14")}</SelectItem>
+                <SelectItem value="30">{t("inventory.days30")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -81,29 +84,31 @@ function SoftwareInventoryPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Quando</TableHead>
-                  <TableHead>Endpoint</TableHead>
-                  <TableHead>Software</TableHead>
-                  <TableHead>Versão</TableHead>
-                  <TableHead>Ação</TableHead>
+                  <TableHead>{t("inventory.col.when")}</TableHead>
+                  <TableHead>{t("alerts.col.endpoint")}</TableHead>
+                  <TableHead>{t("inventory.col.software")}</TableHead>
+                  <TableHead>{t("inventory.col.version")}</TableHead>
+                  <TableHead>{t("inventory.action")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {q.isLoading ? (
-                  <TableRow><TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground"><Package className="mx-auto h-5 w-5 animate-pulse" /></TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground"><Package aria-hidden className="mx-auto h-5 w-5 animate-pulse" /><span className="sr-only" role="status">{t("common.loading")}</span></TableCell></TableRow>
+                ) : q.isError ? (
+                  <TableRow><TableCell colSpan={5} role="alert" className="py-10 text-center text-sm text-muted-foreground">{t("inventory.loadError")} <button type="button" onClick={() => q.refetch()} className="underline underline-offset-2 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">{t("common.retry")}</button></TableCell></TableRow>
                 ) : filtered.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">Sem registros no período.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">{t("inventory.empty")}</TableCell></TableRow>
                 ) : filtered.map((r: any) => (
                   <TableRow key={r.id}>
-                    <TableCell className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatDateTime(r.created_at, lang)}</TableCell>
                     <TableCell className="text-sm font-mono">{r.endpoints?.hostname ?? "—"}</TableCell>
                     <TableCell className="text-sm">{r.field}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{r.new_value ?? r.old_value ?? "—"}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={r.change_type === "added"
-                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
-                        : "border-rose-500/40 bg-rose-500/10 text-rose-500"}>
-                        {r.change_type === "added" ? "instalado" : "removido"}
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-500"
+                        : "border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-500"}>
+                        {r.change_type === "added" ? t("inventory.badge.installed") : t("inventory.badge.removed")}
                       </Badge>
                     </TableCell>
                   </TableRow>

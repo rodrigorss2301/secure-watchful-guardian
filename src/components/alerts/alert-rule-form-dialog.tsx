@@ -139,7 +139,7 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t(rule ? "alerts.rules.edit" : "alerts.rules.new")}</DialogTitle>
           <DialogDescription>{t("alerts.subtitle")}</DialogDescription>
@@ -147,19 +147,19 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
 
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label>{t("alerts.field.name")} *</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Label htmlFor="ar-name">{t("alerts.field.name")} <span aria-hidden className="text-destructive">*</span></Label>
+            <Input id="ar-name" aria-required="true" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="grid gap-2">
-            <Label>{t("alerts.field.description")}</Label>
-            <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Label htmlFor="ar-description">{t("alerts.field.description")}</Label>
+            <Textarea id="ar-description" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="grid gap-2">
-              <Label>{t("alerts.field.metric")}</Label>
+              <Label htmlFor="ar-metric">{t("alerts.field.metric")}</Label>
               <Select value={form.metric} onValueChange={(v) => setForm({ ...form, metric: v as AlertMetric })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ar-metric"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ALERT_METRICS.map((m) => <SelectItem key={m} value={m}>{t(`alerts.metric.${m}` as TKey)}</SelectItem>)}
                 </SelectContent>
@@ -167,9 +167,9 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
             </div>
             {!isOffline && (
               <div className="grid gap-2">
-                <Label>{t("alerts.field.comparator")}</Label>
+                <Label htmlFor="ar-comparator">{t("alerts.field.comparator")}</Label>
                 <Select value={form.comparator} onValueChange={(v) => setForm({ ...form, comparator: v as AlertComparator })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="ar-comparator"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {ALERT_COMPARATORS.map((c) => <SelectItem key={c} value={c}>{t(`alerts.comparator.${c}` as TKey)}</SelectItem>)}
                   </SelectContent>
@@ -178,18 +178,18 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
             )}
             {!isOffline && (
               <div className="grid gap-2">
-                <Label>{t("alerts.field.threshold")} (%)</Label>
-                <Input type="number" min={0} max={100} value={form.threshold} onChange={(e) => setForm({ ...form, threshold: e.target.value })} />
+                <Label htmlFor="ar-threshold">{t("alerts.field.threshold")} (%)</Label>
+                <Input id="ar-threshold" type="number" min={0} max={100} value={form.threshold} onChange={(e) => setForm({ ...form, threshold: e.target.value })} />
               </div>
             )}
             <div className="grid gap-2">
-              <Label>{t("alerts.field.duration")}</Label>
-              <Input type="number" min={1} value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })} />
+              <Label htmlFor="ar-duration">{t("alerts.field.duration")}</Label>
+              <Input id="ar-duration" type="number" min={1} value={form.duration_minutes} onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })} />
             </div>
             <div className="grid gap-2">
-              <Label>{t("alerts.field.severity")}</Label>
+              <Label htmlFor="ar-severity">{t("alerts.field.severity")}</Label>
               <Select value={form.severity} onValueChange={(v) => setForm({ ...form, severity: v as AlertSeverity })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ar-severity"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ALERT_SEVERITIES.map((s) => <SelectItem key={s} value={s}>{t(`alerts.severity.${s}` as TKey)}</SelectItem>)}
                 </SelectContent>
@@ -199,9 +199,9 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="grid gap-2">
-              <Label>{t("alerts.field.scope")}</Label>
+              <Label htmlFor="ar-scope">{t("alerts.field.scope")}</Label>
               <Select value={form.scope} onValueChange={(v) => setForm({ ...form, scope: v as AlertScope, client_id: "", endpoint_id: "" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ar-scope"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ALERT_SCOPES.map((s) => <SelectItem key={s} value={s}>{t(`alerts.scope.${s}` as TKey)}</SelectItem>)}
                 </SelectContent>
@@ -209,9 +209,9 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
             </div>
             {(form.scope === "client" || form.scope === "endpoint") && (
               <div className="grid gap-2">
-                <Label>{t("alerts.field.client")}</Label>
+                <Label htmlFor="ar-client">{t("alerts.field.client")}</Label>
                 <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v, endpoint_id: "" })}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectTrigger id="ar-client"><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
                     {clients?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -220,9 +220,9 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
             )}
             {form.scope === "endpoint" && (
               <div className="grid gap-2">
-                <Label>{t("alerts.field.endpoint")}</Label>
+                <Label htmlFor="ar-endpoint">{t("alerts.field.endpoint")}</Label>
                 <Select value={form.endpoint_id} onValueChange={(v) => setForm({ ...form, endpoint_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectTrigger id="ar-endpoint"><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
                     {endpoints?.map((e) => <SelectItem key={e.id} value={e.id}>{e.hostname}</SelectItem>)}
                   </SelectContent>
@@ -232,8 +232,8 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
           </div>
 
           <div className="grid gap-2">
-            <Label>{t("alerts.field.notify")}</Label>
-            <Input type="email" placeholder="ops@empresa.com" value={form.notify_email} onChange={(e) => setForm({ ...form, notify_email: e.target.value })} />
+            <Label htmlFor="ar-notify">{t("alerts.field.notify")}</Label>
+            <Input id="ar-notify" type="email" placeholder="ops@empresa.com" value={form.notify_email} onChange={(e) => setForm({ ...form, notify_email: e.target.value })} />
           </div>
 
           <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-3">
@@ -245,7 +245,7 @@ export function AlertRuleFormDialog({ open, onOpenChange, rule }: Props) {
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
           <Button onClick={() => save.mutate()} disabled={!form.name || save.isPending}>
-            {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {save.isPending && <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />}
             {t("common.save")}
           </Button>
         </DialogFooter>

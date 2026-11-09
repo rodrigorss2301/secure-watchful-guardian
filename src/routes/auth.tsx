@@ -19,7 +19,7 @@ import { useI18n } from "@/lib/i18n";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Autotechs RMM — Sign in" },
+      { title: "Entrar — Autotechs RMM" },
       { name: "description", content: "Access the Autotechs RMM monitoring command center." },
     ],
   }),
@@ -43,7 +43,7 @@ function AuthPage() {
   }, [user, profile, loading, navigate]);
 
   return (
-    <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background p-4">
+    <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-background p-4 pt-16 sm:pt-4">
       {/* Atmospheric backdrop */}
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-40" />
       <div className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[800px] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]" />
@@ -82,7 +82,7 @@ function AuthPage() {
           © {new Date().getFullYear()} Autotechs RMM
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -169,14 +169,14 @@ function LoginForm({ onForgot }: { onForgot: () => void }) {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="login-password">{t("auth.password")}</Label>
-            <button type="button" onClick={onForgot} className="text-xs font-medium text-primary hover:underline">
+            <button type="button" onClick={onForgot} className="-my-2 rounded-sm py-2 text-xs font-medium text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background">
               {t("auth.forgot")}
             </button>
           </div>
           <Input id="login-password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {offline && (
-          <Alert variant="destructive" className="py-3">
+          <Alert variant="destructive" role="alert" className="py-3">
             <AlertDescription className="space-y-2 text-xs">
               <p className="font-semibold">{t("auth.offline.title")}</p>
               <p className="opacity-90">{t("auth.offline.body")}</p>
@@ -184,21 +184,21 @@ function LoginForm({ onForgot }: { onForgot: () => void }) {
                 type="button"
                 onClick={recheck}
                 disabled={probing}
-                className="inline-flex items-center font-medium underline underline-offset-2 disabled:opacity-60"
+                className="inline-flex min-h-9 items-center rounded-sm font-medium underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
               >
-                {probing && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />}
+                {probing && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" aria-hidden="true" />}
                 {probing ? t("auth.checking") : t("auth.offline.retry")}
               </button>
             </AlertDescription>
           </Alert>
         )}
         {error && !offline && (
-          <Alert variant="destructive" className="py-2.5">
+          <Alert variant="destructive" role="alert" className="py-2.5">
             <AlertDescription className="text-xs">{error}</AlertDescription>
           </Alert>
         )}
         <Button type="submit" className="w-full font-semibold shadow-glow" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {t("auth.signIn")}
         </Button>
       </form>
@@ -247,12 +247,12 @@ function SignupForm({ onSuccess }: { onSuccess: () => void }) {
       <form onSubmit={onSubmit} className="space-y-3.5">
         <div className="space-y-1.5">
           <Label htmlFor="su-name">{t("auth.fullName")}</Label>
-          <Input id="su-name" required maxLength={100} value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          <Input id="su-name" autoComplete="name" required maxLength={100} value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="su-company">{t("auth.company")}</Label>
-          <Input id="su-company" required maxLength={100} value={company} onChange={(e) => setCompany(e.target.value)} />
-          <p className="text-[11px] leading-snug text-muted-foreground">{t("auth.company.help")}</p>
+          <Input id="su-company" autoComplete="organization" aria-describedby="su-company-help" required maxLength={100} value={company} onChange={(e) => setCompany(e.target.value)} />
+          <p id="su-company-help" className="text-xs leading-snug text-muted-foreground">{t("auth.company.help")}</p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="su-email">{t("auth.email")}</Label>
@@ -263,12 +263,12 @@ function SignupForm({ onSuccess }: { onSuccess: () => void }) {
           <Input id="su-password" type="password" autoComplete="new-password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         {error && (
-          <Alert variant="destructive" className="py-2.5">
+          <Alert variant="destructive" role="alert" className="py-2.5">
             <AlertDescription className="text-xs">{error}</AlertDescription>
           </Alert>
         )}
         <Button type="submit" className="w-full font-semibold shadow-glow" disabled={loading}>
-          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {t("auth.signUp")}
         </Button>
       </form>
@@ -304,22 +304,22 @@ function ForgotPasswordForm({ onBack }: { onBack: () => void }) {
         <p className="mt-1 text-sm text-muted-foreground">{t("auth.forgot.sub")}</p>
       </div>
       {sent ? (
-        <Alert>
+        <Alert role="status">
           <AlertDescription>{t("auth.reset.sent")}</AlertDescription>
         </Alert>
       ) : (
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="fp-email">{t("auth.email")}</Label>
-            <Input id="fp-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input id="fp-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           {error && (
-            <Alert variant="destructive" className="py-2.5">
+            <Alert variant="destructive" role="alert" className="py-2.5">
               <AlertDescription className="text-xs">{error}</AlertDescription>
             </Alert>
           )}
           <Button type="submit" className="w-full font-semibold" disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
             {t("auth.sendReset")}
           </Button>
         </form>

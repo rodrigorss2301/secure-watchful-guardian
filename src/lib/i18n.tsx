@@ -1,3 +1,7 @@
+import * as xShell from "@/lib/i18n-extra/shell";
+import * as xEndpoints from "@/lib/i18n-extra/endpoints";
+import * as xClients from "@/lib/i18n-extra/clients";
+import * as xOps from "@/lib/i18n-extra/ops";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 export type Lang = "pt" | "en";
@@ -5,6 +9,10 @@ const STORAGE_KEY = "autotechs-lang";
 
 const dict = {
   pt: {
+    ...xShell.pt,
+    ...xEndpoints.pt,
+    ...xClients.pt,
+    ...xOps.pt,
     "brand.tagline": "Plataforma RMM",
     "nav.dashboard": "Dashboard",
     "nav.endpoints": "Endpoints",
@@ -22,6 +30,8 @@ const dict = {
     "auth.signup.sub": "Comece a monitorar sua infraestrutura em minutos",
     "auth.forgot.title": "Recuperar senha",
     "auth.forgot.sub": "Enviaremos um link de redefinição para seu email",
+    "auth.reset.done": "Senha atualizada com sucesso",
+    "nav.menu": "Abrir ou fechar menu",
     "auth.tab.login": "Entrar",
     "auth.tab.signup": "Cadastrar",
     "auth.email": "Email",
@@ -120,6 +130,19 @@ const dict = {
     "common.delete": "Excluir",
     "common.back": "Voltar",
     "common.error": "Algo deu errado",
+    "common.retry": "Tentar novamente",
+    "common.actions": "Ações",
+    "common.notFound": "Não encontrado",
+    "common.edit": "Editar",
+    "common.remove": "Remover",
+    "common.confirm": "Confirmar",
+    "common.close": "Fechar",
+    "common.copy": "Copiar",
+    "common.copied": "Copiado",
+    "common.active": "Ativo",
+    "common.inactive": "Inativo",
+    "common.none": "Nenhum",
+    "common.irreversible": "Esta ação não pode ser desfeita.",
     "endpoints.title": "Endpoints",
     "endpoints.subtitle": "Dispositivos monitorados em tempo real",
     "endpoints.new": "Novo endpoint",
@@ -679,6 +702,10 @@ const dict = {
     "billing.unit.fixed": "Fixo",
   },
   en: {
+    ...xShell.en,
+    ...xEndpoints.en,
+    ...xClients.en,
+    ...xOps.en,
     "brand.tagline": "RMM Platform",
     "nav.dashboard": "Dashboard",
     "nav.endpoints": "Endpoints",
@@ -696,6 +723,8 @@ const dict = {
     "auth.signup.sub": "Start monitoring your infrastructure in minutes",
     "auth.forgot.title": "Recover password",
     "auth.forgot.sub": "We'll send a reset link to your email",
+    "auth.reset.done": "Password updated successfully",
+    "nav.menu": "Open or close menu",
     "auth.tab.login": "Sign in",
     "auth.tab.signup": "Sign up",
     "auth.email": "Email",
@@ -794,6 +823,19 @@ const dict = {
     "common.delete": "Delete",
     "common.back": "Back",
     "common.error": "Something went wrong",
+    "common.retry": "Try again",
+    "common.actions": "Actions",
+    "common.notFound": "Not found",
+    "common.edit": "Edit",
+    "common.remove": "Remove",
+    "common.confirm": "Confirm",
+    "common.close": "Close",
+    "common.copy": "Copy",
+    "common.copied": "Copied",
+    "common.active": "Active",
+    "common.inactive": "Inactive",
+    "common.none": "None",
+    "common.irreversible": "This action cannot be undone.",
     "endpoints.title": "Endpoints",
     "endpoints.subtitle": "Devices monitored in real time",
     "endpoints.new": "New endpoint",

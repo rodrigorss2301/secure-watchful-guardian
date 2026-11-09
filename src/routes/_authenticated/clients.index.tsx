@@ -98,10 +98,12 @@ function ClientsPage() {
       />
 
       <Card className="border-border/60 bg-card/60 backdrop-blur-sm">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border/60 p-4">
-          <div className="relative flex-1 min-w-[220px]">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="grid grid-cols-1 gap-3 border-b border-border/60 p-4 sm:flex sm:flex-wrap sm:items-center">
+          <div className="relative min-w-0 flex-1 sm:min-w-[220px]">
+            <Search aria-hidden="true" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              type="search"
+              aria-label={t("clients.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("clients.search")}
@@ -109,7 +111,7 @@ function ClientsPage() {
             />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ClientStatus | "all")}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger aria-label={t("clients.filter.status")} className="w-full sm:w-[180px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("clients.filter.all")}</SelectItem>
               {CLIENT_STATUSES.map((s) => (
@@ -120,7 +122,7 @@ function ClientsPage() {
         </div>
 
         {isLoading ? (
-          <div className="space-y-3 p-6">
+          <div className="space-y-3 p-6" role="status" aria-busy="true" aria-label={t("common.loading")}>
             {[0,1,2,3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
           </div>
         ) : filtered.length === 0 ? (
@@ -136,6 +138,7 @@ function ClientsPage() {
             )}
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -144,7 +147,7 @@ function ClientsPage() {
                 <TableHead>{t("clients.col.contact")}</TableHead>
                 <TableHead>{t("clients.col.sla")}</TableHead>
                 <TableHead>{t("clients.col.status")}</TableHead>
-                <TableHead className="text-right">—</TableHead>
+                <TableHead className="text-right"><span className="sr-only">{t("common.actions")}</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -157,7 +160,7 @@ function ClientsPage() {
                       className="flex items-center gap-2 font-medium hover:text-primary"
                     >
                       <span>{c.name}</span>
-                      <ExternalLink className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-60" />
+                      <ExternalLink aria-hidden="true" className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-60 group-focus-within:opacity-60" />
                     </Link>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{c.industry ?? "—"}</TableCell>
@@ -180,12 +183,12 @@ function ClientsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     {canWrite && (
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label="edit">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(c)} aria-label={`${t("clients.edit")}: ${c.name}`}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                     )}
                     {canDelete && (
-                      <Button variant="ghost" size="icon" onClick={() => setDeleting(c)} aria-label="delete" className="text-destructive hover:text-destructive">
+                      <Button variant="ghost" size="icon" onClick={() => setDeleting(c)} aria-label={`${t("clients.delete")}: ${c.name}`} className="text-destructive hover:text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
@@ -194,6 +197,7 @@ function ClientsPage() {
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </Card>
 

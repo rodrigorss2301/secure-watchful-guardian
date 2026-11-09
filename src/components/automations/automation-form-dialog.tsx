@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -158,12 +158,12 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
 
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label>{t("automations.field.name")} *</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Label htmlFor="auto-name">{t("automations.field.name")} *</Label>
+            <Input id="auto-name" required aria-required="true" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="grid gap-2">
-            <Label>{t("automations.field.description")}</Label>
-            <Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <Label htmlFor="auto-desc">{t("automations.field.description")}</Label>
+            <Textarea id="auto-desc" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
@@ -293,7 +293,7 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
           <Button onClick={() => save.mutate()} disabled={!form.name || save.isPending}>
-            {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
             {t("common.save")}
           </Button>
         </DialogFooter>
@@ -303,9 +303,10 @@ export function AutomationFormDialog({ open, onOpenChange, automation }: Props) 
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const id = useId();
   return (
-    <div className="grid gap-2">
-      <Label>{label}</Label>
+    <div className="grid gap-2" role="group" aria-labelledby={id}>
+      <Label id={id}>{label}</Label>
       {children}
     </div>
   );

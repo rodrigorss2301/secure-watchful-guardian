@@ -10,9 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useI18n, type TKey } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/format";
+import { PageHeader } from "@/components/app/app-shell";
 
 export const Route = createFileRoute("/_authenticated/audit")({
-  head: () => ({ meta: [{ title: "Audit — Autotechs RMM" }] }),
+  head: () => ({ meta: [{ title: "Auditoria — Autotechs RMM" }] }),
   component: AuditPage,
 });
 
@@ -33,7 +35,12 @@ const ENTITIES = ["clients", "endpoints", "automations", "alert_rules", "user_ro
 const ACTIONS = ["insert", "update", "delete"] as const;
 
 function AuditPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const entityLabel = (e: string) => {
+    const k = `audit.entity.${e}` as TKey;
+    const label = t(k);
+    return label === k ? e : label;
+  };
   const [entity, setEntity] = useState<string>("all");
   const [action, setAction] = useState<string>("all");
   const [actor, setActor] = useState<string>("all");
@@ -64,13 +71,8 @@ function AuditPage() {
   const uniqueActors = new Set(last30.map((r) => r.actor_email).filter(Boolean)).size;
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-          <ScrollText className="h-6 w-6 text-primary" /> {t("audit.title")}
-        </h1>
-        <p className="text-sm text-muted-foreground">{t("audit.subtitle")}</p>
-      </header>
+    <div className="space-y-6">
+      <PageHeader title={t("audit.title")} description={t("audit.subtitle")} />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Kpi icon={ScrollText} label={t("audit.kpi.total")} value={last30.length} />
@@ -103,17 +105,17 @@ function AuditPage() {
               </TableHeader>
               <TableBody>
                 {rows.length === 0 ? (
-                  <TableRow><TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">{query.isLoading ? "…" : t("audit.empty")}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground"><span role="status">{query.isLoading ? t("common.loading") : query.isError ? t("common.error") : t("audit.empty")}</span></TableCell></TableRow>
                 ) : rows.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="whitespace-nowrap text-xs">{new Date(r.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="whitespace-nowrap text-xs">{formatDateTime(r.created_at, lang)}</TableCell>
                     <TableCell className="text-xs">{r.actor_email ?? "—"}</TableCell>
                     <TableCell><ActionBadge action={r.action} label={t(`audit.action.${r.action}` as TKey)} /></TableCell>
-                    <TableCell className="text-xs">{t(`audit.entity.${r.entity_table}` as TKey) ?? r.entity_table}</TableCell>
-                    <TableCell className="max-w-[280px] truncate text-xs">{r.summary ?? "—"}</TableCell>
+                    <TableCell className="text-xs">{entityLabel(r.entity_table)}</TableCell>
+                    <TableCell className="max-w-[280px] truncate text-xs" title={r.summary ?? undefined}>{r.summary ?? "—"}</TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" onClick={() => setSelected(r)}>
-                        <Eye className="mr-1 h-3 w-3" /> {t("audit.viewDiff")}
+                      <Button size="sm" variant="ghost" className="h-9" onClick={() => setSelected(r)}>
+                        <Eye aria-hidden="true" className="mr-1 h-3 w-3" /> {t("audit.viewDiff")}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -145,7 +147,7 @@ function Kpi({ icon: Icon, label, value }: { icon: typeof ScrollText; label: str
   return (
     <Card><CardContent className="flex items-center justify-between p-4">
       <div><p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>
-      <Icon className="h-5 w-5 text-muted-foreground" />
+      <Icon aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
     </CardContent></Card>
   );
 }
@@ -153,9 +155,9 @@ function Kpi({ icon: Icon, label, value }: { icon: typeof ScrollText; label: str
 function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span aria-hidden="true" className="text-xs uppercase tracking-wider text-muted-foreground">{label}</span>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+        <SelectTrigger aria-label={label} className="w-44"><SelectValue /></SelectTrigger>
         <SelectContent>
           {options.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
         </SelectContent>
@@ -166,8 +168,8 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
 
 function ActionBadge({ action, label }: { action: AuditRow["action"]; label: string }) {
   const variant: Record<AuditRow["action"], string> = {
-    insert: "border-emerald-500/40 bg-emerald-500/10 text-emerald-500",
-    update: "border-blue-500/40 bg-blue-500/10 text-blue-500",
+    insert: "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    update: "border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-400",
     delete: "border-destructive/40 bg-destructive/10 text-destructive",
   };
   return <Badge variant="outline" className={`text-[10px] uppercase ${variant[action]}`}>{label}</Badge>;

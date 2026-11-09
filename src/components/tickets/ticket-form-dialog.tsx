@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -183,7 +183,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
           <div className="grid gap-4 md:grid-cols-2">
             <Field label={t("tickets.field.client")} required>
               <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v, endpoint_id: "none", contact_id: "none" })}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger aria-label={t("tickets.field.client")}><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {clients?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -191,7 +191,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
             </Field>
             <Field label={t("tickets.field.assignee")}>
               <Select value={form.assignee_id} onValueChange={(v) => setForm({ ...form, assignee_id: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label={t("tickets.field.assignee")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">{t("tickets.unassigned")}</SelectItem>
                   {staff?.map((s) => <SelectItem key={s.id} value={s.id}>{s.full_name ?? s.email}</SelectItem>)}
@@ -200,7 +200,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
             </Field>
             <Field label={t("tickets.field.endpoint")}>
               <Select value={form.endpoint_id} onValueChange={(v) => setForm({ ...form, endpoint_id: v })} disabled={!form.client_id}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label={t("tickets.field.endpoint")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">—</SelectItem>
                   {endpoints?.map((e) => <SelectItem key={e.id} value={e.id}>{e.hostname}</SelectItem>)}
@@ -209,7 +209,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
             </Field>
             <Field label={t("tickets.field.contact")}>
               <Select value={form.contact_id} onValueChange={(v) => setForm({ ...form, contact_id: v })} disabled={!form.client_id}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label={t("tickets.field.contact")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">—</SelectItem>
                   {contacts?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -218,7 +218,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
             </Field>
             <Field label={t("tickets.field.category")}>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v as TicketCategory })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label={t("tickets.field.category")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TICKET_CATEGORIES.map((c) => (
                     <SelectItem key={c} value={c}>{t(`tickets.category.${c}` as TKey)}</SelectItem>
@@ -228,7 +228,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
             </Field>
             <Field label={t("tickets.field.priority")}>
               <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as TicketPriority })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label={t("tickets.field.priority")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TICKET_PRIORITIES.map((p) => (
                     <SelectItem key={p} value={p}>{t(`tickets.priority.${p}` as TKey)}</SelectItem>
@@ -238,7 +238,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
             </Field>
             <Field label={t("tickets.field.status")}>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as TicketStatus })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label={t("tickets.field.status")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {TICKET_STATUSES.map((s) => (
                     <SelectItem key={s} value={s}>{t(`tickets.status.${s}` as TKey)}</SelectItem>
@@ -250,7 +250,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
               <Input type="datetime-local" value={form.sla_due_at} onChange={(e) => setForm({ ...form, sla_due_at: e.target.value })} />
             </Field>
             <Field label={t("tickets.field.tags")} className="md:col-span-2">
-              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="vip, network, urgent" />
+              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder={t("tickets.field.tagsPh")} />
             </Field>
           </div>
           <DialogFooter>
@@ -267,12 +267,16 @@ export function TicketFormDialog({ open, onOpenChange, ticket, defaultClientId }
 }
 
 function Field({ label, required, className, children }: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
+  const id = useId();
+  const child = isValidElement(children) && (children as React.ReactElement).type !== Select
+    ? cloneElement(children as React.ReactElement<{ id?: string }>, { id: (children as React.ReactElement<{ id?: string }>).props.id ?? id })
+    : children;
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label className="text-xs font-medium text-muted-foreground">
+      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}{required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
-      {children}
+      {child}
     </div>
   );
 }

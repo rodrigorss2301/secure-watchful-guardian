@@ -108,7 +108,7 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
   const mutation = useMutation({
     mutationFn: async () => {
       if (!tenant) throw new Error("Tenant missing");
-      if (!form.client_id) throw new Error("Selecione um cliente");
+      if (!form.client_id) throw new Error(t("endpoints.form.selectClient"));
       const payload = {
         hostname: form.hostname.trim(),
         display_name: form.display_name.trim() || null,
@@ -145,7 +145,7 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t(endpoint ? "endpoints.edit" : "endpoints.new")}</DialogTitle>
           <DialogDescription>{t("endpoints.subtitle")}</DialogDescription>
@@ -155,31 +155,31 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
           className="space-y-4"
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Nome de exibição" className="md:col-span-2">
-              <Input
+            <Field htmlFor="ep-display_name" label={t("endpoints.form.displayName")} className="md:col-span-2">
+              <Input id="ep-display_name"
                 maxLength={120}
                 value={form.display_name}
                 onChange={(e) => setForm({ ...form, display_name: e.target.value })}
-                placeholder="Ex.: PC do João - Recepção"
+                placeholder={t("endpoints.form.displayNamePlaceholder")}
               />
               <p className="text-[11px] text-muted-foreground">
-                Apelido amigável mostrado na interface. O hostname real do equipamento não é alterado.
+                {t("endpoints.form.displayNameHelp")}
               </p>
             </Field>
-            <Field label={t("endpoints.field.hostname")} required>
-              <Input required maxLength={120} value={form.hostname} onChange={(e) => setForm({ ...form, hostname: e.target.value })} />
+            <Field htmlFor="ep-hostname" label={t("endpoints.field.hostname")} required>
+              <Input id="ep-hostname" required maxLength={120} value={form.hostname} onChange={(e) => setForm({ ...form, hostname: e.target.value })} />
             </Field>
-            <Field label={t("endpoints.field.client")} required>
+            <Field htmlFor="ep-client" label={t("endpoints.field.client")} required>
               <Select value={form.client_id} onValueChange={(v) => setForm({ ...form, client_id: v })}>
-                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectTrigger id="ep-client"><SelectValue placeholder="—" /></SelectTrigger>
                 <SelectContent>
                   {clients?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={t("endpoints.field.type")}>
+            <Field htmlFor="ep-type" label={t("endpoints.field.type")}>
               <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v as EndpointType })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ep-type"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ENDPOINT_TYPES.map((tp) => (
                     <SelectItem key={tp} value={tp}>{t(`endpoints.type.${tp}` as TKey)}</SelectItem>
@@ -187,9 +187,9 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={t("endpoints.field.status")}>
+            <Field htmlFor="ep-status" label={t("endpoints.field.status")}>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as EndpointStatus })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="ep-status"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {ENDPOINT_STATUSES.map((s) => (
                     <SelectItem key={s} value={s}>{t(`endpoints.status.${s}` as TKey)}</SelectItem>
@@ -197,42 +197,42 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
                 </SelectContent>
               </Select>
             </Field>
-            <Field label={t("endpoints.field.os")}>
-              <Input maxLength={80} value={form.os} onChange={(e) => setForm({ ...form, os: e.target.value })} placeholder="Windows 11 / Ubuntu 22.04" />
+            <Field htmlFor="ep-os" label={t("endpoints.field.os")}>
+              <Input id="ep-os" maxLength={80} value={form.os} onChange={(e) => setForm({ ...form, os: e.target.value })} placeholder="Windows 11 / Ubuntu 22.04" />
             </Field>
-            <Field label={t("endpoints.field.osVersion")}>
-              <Input maxLength={80} value={form.os_version} onChange={(e) => setForm({ ...form, os_version: e.target.value })} />
+            <Field htmlFor="ep-os_version" label={t("endpoints.field.osVersion")}>
+              <Input id="ep-os_version" maxLength={80} value={form.os_version} onChange={(e) => setForm({ ...form, os_version: e.target.value })} />
             </Field>
-            <Field label={t("endpoints.field.ip")}>
-              <Input maxLength={64} value={form.ip_address} onChange={(e) => setForm({ ...form, ip_address: e.target.value })} placeholder="192.168.1.10" />
+            <Field htmlFor="ep-ip" label={t("endpoints.field.ip")}>
+              <Input id="ep-ip" maxLength={64} value={form.ip_address} onChange={(e) => setForm({ ...form, ip_address: e.target.value })} placeholder="192.168.1.10" />
             </Field>
-            <Field label={t("endpoints.field.mac")}>
-              <Input maxLength={32} value={form.mac_address} onChange={(e) => setForm({ ...form, mac_address: e.target.value })} placeholder="aa:bb:cc:dd:ee:ff" />
+            <Field htmlFor="ep-mac" label={t("endpoints.field.mac")}>
+              <Input id="ep-mac" maxLength={32} value={form.mac_address} onChange={(e) => setForm({ ...form, mac_address: e.target.value })} placeholder="aa:bb:cc:dd:ee:ff" />
             </Field>
-            <Field label={t("endpoints.field.agent")}>
-              <Input maxLength={40} value={form.agent_version} onChange={(e) => setForm({ ...form, agent_version: e.target.value })} placeholder="1.0.0" />
+            <Field htmlFor="ep-agent" label={t("endpoints.field.agent")}>
+              <Input id="ep-agent" maxLength={40} value={form.agent_version} onChange={(e) => setForm({ ...form, agent_version: e.target.value })} placeholder="1.0.0" />
             </Field>
-            <Field label={t("endpoints.field.cpu")}>
-              <Input type="number" min={0} max={100} step="0.1" value={form.cpu_usage} onChange={(e) => setForm({ ...form, cpu_usage: e.target.value })} />
+            <Field htmlFor="ep-cpu" label={t("endpoints.field.cpu")}>
+              <Input id="ep-cpu" type="number" min={0} max={100} step="0.1" value={form.cpu_usage} onChange={(e) => setForm({ ...form, cpu_usage: e.target.value })} />
             </Field>
-            <Field label={t("endpoints.field.ram")}>
-              <Input type="number" min={0} max={100} step="0.1" value={form.ram_usage} onChange={(e) => setForm({ ...form, ram_usage: e.target.value })} />
+            <Field htmlFor="ep-ram" label={t("endpoints.field.ram")}>
+              <Input id="ep-ram" type="number" min={0} max={100} step="0.1" value={form.ram_usage} onChange={(e) => setForm({ ...form, ram_usage: e.target.value })} />
             </Field>
-            <Field label={t("endpoints.field.disk")}>
-              <Input type="number" min={0} max={100} step="0.1" value={form.disk_usage} onChange={(e) => setForm({ ...form, disk_usage: e.target.value })} />
+            <Field htmlFor="ep-disk" label={t("endpoints.field.disk")}>
+              <Input id="ep-disk" type="number" min={0} max={100} step="0.1" value={form.disk_usage} onChange={(e) => setForm({ ...form, disk_usage: e.target.value })} />
             </Field>
-            <Field label={t("endpoints.field.tags")} className="md:col-span-2">
-              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="prod, vip, sql" />
+            <Field htmlFor="ep-tags" label={t("endpoints.field.tags")} className="md:col-span-2">
+              <Input id="ep-tags" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="prod, vip, sql" />
               <p className="text-[11px] text-muted-foreground">{t("endpoints.field.tagsHelp")}</p>
             </Field>
-            <Field label={t("endpoints.field.notes")} className="md:col-span-2">
-              <Textarea rows={3} maxLength={2000} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            <Field htmlFor="ep-notes" label={t("endpoints.field.notes")} className="md:col-span-2">
+              <Textarea id="ep-notes" rows={3} maxLength={2000} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
             </Field>
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+            <Button type="button" variant="ghost" disabled={mutation.isPending} onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button type="submit" disabled={mutation.isPending} className="shadow-glow">
-              {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {mutation.isPending && <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />}
               {t("common.save")}
             </Button>
           </DialogFooter>
@@ -242,11 +242,11 @@ export function EndpointFormDialog({ open, onOpenChange, endpoint, defaultClient
   );
 }
 
-function Field({ label, required, className, children }: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
+function Field({ htmlFor, label, required, className, children }: { htmlFor?: string; label: string; required?: boolean; className?: string; children: React.ReactNode }) {
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label className="text-xs font-medium text-muted-foreground">
-        {label}{required && <span className="ml-0.5 text-destructive">*</span>}
+      <Label htmlFor={htmlFor} className="text-xs font-medium text-muted-foreground">
+        {label}{required && <span aria-hidden className="ml-0.5 text-destructive">*</span>}
       </Label>
       {children}
     </div>

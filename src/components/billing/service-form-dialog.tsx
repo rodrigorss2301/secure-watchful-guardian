@@ -79,31 +79,31 @@ export function ServiceFormDialog({
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>{t("billing.service.field.name")}</Label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+            <Label htmlFor="svc-1">{t("billing.service.field.name")}</Label>
+            <Input id="svc-1" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <Label>{t("billing.service.field.description")}</Label>
-            <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+            <Label htmlFor="svc-2">{t("billing.service.field.description")}</Label>
+            <Textarea id="svc-2" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label>{t("billing.service.field.unit")}</Label>
+              <Label htmlFor="svc-3">{t("billing.service.field.unit")}</Label>
               <Select value={unit} onValueChange={(v) => setUnit(v as ServiceUnit)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="svc-3"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {UNITS.map((u) => <SelectItem key={u} value={u}>{t(`billing.unit.${u}` as TKey)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>{t("billing.service.field.unitPrice")}</Label>
-              <Input type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
+              <Label htmlFor="svc-4">{t("billing.service.field.unitPrice")}</Label>
+              <Input id="svc-4" type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
             </div>
             <div>
-              <Label>{t("billing.service.field.currency")}</Label>
+              <Label htmlFor="svc-5">{t("billing.service.field.currency")}</Label>
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger id="svc-5"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="BRL">BRL</SelectItem>
                   <SelectItem value="USD">USD</SelectItem>
@@ -114,8 +114,8 @@ export function ServiceFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>{t("billing.service.field.taxRate")} (%)</Label>
-              <Input type="number" step="0.01" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} />
+              <Label htmlFor="svc-6">{t("billing.service.field.taxRate")} (%)</Label>
+              <Input id="svc-6" type="number" step="0.01" value={taxRate} onChange={(e) => setTaxRate(e.target.value)} />
             </div>
             <div className="flex items-end gap-2">
               <Switch id="svc-active" checked={active} onCheckedChange={setActive} />

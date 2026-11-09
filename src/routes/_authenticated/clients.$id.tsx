@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
+import { formatDate } from "@/lib/format";
 import { ClientFormDialog } from "@/components/clients/client-form-dialog";
 import { ContactFormDialog } from "@/components/clients/contact-form-dialog";
 import { SLA_TONE, STATUS_TONE, type Client, type ClientContact } from "@/lib/clients";
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/clients/$id")({
 
 function ClientDetailPage() {
   const { id } = Route.useParams();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { hasAnyRole } = useAuth();
   const canWrite = hasAnyRole(["admin", "technician"]);
   const qc = useQueryClient();
@@ -95,14 +96,14 @@ function ClientDetailPage() {
   });
 
   if (isLoading) {
-    return <div className="space-y-4"><Skeleton className="h-10 w-64" /><Skeleton className="h-64" /></div>;
+    return <div className="space-y-4" role="status" aria-busy="true" aria-label={t("common.loading")}><Skeleton className="h-10 w-64" /><Skeleton className="h-64" /></div>;
   }
 
   if (!client) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-        <Building2 className="h-12 w-12 text-muted-foreground/40" />
-        <p className="text-muted-foreground">404</p>
+        <Building2 aria-hidden="true" className="h-12 w-12 text-muted-foreground/40" />
+        <p className="text-muted-foreground">{t("common.notFound")}</p>
         <Button asChild variant="outline"><Link to="/clients">{t("common.back")}</Link></Button>
       </div>
     );
@@ -110,13 +111,13 @@ function ClientDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2 h-8 text-muted-foreground">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2 h-9 text-muted-foreground">
             <Link to="/clients"><ArrowLeft className="mr-1.5 h-4 w-4" /> {t("clients.title")}</Link>
           </Button>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-3xl font-bold tracking-tight">{client.name}</h1>
+            <h1 className="break-words font-display text-2xl font-bold tracking-tight sm:text-3xl">{client.name}</h1>
             <Badge variant="outline" className={`uppercase text-[10px] ${STATUS_TONE[client.status]}`}>
               {t(`clients.status.${client.status}` as TKey)}
             </Badge>
@@ -152,7 +153,7 @@ function ClientDetailPage() {
             <>
               <Separator className="my-5" />
               <div className="flex gap-3">
-                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <FileText aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 <p className="whitespace-pre-wrap text-sm text-muted-foreground">{client.notes}</p>
               </div>
             </>
@@ -164,8 +165,8 @@ function ClientDetailPage() {
             {t("clients.detail.contract")}
           </h2>
           <dl className="space-y-4">
-            <Info icon={Calendar} label={t("clients.field.contractStart")} value={fmtDate(client.contract_start)} />
-            <Info icon={Calendar} label={t("clients.field.contractEnd")} value={fmtDate(client.contract_end)} />
+            <Info icon={Calendar} label={t("clients.field.contractStart")} value={client.contract_start ? formatDate(client.contract_start, lang) : null} />
+            <Info icon={Calendar} label={t("clients.field.contractEnd")} value={client.contract_end ? formatDate(client.contract_end, lang) : null} />
           </dl>
         </Card>
       </div>
@@ -180,7 +181,7 @@ function ClientDetailPage() {
       )}
 
       <Card className="border-border/60">
-        <div className="flex items-center justify-between border-b border-border/60 p-4">
+        <div className="flex items-center justify-between gap-2 border-b border-border/60 p-4">
           <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             {t("clients.detail.contacts")} {contacts && `(${contacts.length})`}
           </h2>
@@ -199,7 +200,7 @@ function ClientDetailPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{c.name}</span>
-                    {c.is_primary && <Star className="h-3.5 w-3.5 fill-primary text-primary" />}
+                    {c.is_primary && <Star className="h-3.5 w-3.5 fill-primary text-primary" aria-label={t("clients.contact.primary")} role="img" />}
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
                     {c.role && <span>{c.role}</span>}
@@ -209,10 +210,10 @@ function ClientDetailPage() {
                 </div>
                 {canWrite && (
                   <div className="flex items-center gap-1">
-                    <Button size="icon" variant="ghost" onClick={() => setContactDialog({ open: true, contact: c })}>
+                    <Button size="icon" variant="ghost" aria-label={`${t("clients.edit")}: ${c.name}`} onClick={() => setContactDialog({ open: true, contact: c })}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setDeletingContact(c)} className="text-destructive hover:text-destructive">
+                    <Button size="icon" variant="ghost" aria-label={`${t("clients.delete")}: ${c.name}`} onClick={() => setDeletingContact(c)} className="text-destructive hover:text-destructive">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -257,10 +258,10 @@ function Info({
 }: { icon: typeof Mail; label: string; value: string | null | undefined; link?: string }) {
   return (
     <div className="flex gap-3">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <Icon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
       <div className="min-w-0 flex-1">
-        <dt className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</dt>
-        <dd className="truncate text-sm">
+        <dt className="text-xs uppercase tracking-wider text-muted-foreground">{label}</dt>
+        <dd className="break-words text-sm">
           {value
             ? link
               ? <a href={link} target="_blank" rel="noreferrer" className="hover:text-primary">{value}</a>
@@ -270,11 +271,6 @@ function Info({
       </div>
     </div>
   );
-}
-
-function fmtDate(d: string | null) {
-  if (!d) return null;
-  return new Date(d).toLocaleDateString();
 }
 
 function randomSlug() {
@@ -295,6 +291,7 @@ function PublicIntakeCard({
   copied: boolean;
   setCopied: (v: boolean) => void;
 }) {
+  const { t } = useI18n();
   const raw = client as unknown as { public_intake_enabled?: boolean | null; public_intake_slug?: string | null };
   const enabled = !!raw.public_intake_enabled;
   const slug = raw.public_intake_slug ?? null;
@@ -303,23 +300,23 @@ function PublicIntakeCard({
   return (
     <Card className="border-border/60 p-5">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            Link público de chamados
+            {t("clients.intake.title")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Compartilhe este link para que qualquer pessoa (sem cadastro) abra chamados para este cliente.
+            {t("clients.intake.desc")}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{enabled ? "Ativo" : "Inativo"}</span>
-          <Switch checked={enabled} onCheckedChange={onToggle} />
+          <span className="text-xs text-muted-foreground" aria-hidden="true">{enabled ? t("common.active") : t("common.inactive")}</span>
+          <Switch checked={enabled} onCheckedChange={onToggle} aria-label={t("clients.intake.title")} />
         </div>
       </div>
       {enabled && slug && (
-        <div className="mt-4 flex items-center gap-2">
-          <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <Input value={url} readOnly className="font-mono text-xs" />
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <LinkIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Input value={url} readOnly aria-label={t("clients.intake.title")} onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 basis-48 font-mono text-xs" />
           <Button
             size="icon"
             variant="outline"
@@ -327,17 +324,17 @@ function PublicIntakeCard({
               try {
                 await navigator.clipboard.writeText(url);
                 setCopied(true);
-                toast.success("Link copiado");
+                toast.success(t("clients.intake.copied"));
                 setTimeout(() => setCopied(false), 1500);
-              } catch { toast.error("Não foi possível copiar"); }
+              } catch { toast.error(t("clients.intake.copyFail")); }
             }}
-            aria-label="Copiar link"
+            aria-label={t("clients.intake.copy")}
           >
-            {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+            {copied ? <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-4 w-4" />}
           </Button>
           <Button asChild size="sm" variant="outline">
             <a href={url} target="_blank" rel="noreferrer">
-              <ExternalLink className="mr-1.5 h-4 w-4" /> Abrir preview
+              <ExternalLink aria-hidden="true" className="mr-1.5 h-4 w-4" /> {t("clients.intake.preview")}
             </a>
           </Button>
         </div>

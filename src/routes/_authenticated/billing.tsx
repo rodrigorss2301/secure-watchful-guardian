@@ -20,6 +20,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useI18n, type TKey } from "@/lib/i18n";
+import { formatDate } from "@/lib/format";
 import {
   CONTRACT_STATUS_TONE, INVOICE_STATUS_TONE, formatCurrency, isOverdue,
   type Contract, type Invoice, type Service,
@@ -29,15 +30,26 @@ import { ServiceFormDialog } from "@/components/billing/service-form-dialog";
 import { InvoiceDetailDialog } from "@/components/billing/invoice-detail-dialog";
 
 export const Route = createFileRoute("/_authenticated/billing")({
-  head: () => ({ meta: [{ title: "Contracts & Billing — Autotechs RMM" }] }),
+  head: () => ({ meta: [{ title: "Contratos e faturamento — Autotechs RMM" }] }),
   component: BillingPage,
 });
 
 type ContractRow = Contract & { client?: { name: string } | null };
 type InvoiceRow = Invoice & { client?: { name: string } | null; contract?: { name: string } | null };
 
-function BillingPage() {
+function StateRow({ cols, loading, error, children }: { cols: number; loading: boolean; error: boolean; children: React.ReactNode }) {
   const { t } = useI18n();
+  return (
+    <TableRow>
+      <TableCell colSpan={cols} role={error ? "alert" : loading ? "status" : undefined} className="py-10 text-center text-muted-foreground">
+        {error ? t("common.error") : loading ? t("common.loading") : children}
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function BillingPage() {
+  const { t, lang } = useI18n();
   const { tenant, hasAnyRole } = useAuth();
   const canEdit = hasAnyRole(["admin", "technician"]);
   const isAdmin = hasAnyRole(["admin"]);
@@ -53,7 +65,7 @@ function BillingPage() {
   const [pendingDelService, setPendingDelService] = useState<Service | null>(null);
   const [pendingDelInvoice, setPendingDelInvoice] = useState<Invoice | null>(null);
 
-  const { data: contracts } = useQuery({
+  const { data: contracts, isLoading: loadingContracts, isError: errContracts } = useQuery({
     queryKey: ["contracts", tenant?.id],
     queryFn: async (): Promise<ContractRow[]> => {
       const { data, error } = await supabase
@@ -66,7 +78,7 @@ function BillingPage() {
     enabled: !!tenant,
   });
 
-  const { data: invoices } = useQuery({
+  const { data: invoices, isLoading: loadingInvoices, isError: errInvoices } = useQuery({
     queryKey: ["invoices", tenant?.id],
     queryFn: async (): Promise<InvoiceRow[]> => {
       const { data, error } = await supabase
@@ -79,7 +91,7 @@ function BillingPage() {
     enabled: !!tenant,
   });
 
-  const { data: services } = useQuery({
+  const { data: services, isLoading: loadingServices, isError: errServices } = useQuery({
     queryKey: ["services", tenant?.id],
     queryFn: async (): Promise<Service[]> => {
       const { data, error } = await supabase.from("service_catalog").select("*").order("name");
@@ -161,7 +173,7 @@ function BillingPage() {
     <>
       <PageHeader title={t("billing.title")} description={t("billing.subtitle")} />
 
-      <div className="mb-6 grid gap-3 md:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Kpi icon={Wallet} label={t("billing.kpi.mrr")} value={formatCurrency(kpis.mrr)} tone="text-emerald-500" />
         <Kpi icon={FileText} label={t("billing.kpi.activeContracts")} value={String(kpis.active)} />
         <Kpi icon={Receipt} label={t("billing.kpi.pending")} value={String(kpis.pending)} tone="text-sky-500" />
@@ -170,14 +182,14 @@ function BillingPage() {
 
       <Tabs defaultValue="contracts" className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TabsList>
+          <TabsList className="h-auto flex-wrap justify-start">
             <TabsTrigger value="contracts">{t("billing.tab.contracts")}</TabsTrigger>
             <TabsTrigger value="invoices">{t("billing.tab.invoices")}</TabsTrigger>
             <TabsTrigger value="services">{t("billing.tab.services")}</TabsTrigger>
           </TabsList>
-          <div className="relative max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("billing.search")} className="pl-9" />
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input type="search" aria-label={t("billing.search")} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("billing.search")} className="pl-9" />
           </div>
         </div>
 
@@ -186,11 +198,11 @@ function BillingPage() {
           {canEdit && (
             <div className="flex justify-end">
               <Button onClick={() => { setEditingContract(null); setContractOpen(true); }} className="shadow-glow">
-                <Plus className="mr-2 h-4 w-4" /> {t("billing.contract.new")}
+                <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> {t("billing.contract.new")}
               </Button>
             </div>
           )}
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -205,8 +217,8 @@ function BillingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredContracts.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">{t("billing.empty")}</TableCell></TableRow>
+                {loadingContracts || errContracts || filteredContracts.length === 0 ? (
+                  <StateRow cols={8} loading={loadingContracts} error={errContracts}>{t("billing.empty")}</StateRow>
                 ) : filteredContracts.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell>
@@ -223,24 +235,24 @@ function BillingPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-mono text-sm">{formatCurrency(c.monthly_value, c.currency)}</TableCell>
-                    <TableCell className="text-sm">{c.start_date}</TableCell>
-                    <TableCell className="text-sm">{c.end_date ?? "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">{formatDate(c.start_date, lang)}</TableCell>
+                    <TableCell className="whitespace-nowrap text-sm">{formatDate(c.end_date, lang)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         {canEdit && (
                           <Button size="sm" variant="ghost" disabled={generateInvoice.isPending}
-                            onClick={() => generateInvoice.mutate(c.id)} title={t("billing.contract.generateInvoice")}>
-                            <FilePlus2 className="h-4 w-4" />
+                            onClick={() => generateInvoice.mutate(c.id)} title={t("billing.contract.generateInvoice")} aria-label={`${t("billing.contract.generateInvoice")}: ${c.name}`}>
+                            <FilePlus2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         )}
                         {canEdit && (
-                          <Button size="sm" variant="ghost" onClick={() => { setEditingContract(c); setContractOpen(true); }}>
-                            <Pencil className="h-4 w-4" />
+                          <Button size="sm" variant="ghost" onClick={() => { setEditingContract(c); setContractOpen(true); }} title={t("billing.contract.edit")} aria-label={`${t("billing.contract.edit")}: ${c.name}`}>
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         )}
                         {isAdmin && (
-                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setPendingDelContract(c)}>
-                            <Trash2 className="h-4 w-4" />
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setPendingDelContract(c)} title={t("common.delete")} aria-label={`${t("common.delete")}: ${c.name}`}>
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         )}
                       </div>
@@ -254,7 +266,7 @@ function BillingPage() {
 
         {/* INVOICES */}
         <TabsContent value="invoices" className="space-y-3">
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -269,31 +281,32 @@ function BillingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.length === 0 ? (
-                  <TableRow><TableCell colSpan={8} className="py-10 text-center text-muted-foreground">{t("billing.empty")}</TableCell></TableRow>
+                {loadingInvoices || errInvoices || filteredInvoices.length === 0 ? (
+                  <StateRow cols={8} loading={loadingInvoices} error={errInvoices}>{t("billing.empty")}</StateRow>
                 ) : filteredInvoices.map((i) => {
-                  const overdue = isOverdue(i);
+                  // Status exibido: fatura enviada e vencida aparece como "vencida" (cor e texto da mesma fonte).
+                  const shownStatus = isOverdue(i) ? "overdue" : i.status;
                   return (
                     <TableRow key={i.id}>
                       <TableCell className="font-mono text-sm">{i.number}</TableCell>
                       <TableCell className="text-sm">{i.client?.name ?? "—"}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{i.contract?.name ?? "—"}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={INVOICE_STATUS_TONE[overdue && i.status !== "paid" && i.status !== "void" ? "overdue" : i.status]}>
-                          {t(`billing.invoice.status.${overdue && i.status === "sent" ? "overdue" : i.status}` as TKey)}
+                        <Badge variant="outline" className={INVOICE_STATUS_TONE[shownStatus]}>
+                          {t(`billing.invoice.status.${shownStatus}` as TKey)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm">{i.issue_date}</TableCell>
-                      <TableCell className="text-sm">{i.due_date}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">{formatDate(i.issue_date, lang)}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm">{formatDate(i.due_date, lang)}</TableCell>
                       <TableCell className="text-right font-mono text-sm font-semibold">{formatCurrency(i.total, i.currency)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="ghost" onClick={() => setInvoiceDetail(i)}>
-                            <Eye className="h-4 w-4" />
+                          <Button size="sm" variant="ghost" onClick={() => setInvoiceDetail(i)} title={t("billing.invoice.view")} aria-label={`${t("billing.invoice.view")}: ${i.number}`}>
+                            <Eye className="h-4 w-4" aria-hidden="true" />
                           </Button>
                           {isAdmin && (
-                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setPendingDelInvoice(i)}>
-                              <Trash2 className="h-4 w-4" />
+                            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setPendingDelInvoice(i)} title={t("common.delete")} aria-label={`${t("common.delete")}: ${i.number}`}>
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           )}
                         </div>
@@ -311,11 +324,11 @@ function BillingPage() {
           {canEdit && (
             <div className="flex justify-end">
               <Button onClick={() => { setEditingService(null); setServiceOpen(true); }} className="shadow-glow">
-                <Plus className="mr-2 h-4 w-4" /> {t("billing.service.new")}
+                <Plus className="mr-2 h-4 w-4" aria-hidden="true" /> {t("billing.service.new")}
               </Button>
             </div>
           )}
-          <div className="rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto rounded-lg border border-border">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -327,13 +340,13 @@ function BillingPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredServices.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} className="py-10 text-center text-muted-foreground">{t("billing.empty")}</TableCell></TableRow>
+                {loadingServices || errServices || filteredServices.length === 0 ? (
+                  <StateRow cols={5} loading={loadingServices} error={errServices}>{t("billing.empty")}</StateRow>
                 ) : filteredServices.map((sv) => (
                   <TableRow key={sv.id}>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
+                        <Package className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                         <div className="flex flex-col">
                           <span className="font-medium">{sv.name}</span>
                           {sv.description && <span className="text-xs text-muted-foreground line-clamp-1">{sv.description}</span>}
@@ -344,19 +357,19 @@ function BillingPage() {
                     <TableCell className="text-right font-mono text-sm">{formatCurrency(sv.unit_price, sv.currency)}</TableCell>
                     <TableCell>
                       {sv.active
-                        ? <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-500">●</Badge>
-                        : <Badge variant="outline" className="border-border bg-muted text-muted-foreground">○</Badge>}
+                        ? <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">{t("billing.service.col.active")}</Badge>
+                        : <Badge variant="outline" className="border-border bg-muted text-muted-foreground">—</Badge>}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         {canEdit && (
-                          <Button size="sm" variant="ghost" onClick={() => { setEditingService(sv); setServiceOpen(true); }}>
-                            <Pencil className="h-4 w-4" />
+                          <Button size="sm" variant="ghost" onClick={() => { setEditingService(sv); setServiceOpen(true); }} title={t("billing.service.edit")} aria-label={`${t("billing.service.edit")}: ${sv.name}`}>
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         )}
                         {isAdmin && (
-                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setPendingDelService(sv)}>
-                            <Trash2 className="h-4 w-4" />
+                          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setPendingDelService(sv)} title={t("common.delete")} aria-label={`${t("common.delete")}: ${sv.name}`}>
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
                           </Button>
                         )}
                       </div>
@@ -426,7 +439,7 @@ function Kpi({ icon: Icon, label, value, tone }: { icon: typeof Wallet; label: s
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</CardTitle>
-        <Icon className={`h-4 w-4 ${tone ?? "text-muted-foreground"}`} />
+        <Icon className={`h-4 w-4 ${tone ?? "text-muted-foreground"}`} aria-hidden="true" />
       </CardHeader>
       <CardContent>
         <div className={`text-2xl font-bold ${tone ?? ""}`}>{value}</div>

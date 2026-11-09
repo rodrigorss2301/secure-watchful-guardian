@@ -36,7 +36,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border/10 bg-background/70 px-4 shadow-sm shadow-black/5 backdrop-blur-xl backdrop-saturate-150 md:px-6">
-      <SidebarTrigger className="h-10 w-10 rounded-2xl border border-border/50 bg-background/70 text-foreground transition hover:bg-accent/15" />
+      <SidebarTrigger aria-label={t("nav.menu")} title={t("nav.menu")} className="h-10 w-10 rounded-2xl border border-border/50 bg-background/70 text-foreground transition hover:bg-accent/15" />
       <Separator orientation="vertical" className="mx-1 h-5" />
 
       <div className="ml-auto flex items-center gap-2">
@@ -45,10 +45,9 @@ export function AppHeader() {
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative rounded-full" aria-label={t("common.notifications")}>
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-primary shadow-glow" />
-            </Button>
+            <Button variant="ghost" size="icon" className="rounded-full" aria-label={t("common.notifications")}>
+              <Bell className="h-4 w-4" aria-hidden="true" />
+                          </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-80">
             <div className="mb-3 flex items-center justify-between">
@@ -62,9 +61,9 @@ export function AppHeader() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-9 gap-2 rounded-full pl-1 pr-3">
+            <Button variant="ghost" className="h-10 gap-2 rounded-full pl-1 pr-3" aria-label={profile?.full_name ?? user?.email ?? t("auth.profile")}>
               <Avatar className="h-7 w-7 border border-border">
-                <AvatarImage src={profile?.avatar_url ?? undefined} />
+                <AvatarImage src={profile?.avatar_url ?? undefined} alt="" />
                 <AvatarFallback className="bg-primary/15 text-xs font-semibold text-primary">
                   {initials(profile?.full_name, user?.email ?? "U")}
                 </AvatarFallback>

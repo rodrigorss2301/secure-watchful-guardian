@@ -6,14 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n, type TKey } from "@/lib/i18n";
+import { formatDateTime } from "@/lib/format";
 
 type Category = "all" | "hardware" | "network" | "software" | "os";
 type PeriodDays = 1 | 7 | 14 | 30;
-const PERIOD_OPTIONS: { days: PeriodDays; label: string }[] = [
-  { days: 1,  label: "24h" },
-  { days: 7,  label: "7 dias" },
-  { days: 14, label: "14 dias" },
-  { days: 30, label: "30 dias" },
+const PERIOD_OPTIONS: { days: PeriodDays; labelKey: TKey }[] = [
+  { days: 1,  labelKey: "history.period.24h" },
+  { days: 7,  labelKey: "history.period.7d" },
+  { days: 14, labelKey: "history.period.14d" },
+  { days: 30, labelKey: "history.period.30d" },
 ];
 type HistoryRow = {
   id: string;
@@ -25,26 +27,20 @@ type HistoryRow = {
   created_at: string;
 };
 
-const CAT_LABEL: Record<string, { label: string; icon: typeof Cpu; tone: string }> = {
-  hardware: { label: "Hardware", icon: Cpu,               tone: "border-purple-500/40 text-purple-500" },
-  network:  { label: "Rede",     icon: Network,           tone: "border-sky-500/40 text-sky-500" },
-  software: { label: "Software", icon: Package,           tone: "border-emerald-500/40 text-emerald-500" },
-  os:       { label: "SO",       icon: MonitorSmartphone, tone: "border-amber-500/40 text-amber-600" },
+const CAT_LABEL: Record<string, { labelKey: TKey; icon: typeof Cpu; tone: string }> = {
+  hardware: { labelKey: "history.cat.hardware", icon: Cpu,               tone: "border-purple-500/40 text-purple-600 dark:text-purple-400" },
+  network:  { labelKey: "history.cat.network", icon: Network,           tone: "border-sky-500/40 text-sky-600 dark:text-sky-500" },
+  software: { labelKey: "history.cat.software", icon: Package,           tone: "border-emerald-500/40 text-emerald-600 dark:text-emerald-500" },
+  os:       { labelKey: "history.cat.os", icon: MonitorSmartphone, tone: "border-amber-500/40 text-amber-600" },
 };
 
-const FIELD_LABEL: Record<string, string> = {
-  cpu_model: "Modelo da CPU", cpu_cores: "Núcleos", ram_total_mb: "RAM total (MB)",
-  gpu: "GPU", manufacturer: "Fabricante", model: "Modelo", serial_number: "Número de série",
-  motherboard: "Placa-mãe", bios_version: "BIOS", disks: "Discos",
-  ip_address: "IP privado", public_ip: "IP público", gateway: "Gateway",
-  mac_address: "MAC", tailscale_ip: "IP Tailscale", dns_servers: "Servidores DNS",
-  interfaces: "Interfaces de rede", os: "Sistema operacional", os_version: "Versão do SO",
-};
+const FIELD_KEYS = new Set(["cpu_model", "cpu_cores", "ram_total_mb", "gpu", "manufacturer", "model", "serial_number", "motherboard", "bios_version", "disks", "ip_address", "public_ip", "gateway", "mac_address", "tailscale_ip", "dns_servers", "interfaces", "os", "os_version"]);
 
 export function HistoryTab({ endpointId }: { endpointId: string }) {
+  const { t, lang } = useI18n();
   const [cat, setCat] = useState<Category>("all");
   const [periodDays, setPeriodDays] = useState<PeriodDays>(30);
-  const periodLabel = PERIOD_OPTIONS.find((p) => p.days === periodDays)!.label;
+  const periodLabel = t(PERIOD_OPTIONS.find((p) => p.days === periodDays)!.labelKey);
 
   const since = useMemo(() => {
     const d = new Date(); d.setDate(d.getDate() - periodDays); return d.toISOString();
@@ -174,37 +170,38 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Período</span>
-        <div className="flex flex-wrap gap-1">
+        <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{t("history.period")}</span>
+        <div className="flex flex-wrap gap-1" role="group" aria-label={t("history.period")}>
           {PERIOD_OPTIONS.map((p) => (
             <Button
               key={p.days}
               type="button" size="sm"
+              aria-pressed={periodDays === p.days}
               variant={periodDays === p.days ? "default" : "outline"}
               onClick={() => setPeriodDays(p.days)}
-              className="h-7 px-2.5 text-[11px]"
+              className="h-8 px-3 text-xs"
             >
-              {p.label}
+              {t(p.labelKey)}
             </Button>
           ))}
         </div>
       </div>
 
       <Card className="border-border/60 p-4">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <Wifi className="h-4 w-4" /> Conectividade
+            <Wifi className="h-4 w-4" /> {t("history.connectivity")}
           </h3>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Últimos {periodLabel}</span>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("history.lastPeriod").replace("{period}", periodLabel)}</span>
         </div>
         <div className="mb-3 grid grid-cols-3 gap-2 text-center">
-          <Stat label="Uptime" value={`${uptime.pct.toFixed(2)}%`} tone={uptime.pct >= 99 ? "text-emerald-500" : uptime.pct >= 95 ? "text-amber-500" : "text-destructive"} />
-          <Stat label="Quedas" value={String(uptime.outageCount)} tone="text-foreground" />
-          <Stat label="Tempo fora" value={formatDuration(uptime.downSeconds)} tone={uptime.downSeconds > 0 ? "text-destructive" : "text-foreground"} />
+          <Stat label={t("history.uptime")} value={`${uptime.pct.toFixed(2)}%`} tone={uptime.pct >= 99 ? "text-emerald-600 dark:text-emerald-500" : uptime.pct >= 95 ? "text-amber-600 dark:text-amber-500" : "text-destructive"} />
+          <Stat label={t("history.outages")} value={String(uptime.outageCount)} tone="text-foreground" />
+          <Stat label={t("history.downtime")} value={formatDuration(uptime.downSeconds)} tone={uptime.downSeconds > 0 ? "text-destructive" : "text-foreground"} />
         </div>
-        <div className="mb-3 h-44">
+        <div className="mb-3 h-44" role="img" aria-label={t("history.uptimeChartAria").replace("{period}", periodLabel).replace("{pct}", uptime.pct.toFixed(2))}>
           {connectivity.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Sem dados de conectividade.</div>
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">{t("history.noConnectivity")}</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={connectivity} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -219,35 +216,35 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
                 <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
                 <Tooltip
                   contentStyle={{ fontSize: 11, background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
-                  formatter={(v: number) => [`${v}%`, "Uptime"]}
+                  formatter={(v: number) => [`${v}%`, t("history.uptime")]}
                 />
-                <Area type="monotone" dataKey="uptime" stroke="#10b981" fill="url(#h-net)" strokeWidth={1.5} name="Uptime" />
+                <Area type="monotone" dataKey="uptime" stroke="#10b981" fill="url(#h-net)" strokeWidth={1.5} name={t("history.uptime")} />
               </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
         {(outages ?? []).length === 0 ? (
-          <p className="py-4 text-center text-xs text-muted-foreground">Sem quedas registradas nos últimos {periodLabel}.</p>
+          <p className="py-4 text-center text-xs text-muted-foreground">{t("history.noOutages").replace("{period}", periodLabel)}</p>
         ) : (
           <ul className="space-y-2">
             {(outages ?? []).slice(0, 20).map((o) => {
               const ongoing = !o.ended_at;
               return (
                 <li key={o.id} className="flex items-center gap-3 rounded-md border border-border/40 bg-card/30 px-3 py-2 text-xs">
-                  <WifiOff className={`h-4 w-4 shrink-0 ${ongoing ? "text-destructive" : "text-muted-foreground"}`} />
+                  <WifiOff aria-hidden className={`h-4 w-4 shrink-0 ${ongoing ? "text-destructive" : "text-muted-foreground"}`} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       {ongoing ? (
-                        <Badge variant="outline" className="border-destructive/40 text-[10px] text-destructive">offline agora</Badge>
+                        <Badge variant="outline" className="border-destructive/40 text-[10px] text-destructive">{t("history.offlineNow")}</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[10px] text-muted-foreground">recuperado</Badge>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">{t("history.recovered")}</Badge>
                       )}
                       <span className="font-medium">{formatDuration(o.duration_seconds ?? Math.max(0, Math.round((Date.now() - new Date(o.started_at).getTime()) / 1000)))}</span>
-                      <span className="text-muted-foreground">sem heartbeat</span>
+                      <span className="text-muted-foreground">{t("history.noHeartbeat")}</span>
                     </div>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      Início: {new Date(o.started_at).toLocaleString()}
-                      {o.ended_at ? ` · Fim: ${new Date(o.ended_at).toLocaleString()}` : ""}
+                      {t("history.start")}: {formatDateTime(o.started_at, lang)}
+                      {o.ended_at ? ` · ${t("history.end")}: ${formatDateTime(o.ended_at, lang)}` : ""}
                     </p>
                   </div>
                 </li>
@@ -258,13 +255,13 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
       </Card>
 
       <Card className="border-border/60 p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Utilização média diária</h3>
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Últimos {periodLabel}</span>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold">{t("history.dailyUsage")}</h3>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("history.lastPeriod").replace("{period}", periodLabel)}</span>
         </div>
-        <div className="h-56">
+        <div className="h-56" role="img" aria-label={t("history.usageChartAria").replace("{period}", periodLabel)}>
           {daily.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">Sem amostras suficientes para os últimos {periodLabel}.</div>
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">{t("history.noSamples").replace("{period}", periodLabel)}</div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={daily} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -279,7 +276,7 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
                 <Tooltip contentStyle={{ fontSize: 11, background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }} />
                 <Area type="monotone" dataKey="cpu"  stroke="#10b981" fill="url(#h-cpu)"  strokeWidth={1.5} name="CPU" />
                 <Area type="monotone" dataKey="ram"  stroke="#0ea5e9" fill="url(#h-ram)"  strokeWidth={1.5} name="RAM" />
-                <Area type="monotone" dataKey="disk" stroke="#f59e0b" fill="url(#h-disk)" strokeWidth={1.5} name="Disco" />
+                <Area type="monotone" dataKey="disk" stroke="#f59e0b" fill="url(#h-disk)" strokeWidth={1.5} name={t("history.disk")} />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -289,42 +286,42 @@ export function HistoryTab({ endpointId }: { endpointId: string }) {
       <Card className="border-border/60 p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
-            <History className="h-4 w-4" /> Mudanças detectadas
+            <History className="h-4 w-4" /> {t("history.changes")}
           </h3>
-          <div className="flex flex-wrap gap-1">
-            <FilterPill active={cat === "all"} onClick={() => setCat("all")} label="Tudo" count={(changes ?? []).length} />
-            <FilterPill active={cat === "hardware"} onClick={() => setCat("hardware")} label="Hardware" count={counts.hardware} />
-            <FilterPill active={cat === "network"}  onClick={() => setCat("network")}  label="Rede"     count={counts.network} />
-            <FilterPill active={cat === "software"} onClick={() => setCat("software")} label="Software" count={counts.software} />
-            <FilterPill active={cat === "os"}       onClick={() => setCat("os")}       label="SO"       count={counts.os} />
+          <div className="flex flex-wrap gap-1" role="group" aria-label={t("history.category")}>
+            <FilterPill active={cat === "all"} onClick={() => setCat("all")} label={t("history.cat.all")} count={(changes ?? []).length} />
+            <FilterPill active={cat === "hardware"} onClick={() => setCat("hardware")} label={t("history.cat.hardware")} count={counts.hardware} />
+            <FilterPill active={cat === "network"}  onClick={() => setCat("network")}  label={t("history.cat.network")}     count={counts.network} />
+            <FilterPill active={cat === "software"} onClick={() => setCat("software")} label={t("history.cat.software")} count={counts.software} />
+            <FilterPill active={cat === "os"}       onClick={() => setCat("os")}       label={t("history.cat.os")}       count={counts.os} />
           </div>
         </div>
 
         {isLoading ? (
-          <p className="py-8 text-center text-xs text-muted-foreground">Carregando…</p>
+          <p role="status" className="py-8 text-center text-xs text-muted-foreground">{t("common.loading")}</p>
         ) : (changes ?? []).length === 0 ? (
           <p className="py-8 text-center text-xs text-muted-foreground">
-            Nenhuma mudança registrada nos últimos {periodLabel}. As mudanças aparecem aqui assim que o agente reportar diferenças.
+            {t("history.noChanges").replace("{period}", periodLabel)}
           </p>
         ) : (
           <ul className="space-y-2">
             {(changes ?? []).map((c) => {
               const meta = CAT_LABEL[c.category] ?? CAT_LABEL.hardware;
               const Icon = meta.icon;
-              const fieldLabel = FIELD_LABEL[c.field] ?? c.field;
+              const fieldLabel = FIELD_KEYS.has(c.field) ? t(`history.field.${c.field}` as TKey) : c.field;
               return (
-                <li key={c.id} className="flex items-start gap-3 rounded-md border border-border/40 bg-card/30 px-3 py-2 text-xs">
-                  <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <li key={c.id} className="flex flex-wrap items-start gap-x-3 gap-y-1 sm:flex-nowrap rounded-md border border-border/40 bg-card/30 px-3 py-2 text-xs">
+                  <Icon aria-hidden className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className={`text-[10px] uppercase ${meta.tone}`}>{meta.label}</Badge>
+                      <Badge variant="outline" className={`text-[10px] uppercase ${meta.tone}`}>{t(meta.labelKey)}</Badge>
                       <span className="font-medium">{fieldLabel}</span>
                       <ChangeBadge type={c.change_type} />
                     </div>
                     <ValueDiff old={c.old_value} next={c.new_value} type={c.change_type} />
                   </div>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">
-                    {new Date(c.created_at).toLocaleString()}
+                  <span className="shrink-0 text-[11px] text-muted-foreground max-sm:w-full max-sm:pl-7">
+                    {formatDateTime(c.created_at, lang)}
                   </span>
                 </li>
               );
@@ -340,8 +337,9 @@ function FilterPill({ label, count, active, onClick }: { label: string; count: n
   return (
     <Button
       type="button" size="sm" variant={active ? "default" : "outline"}
+      aria-pressed={active}
       onClick={onClick}
-      className="h-7 gap-1.5 px-2.5 text-[11px]"
+      className="h-8 gap-1.5 px-3 text-xs"
     >
       {label}
       <span className={`rounded-full px-1.5 text-[10px] ${active ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground"}`}>{count}</span>
@@ -350,19 +348,21 @@ function FilterPill({ label, count, active, onClick }: { label: string; count: n
 }
 
 function ChangeBadge({ type }: { type: string }) {
-  if (type === "added")   return <Badge variant="outline" className="gap-1 border-emerald-500/40 text-[10px] text-emerald-500"><Plus className="h-3 w-3" />adicionado</Badge>;
-  if (type === "removed") return <Badge variant="outline" className="gap-1 border-destructive/40 text-[10px] text-destructive"><Minus className="h-3 w-3" />removido</Badge>;
-  return <Badge variant="outline" className="text-[10px] text-muted-foreground">alterado</Badge>;
+  const { t } = useI18n();
+  if (type === "added")   return <Badge variant="outline" className="gap-1 border-emerald-500/40 text-[10px] text-emerald-600 dark:text-emerald-500"><Plus aria-hidden className="h-3 w-3" />{t("history.added")}</Badge>;
+  if (type === "removed") return <Badge variant="outline" className="gap-1 border-destructive/40 text-[10px] text-destructive"><Minus aria-hidden className="h-3 w-3" />{t("history.removed")}</Badge>;
+  return <Badge variant="outline" className="text-[10px] text-muted-foreground">{t("history.changed")}</Badge>;
 }
 
 function ValueDiff({ old, next, type }: { old: string | null; next: string | null; type: string }) {
+  const { t } = useI18n();
   const show = (v: string | null) => v && v.length > 120 ? v.slice(0, 117) + "…" : v ?? "—";
-  if (type === "added")   return <p className="mt-1 truncate font-mono text-[11px] text-emerald-500">{show(next)}</p>;
+  if (type === "added")   return <p className="mt-1 truncate font-mono text-[11px] text-emerald-600 dark:text-emerald-500">{show(next)}</p>;
   if (type === "removed") return <p className="mt-1 truncate font-mono text-[11px] text-destructive line-through">{show(old)}</p>;
   return (
     <div className="mt-1 flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
       <span className="truncate line-through">{show(old)}</span>
-      <ArrowRight className="h-3 w-3 shrink-0" />
+      <ArrowRight aria-label={t("history.to")} className="h-3 w-3 shrink-0" />
       <span className="truncate text-foreground">{show(next)}</span>
     </div>
   );

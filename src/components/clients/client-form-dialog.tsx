@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -183,7 +183,7 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
                 value={form.status}
                 onValueChange={(v) => setForm({ ...form, status: v as ClientStatus })}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label={t("clients.field.status")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -200,7 +200,7 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
                 value={form.sla_tier}
                 onValueChange={(v) => setForm({ ...form, sla_tier: v as SlaTier })}
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label={t("clients.field.sla")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -296,17 +296,16 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
           </div>
           <section
             className="space-y-4 rounded-xl border p-4"
-            aria-label="Marca do portal do cliente"
+            aria-label={t("clients.brand.section")}
           >
             <div>
-              <h3 className="font-semibold">Marca do portal do cliente</h3>
+              <h3 className="font-semibold">{t("clients.brand.section")}</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Personalize a página de atendimento desta empresa. Ative e copie o link público nos
-                detalhes do cliente.
+                {t("clients.brand.sectionDesc")}
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="portal-logo">Endereço do logotipo</Label>
+              <Label htmlFor="portal-logo">{t("clients.brand.logoUrl")}</Label>
               <Input
                 id="portal-logo"
                 type="url"
@@ -316,15 +315,15 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
                 onChange={(e) => setForm({ ...form, portal_logo_url: e.target.value })}
               />
               <p className="text-xs text-muted-foreground">
-                Use uma imagem pública por HTTPS. Sem logo, exibimos as iniciais da empresa.
+                {t("clients.brand.logoHint")}
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="portal-color">Cor da marca</Label>
+              <Label htmlFor="portal-color">{t("clients.brand.color")}</Label>
               <div className="flex gap-3">
                 <Input
                   type="color"
-                  aria-label="Escolher cor da marca"
+                  aria-label={t("clients.brand.colorPick")}
                   className="w-16 p-1"
                   value={normalizeBranding(form).portal_primary_color}
                   onChange={(e) => setForm({ ...form, portal_primary_color: e.target.value })}
@@ -340,28 +339,28 @@ export function ClientFormDialog({ open, onOpenChange, client }: Props) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="portal-title">Título de boas-vindas</Label>
+              <Label htmlFor="portal-title">{t("clients.brand.title")}</Label>
               <Input
                 id="portal-title"
                 maxLength={100}
-                placeholder="Como podemos ajudar?"
+                placeholder={t("clients.brand.defaultTitle")}
                 value={form.portal_title}
                 onChange={(e) => setForm({ ...form, portal_title: e.target.value })}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="portal-message">Mensagem para o cliente</Label>
+              <Label htmlFor="portal-message">{t("clients.brand.message")}</Label>
               <Textarea
                 id="portal-message"
                 maxLength={400}
                 rows={3}
                 value={form.portal_message}
                 onChange={(e) => setForm({ ...form, portal_message: e.target.value })}
-                placeholder="Apresente a equipe de suporte e oriente como solicitar atendimento."
+                placeholder={t("clients.brand.messagePh")}
               />
             </div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Prévia da página
+              {t("clients.brand.preview")}
             </p>
             <ClientBrandHeader name={form.name} branding={form} />
           </section>
@@ -391,13 +390,17 @@ function Field({
   className?: string;
   children: React.ReactNode;
 }) {
+  const id = useId();
+  const child = isValidElement(children) && (children as React.ReactElement).type !== Select
+    ? cloneElement(children as React.ReactElement<{ id?: string }>, { id: (children as React.ReactElement<{ id?: string }>).props.id ?? id })
+    : children;
   return (
     <div className={`space-y-1.5 ${className ?? ""}`}>
-      <Label className="text-xs font-medium text-muted-foreground">
+      <Label htmlFor={id} className="text-xs font-medium text-muted-foreground">
         {label}
         {required && <span className="ml-0.5 text-destructive">*</span>}
       </Label>
-      {children}
+      {child}
     </div>
   );
 }

@@ -4,7 +4,7 @@ type Props = { size?: number; withWordmark?: boolean; className?: string };
 
 export function Logo({ size = 32, withWordmark = true, className }: Props) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
+    <div className={cn("flex items-center gap-2.5", className)} role={withWordmark ? undefined : "img"} aria-label={withWordmark ? undefined : "Autotechs RMM"}>
       <div
         className="relative grid place-items-center rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-glow"
         style={{ width: size, height: size }}

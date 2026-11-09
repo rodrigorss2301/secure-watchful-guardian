@@ -45,7 +45,7 @@ function AlertsPage() {
   const [editingRule, setEditingRule] = useState<AlertRule | null>(null);
   const [deletingRule, setDeletingRule] = useState<AlertRule | null>(null);
 
-  const { data: alerts, isLoading: loadingAlerts } = useQuery({
+  const { data: alerts, isLoading: loadingAlerts, isError: alertsError, refetch: refetchAlerts } = useQuery({
     queryKey: ["alerts", tenant?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,7 +60,7 @@ function AlertsPage() {
     refetchInterval: 30_000,
   });
 
-  const { data: rules, isLoading: loadingRules } = useQuery({
+  const { data: rules, isLoading: loadingRules, isError: rulesError, refetch: refetchRules } = useQuery({
     queryKey: ["alert_rules", tenant?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -169,7 +169,7 @@ function AlertsPage() {
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <TabsList>
+        <TabsList className="h-auto max-w-full flex-wrap justify-start">
           <TabsTrigger value="active">{t("alerts.tab.active")} {active.length > 0 && <Badge className="ml-2" variant="secondary">{active.length}</Badge>}</TabsTrigger>
           <TabsTrigger value="history">{t("alerts.tab.history")}</TabsTrigger>
           <TabsTrigger value="rules">{t("alerts.tab.rules")}</TabsTrigger>
@@ -179,6 +179,8 @@ function AlertsPage() {
           <AlertTable
             alerts={active}
             loading={loadingAlerts}
+            error={alertsError}
+            onRetry={() => refetchAlerts()}
             emptyKey="alerts.empty.active"
             canWrite={canWrite}
             onAck={(id) => ack.mutate(id)}
@@ -190,6 +192,8 @@ function AlertsPage() {
           <AlertTable
             alerts={history}
             loading={loadingAlerts}
+            error={alertsError}
+            onRetry={() => refetchAlerts()}
             emptyKey="alerts.empty.history"
             canWrite={false}
           />
@@ -205,8 +209,13 @@ function AlertsPage() {
           )}
           <Card className="overflow-hidden">
             {loadingRules ? (
-              <div className="p-6 space-y-3">
+              <div className="p-6 space-y-3" role="status" aria-busy="true" aria-label={t("common.loading")}>
                 {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+              </div>
+            ) : rulesError ? (
+              <div role="alert" className="flex flex-col items-center gap-3 p-10 text-center">
+                <p className="text-sm text-muted-foreground">{t("common.error")}</p>
+                <Button variant="outline" size="sm" onClick={() => refetchRules()}>{t("common.retry")}</Button>
               </div>
             ) : (rules?.length ?? 0) === 0 ? (
               <p className="p-10 text-center text-sm text-muted-foreground">{t("alerts.empty.rules")}</p>
@@ -220,7 +229,7 @@ function AlertsPage() {
                     <TableHead>{t("alerts.rules.col.severity")}</TableHead>
                     <TableHead>{t("alerts.rules.col.scope")}</TableHead>
                     <TableHead className="text-center">{t("alerts.rules.col.enabled")}</TableHead>
-                    {canWrite && <TableHead className="w-20" />}
+                    {canWrite && <TableHead className="w-24"><span className="sr-only">{t("alerts.col.actions")}</span></TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -234,7 +243,7 @@ function AlertsPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2 text-sm">
-                            <MetricIcon className="h-4 w-4 text-muted-foreground" />
+                            <MetricIcon aria-hidden className="h-4 w-4 text-muted-foreground" />
                             {t(`alerts.metric.${r.metric}` as TKey)}
                           </div>
                         </TableCell>
@@ -253,6 +262,7 @@ function AlertsPage() {
                         </TableCell>
                         <TableCell className="text-center">
                           <Switch
+                            aria-label={`${t("alerts.rules.col.enabled")}: ${r.name}`}
                             checked={r.enabled}
                             onCheckedChange={(v) => toggleRule.mutate({ id: r.id, enabled: v })}
                             disabled={!canWrite}
@@ -261,11 +271,11 @@ function AlertsPage() {
                         {canWrite && (
                           <TableCell>
                             <div className="flex justify-end gap-1">
-                              <Button size="icon" variant="ghost" onClick={() => { setEditingRule(r); setRuleDialog(true); }}>
-                                <Pencil className="h-4 w-4" />
+                              <Button size="icon" variant="ghost" aria-label={`${t("alerts.rules.edit")}: ${r.name}`} title={t("common.edit")} onClick={() => { setEditingRule(r); setRuleDialog(true); }}>
+                                <Pencil aria-hidden className="h-4 w-4" />
                               </Button>
-                              <Button size="icon" variant="ghost" onClick={() => setDeletingRule(r)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                              <Button size="icon" variant="ghost" aria-label={`${t("alerts.action.delete")}: ${r.name}`} title={t("alerts.action.delete")} onClick={() => setDeletingRule(r)}>
+                                <Trash2 aria-hidden className="h-4 w-4 text-destructive" />
                               </Button>
                             </div>
                           </TableCell>
@@ -306,10 +316,12 @@ type AlertWithRels = Alert & {
 };
 
 function AlertTable({
-  alerts, loading, emptyKey, canWrite, onAck, onResolve,
+  alerts, loading, error, onRetry, emptyKey, canWrite, onAck, onResolve,
 }: {
   alerts: AlertWithRels[];
   loading: boolean;
+  error?: boolean;
+  onRetry?: () => void;
   emptyKey: TKey;
   canWrite: boolean;
   onAck?: (id: string) => void;
@@ -319,8 +331,17 @@ function AlertTable({
 
   if (loading) {
     return (
-      <Card className="p-6 space-y-3">
+      <Card className="p-6 space-y-3" role="status" aria-busy="true" aria-label={t("common.loading")}>
         {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-10" />)}
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card role="alert" className="flex flex-col items-center gap-3 p-12 text-center">
+        <p className="text-sm text-muted-foreground">{t("common.error")}</p>
+        {onRetry && <Button variant="outline" size="sm" onClick={onRetry}>{t("common.retry")}</Button>}
       </Card>
     );
   }
@@ -328,7 +349,7 @@ function AlertTable({
   if (alerts.length === 0) {
     return (
       <Card className="p-12 text-center">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500/70" />
+        <CheckCircle2 aria-hidden className="mx-auto h-10 w-10 text-emerald-500/70" />
         <p className="mt-3 text-sm text-muted-foreground">{t(emptyKey)}</p>
       </Card>
     );
@@ -359,7 +380,7 @@ function AlertTable({
                     {t(`alerts.severity.${a.severity}` as TKey)}
                   </Badge>
                 </TableCell>
-                <TableCell className="max-w-[280px] truncate">{a.message}</TableCell>
+                <TableCell className="max-w-[280px] truncate" title={a.message}>{a.message}</TableCell>
                 <TableCell>
                   {a.endpoint ? (
                     <Link
@@ -368,13 +389,13 @@ function AlertTable({
                       className="inline-flex items-center gap-1 text-sm hover:text-primary"
                     >
                       {a.endpoint.hostname}
-                      <ExternalLink className="h-3 w-3 opacity-60" />
+                      <ExternalLink aria-hidden className="h-3 w-3 opacity-60" />
                     </Link>
                   ) : <span className="text-muted-foreground">—</span>}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5 text-sm">
-                    <MetricIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                    <MetricIcon aria-hidden className="h-3.5 w-3.5 text-muted-foreground" />
                     {t(`alerts.metric.${a.metric}` as TKey)}
                   </div>
                 </TableCell>
@@ -386,19 +407,19 @@ function AlertTable({
                     {t(`alerts.status.${a.status}` as TKey)}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-xs text-muted-foreground tabular-nums">
+                <TableCell className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
                   {relTime(a.created_at)}
                 </TableCell>
                 {canWrite && (
                   <TableCell>
                     <div className="flex justify-end gap-1">
                       {a.status === "open" && onAck && (
-                        <Button size="sm" variant="ghost" onClick={() => onAck(a.id)}>
+                        <Button size="sm" variant="ghost" className="whitespace-nowrap" onClick={() => onAck(a.id)}>
                           {t("alerts.action.ack")}
                         </Button>
                       )}
                       {a.status !== "resolved" && onResolve && (
-                        <Button size="sm" variant="outline" onClick={() => onResolve(a.id)}>
+                        <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onResolve(a.id)}>
                           {t("alerts.action.resolve")}
                         </Button>
                       )}
@@ -424,7 +445,7 @@ function KpiCard({
 }) {
   const toneClass = {
     primary: "bg-primary/10 text-primary",
-    warning: "bg-amber-500/15 text-amber-500",
+    warning: "bg-amber-500/15 text-amber-600 dark:text-amber-500",
     danger: "bg-destructive/15 text-destructive",
     muted: "bg-muted text-muted-foreground",
   }[tone];
@@ -436,7 +457,7 @@ function KpiCard({
           <p className="mt-2 font-display text-3xl font-bold tabular-nums">{value}</p>
         </div>
         <div className={`grid h-10 w-10 place-items-center rounded-xl ${toneClass}`}>
-          <Icon className="h-5 w-5" />
+          <Icon aria-hidden className="h-5 w-5" />
         </div>
       </div>
     </Card>

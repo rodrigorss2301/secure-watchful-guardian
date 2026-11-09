@@ -116,49 +116,49 @@ export function KbArticleDialog({ open, onOpenChange, article }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{article ? t("kb.edit") : t("kb.new")}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <Label>{t("kb.field.title")}</Label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="kb-f-1">{t("kb.field.title")}</Label>
+            <Input id="kb-f-1" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
-          <div className="sm:col-span-2">
-            <Label>{t("kb.field.slug")}</Label>
-            <Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} />
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="kb-f-2">{t("kb.field.slug")}</Label>
+            <Input id="kb-f-2" value={slug} onChange={(e) => setSlug(slugify(e.target.value))} />
           </div>
-          <div className="sm:col-span-2">
-            <Label>{t("kb.field.excerpt")}</Label>
-            <Textarea rows={2} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="kb-f-3">{t("kb.field.excerpt")}</Label>
+            <Textarea id="kb-f-3" rows={2} value={excerpt} onChange={(e) => setExcerpt(e.target.value)} />
           </div>
-          <div className="sm:col-span-2">
-            <Label>{t("kb.field.body")}</Label>
-            <Textarea rows={10} className="font-mono text-xs" value={body} onChange={(e) => setBody(e.target.value)} />
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="kb-f-4">{t("kb.field.body")}</Label>
+            <Textarea id="kb-f-4" rows={10} className="font-mono text-xs" value={body} onChange={(e) => setBody(e.target.value)} />
           </div>
-          <div>
-            <Label>{t("kb.field.category")}</Label>
-            <Input value={category} onChange={(e) => setCategory(e.target.value)} />
+          <div className="space-y-1.5">
+            <Label htmlFor="kb-f-5">{t("kb.field.category")}</Label>
+            <Input id="kb-f-5" value={category} onChange={(e) => setCategory(e.target.value)} />
           </div>
-          <div>
-            <Label>{t("kb.field.tags")}</Label>
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="windows, network, vpn" />
+          <div className="space-y-1.5">
+            <Label htmlFor="kb-f-6">{t("kb.field.tags")}</Label>
+            <Input id="kb-f-6" value={tags} onChange={(e) => setTags(e.target.value)} placeholder={t("kb.field.tagsPh")} />
           </div>
-          <div>
-            <Label>{t("kb.field.visibility")}</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="kb-f-7">{t("kb.field.visibility")}</Label>
             <Select value={visibility} onValueChange={(v) => setVisibility(v as KbArticle["visibility"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="kb-f-7"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="internal">{t("kb.visibility.internal")}</SelectItem>
                 <SelectItem value="public">{t("kb.visibility.public")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>{t("kb.field.status")}</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="kb-f-8">{t("kb.field.status")}</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as KbArticle["status"])}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="kb-f-8"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="draft">{t("kb.status.draft")}</SelectItem>
                 <SelectItem value="published">{t("kb.status.published")}</SelectItem>
@@ -166,10 +166,10 @@ export function KbArticleDialog({ open, onOpenChange, article }: {
               </SelectContent>
             </Select>
           </div>
-          <div className="sm:col-span-2">
-            <Label>{t("kb.field.client")}</Label>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="kb-f-9">{t("kb.field.client")}</Label>
             <Select value={clientId} onValueChange={setClientId}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger id="kb-f-9"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">—</SelectItem>
                 {(clients.data ?? []).map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}

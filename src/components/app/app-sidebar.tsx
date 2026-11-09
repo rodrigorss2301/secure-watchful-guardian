@@ -32,7 +32,7 @@ const operations: NavItem[] = [
 
 const management: NavItem[] = [
   { titleKey: "nav.reports", url: "/reports", icon: BarChart3 },
-  { titleKey: "nav.reports", url: "/inventory/software", icon: Package, roles: ["admin", "technician"], literal: "Software" },
+  { titleKey: "nav.software", url: "/inventory/software", icon: Package, roles: ["admin", "technician"] },
   { titleKey: "nav.billing", url: "/billing", icon: Receipt, roles: ["admin", "technician"] },
   { titleKey: "nav.audit", url: "/audit", icon: ScrollText, roles: ["admin"] },
   { titleKey: "nav.settings", url: "/settings", icon: Settings, roles: ["admin"] },
@@ -70,11 +70,11 @@ function NavSection({ labelKey, items }: { labelKey: TKey; items: NavItem[] }) {
                 <SidebarMenuButton
                   asChild
                   isActive={active}
-                  tooltip={t(item.titleKey)}
+                  tooltip={item.literal ?? t(item.titleKey)}
                   className="data-[active=true]:bg-sidebar-accent data-[active=true]:text-foreground data-[active=true]:font-semibold"
                 >
-                  <Link to={item.url}>
-                    <item.icon className="h-4 w-4 shrink-0" />
+                  <Link to={item.url} aria-current={active ? "page" : undefined}>
+                    <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>{item.literal ?? t(item.titleKey)}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -113,7 +113,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border/70 p-4">
         {!collapsed && tenant && (
           <div className="flex flex-col gap-1.5 rounded-2xl bg-sidebar-accent/15 p-3 shadow-sm shadow-primary/10 ring-1 ring-sidebar-border/20">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Tenant</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t("shell.tenant")}</span>
             <span className="truncate text-sm font-semibold">{tenant.name}</span>
             {primaryRole && (
               <Badge variant="outline" className="w-fit gap-1 border-primary/40 bg-primary/10 text-primary text-[10px] uppercase">

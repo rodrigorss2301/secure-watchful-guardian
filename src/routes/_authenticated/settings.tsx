@@ -21,7 +21,7 @@ import { WhatsAppTab } from "@/components/settings/whatsapp-tab";
 import { AgentReleasesSection } from "@/components/settings/agent-releases-section";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — Autotechs RMM" }] }),
+  head: () => ({ meta: [{ title: "Configurações — Autotechs RMM" }] }),
   component: SettingsPage,
 });
 
@@ -40,13 +40,13 @@ function SettingsPage() {
     <>
       <PageHeader title={t("settings.title")} description={t("settings.subtitle")} />
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
+        <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="profile">{t("settings.tab.profile")}</TabsTrigger>
           {isAdmin && <TabsTrigger value="team">{t("settings.tab.team")}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="company">{t("settings.tab.company")}</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="channels">Canais</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="channels">{t("settings.tab.channels")}</TabsTrigger>}
           {isAdmin && <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="agent">Agente</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="agent">{t("settings.tab.agent")}</TabsTrigger>}
         </TabsList>
         <TabsContent value="profile"><ProfileTab /></TabsContent>
         {isAdmin && <TabsContent value="team"><TeamTab /></TabsContent>}
@@ -92,15 +92,15 @@ function ProfileTab() {
           <div className="text-sm text-muted-foreground">{profile?.email}</div>
         </div>
         <div className="grid gap-2">
-          <Label>{t("settings.profile.fullName")}</Label>
-          <Input value={fullName} onChange={(e) => setFullName(e.target.value)} />
+          <Label htmlFor="profile-name">{t("settings.profile.fullName")}</Label>
+          <Input id="profile-name" autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
         </div>
         <div className="grid gap-2">
-          <Label>{t("settings.profile.avatar")}</Label>
-          <Input value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" />
+          <Label htmlFor="profile-avatar">{t("settings.profile.avatar")}</Label>
+          <Input id="profile-avatar" type="url" inputMode="url" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" />
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
-          {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {t("common.save")}
         </Button>
       </CardContent>
@@ -131,15 +131,15 @@ function CompanyTab() {
       </CardHeader>
       <CardContent className="space-y-4 max-w-xl">
         <div className="grid gap-2">
-          <Label>{t("settings.company.name")}</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} />
+          <Label htmlFor="company-name">{t("settings.company.name")}</Label>
+          <Input id="company-name" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="grid gap-2">
-          <Label>{t("settings.company.slug")}</Label>
-          <Input value={tenant?.slug ?? ""} disabled />
+          <Label htmlFor="company-slug">{t("settings.company.slug")}</Label>
+          <Input id="company-slug" value={tenant?.slug ?? ""} disabled />
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending || !name.trim()}>
-          {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {save.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
           {t("common.save")}
         </Button>
       </CardContent>
@@ -163,7 +163,7 @@ function TeamTab() {
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | ProfileStatus>("all");
 
-  const { data: members, isLoading } = useQuery({
+  const { data: members, isLoading, isError } = useQuery({
     queryKey: ["team-members", tenant?.id],
     queryFn: async (): Promise<MemberRow[]> => {
       const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
@@ -237,11 +237,11 @@ function TeamTab() {
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("settings.team.search")} className="pl-9" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input type="search" aria-label={t("settings.team.search")} value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("settings.team.search")} className="pl-9" />
           </div>
           <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
-            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label={t("settings.team.col.status")}><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("settings.team.filter.all")}</SelectItem>
               <SelectItem value="pending">{t("settings.team.pending")}</SelectItem>
@@ -251,7 +251,7 @@ function TeamTab() {
           </Select>
         </div>
 
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="overflow-x-auto rounded-lg border border-border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -263,7 +263,9 @@ function TeamTab() {
             </TableHeader>
             <TableBody>
               {isLoading ? (
-                <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">{t("common.loading")}</TableCell></TableRow>
+                <TableRow><TableCell colSpan={4} role="status" className="text-center text-muted-foreground py-8">{t("common.loading")}</TableCell></TableRow>
+              ) : isError ? (
+                <TableRow><TableCell colSpan={4} role="alert" className="text-center text-muted-foreground py-8">{t("common.error")}</TableCell></TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">{t("settings.team.empty")}</TableCell></TableRow>
               ) : filtered.map((m) => {
@@ -277,7 +279,7 @@ function TeamTab() {
                           <AvatarFallback>{initials(m.full_name, m.email)}</AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="font-medium">{m.full_name ?? m.email}{isSelf && " (you)"}</span>
+                          <span className="font-medium">{m.full_name ?? m.email}{isSelf && ` (${t("settings.team.you")})`}</span>
                           <span className="text-xs text-muted-foreground">{m.email}</span>
                         </div>
                       </div>
@@ -291,27 +293,27 @@ function TeamTab() {
                         onValueChange={(v) => setRole.mutate({ userId: m.id, role: v as AppRole, current: m.role })}
                         disabled={isSelf || setRole.isPending}
                       >
-                        <SelectTrigger className="w-[160px]"><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectTrigger className="w-[160px]" aria-label={`${t("settings.team.col.role")}: ${m.full_name ?? m.email}`}><SelectValue placeholder="—" /></SelectTrigger>
                         <SelectContent>
                           {ROLES.map((r) => <SelectItem key={r} value={r}>{t(`role.${r}` as TKey)}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex flex-wrap justify-end gap-2">
                         {m.status === "pending" && (
                           <Button size="sm" onClick={() => approve.mutate(m)} disabled={approve.isPending}>
-                            <UserCheck className="mr-1 h-3.5 w-3.5" /> {t("settings.team.approve")}
+                            <UserCheck className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> {t("settings.team.approve")}
                           </Button>
                         )}
                         {m.status === "active" && !isSelf && (
                           <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: m.id, status: "disabled" })} disabled={setStatus.isPending}>
-                            <UserX className="mr-1 h-3.5 w-3.5" /> {t("settings.team.disable")}
+                            <UserX className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> {t("settings.team.disable")}
                           </Button>
                         )}
                         {m.status === "disabled" && (
                           <Button size="sm" variant="outline" onClick={() => setStatus.mutate({ id: m.id, status: "active" })} disabled={setStatus.isPending}>
-                            <ShieldCheck className="mr-1 h-3.5 w-3.5" /> {t("settings.team.reactivate")}
+                            <ShieldCheck className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> {t("settings.team.reactivate")}
                           </Button>
                         )}
                       </div>
@@ -330,10 +332,10 @@ function TeamTab() {
 function StatusBadge({ status }: { status: ProfileStatus }) {
   const { t } = useI18n();
   const cls = status === "active"
-    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-500"
+    ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
     : status === "pending"
-    ? "border-amber-500/40 bg-amber-500/10 text-amber-500"
-    : "border-rose-500/40 bg-rose-500/10 text-rose-500";
+    ? "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+    : "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-400";
   const key: TKey = status === "active" ? "settings.team.active" : status === "pending" ? "settings.team.pending" : "settings.team.disabled";
   return <Badge variant="outline" className={cls}>{t(key)}</Badge>;
 }
